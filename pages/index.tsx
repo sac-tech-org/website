@@ -11,6 +11,10 @@ export default function Home() {
     setSendError(null);
     setIsSendLoading(true);
     fetch("/api/mail", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         email
       })

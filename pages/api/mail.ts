@@ -8,7 +8,6 @@ export default async function handler(
   if (req.method !== "POST") {
     return res.status(400);
   };
-  console.log(process.env.SMTP_PASS)
   const transporter = nodemailer.createTransport({
     port: Number(process.env.SMTP_PORT),
     host: process.env.SMTP_HOST,
@@ -19,15 +18,24 @@ export default async function handler(
     secure: true,
   })
 
-  const mailData = {
-    from: process.env.SMTP_USER,
-    to: req.body.email,
-    subject: `Invitation to the SacTech Slack`,
-    text: "Testing",
-    html: `<div>This is a test</div>`
-  }
-
   try {
+    await new Promise<void>((resolve, reject) => transporter.verify((error) => {
+      if (error) {
+        reject(error);
+        return;
+      } else {
+        resolve();
+      }
+    }))
+
+    const mailData = {
+      from: process.env.SMTP_USER,
+      to: req.body.email,
+      subject: `Invitation to the SacTech Slack`,
+      text: "Testing",
+      html: `<div>This is a test</div>`
+    }
+
     await new Promise((resolve, reject) => {
       transporter.sendMail(mailData, (err, info) => {
         if (err) {
@@ -38,10 +46,10 @@ export default async function handler(
         resolve(info)
       })
     });
-    return res.status(200);
+    return res.status(200).json({message: "Success"});
 
   } catch (e) {
     console.error(e);
-    return res.status(500);
+    return res.status(500).json({message: "Error"});;
   }
 }
