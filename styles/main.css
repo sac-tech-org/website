@@ -7,7 +7,8 @@ body {
   }
   
   .splash {
-    width: 400px;
+    width: 100%;
+    max-width: 400px;
     text-align: center;
     height: 90%;
     display: flex;
@@ -143,7 +144,8 @@ body {
   
   .form {
     flex: 1;
-    width: 300px;
+    width: 100%;
+    max-width: 300px;
     margin: 20px auto 0;
   }
   
@@ -160,25 +162,6 @@ body {
   
   .active {
     color: #E01563
-  }
-  
-  .footer {
-    color: #D6D6D6;
-    font-size: 11px;
-    margin: 0 auto;
-    width: 300px;
-    text-align: center;
-  }
-  
-  .footer a {
-    color: #9B9B9B;
-    text-decoration: none;
-    border-bottom: 1px solid #9B9B9B
-  }
-  
-  .footer a:hover {
-    color: #fff;
-    background-color: #9B9B9B
   }
 
   .success {
