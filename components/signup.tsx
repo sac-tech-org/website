@@ -33,7 +33,7 @@ export const Signup = ({ onSubmit, email, setEmail, sendError, isSendLoading, se
       <label className="coc-agreeLabel">
         <input required className="coc-agree" type="checkbox" checked={cocAgree} onChange={e => setCocAgree(e.target.checked)} /> I agree to terms of the Code of Conduct
       </label>
-      <input value={email} required onChange={e => setEmail(e.target.value)} type="email" placeholder="you@yourdomain.com" className="form-item" />
+      <input value={email} required onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="you@yourdomain.com" className="form-item" />
       <button>
         Get my Invite
       </button>
