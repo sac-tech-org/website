@@ -11,6 +11,7 @@ export default function Home() {
 
   const sendEmail = useCallback((e: FormEvent) => {
     e.preventDefault();
+  
     if (!cocAgree) {
       setSendError("You must accept the Code of Conduct first")
     }
@@ -37,7 +38,7 @@ export default function Home() {
         setIsSendLoading(false);
         setSendError("There was an error sending your email");
       })
-  }, [email]);
+  }, [email, cocAgree]);
 
   return (
     <>

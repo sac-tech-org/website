@@ -31,10 +31,10 @@ export const Signup = ({ onSubmit, email, setEmail, sendError, isSendLoading, se
   return (
     <form className="form" onSubmit={onSubmit}>
       <label className="coc-agreeLabel">
-        <input className="coc-agree" type="checkbox" checked={cocAgree} onChange={e => setCocAgree(e.target.checked)} /> I agree to terms of the Code of Conduct
+        <input required className="coc-agree" type="checkbox" checked={cocAgree} onChange={e => setCocAgree(e.target.checked)} /> I agree to terms of the Code of Conduct
       </label>
-      <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="you@yourdomain.com" autoFocus className="form-item" />
-      <button className="loading" type="button">
+      <input value={email} required onChange={e => setEmail(e.target.value)} type="email" placeholder="you@yourdomain.com" className="form-item" />
+      <button>
         Get my Invite
       </button>
       {sendError && <p aria-live="polite">{sendError}</p>}
