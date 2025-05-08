@@ -1,3 +1,4 @@
+"use client"
 import { FormEventHandler } from "react"
 
 interface SignupProps {

@@ -1,14 +1,7 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
 import nodemailer from 'nodemailer';
 import mjml2html from 'mjml'
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(400);
-  };
+export async function POST(request: Request) {
   const transporter = nodemailer.createTransport({
     port: Number(process.env.SMTP_PORT),
     host: process.env.SMTP_HOST,
@@ -109,9 +102,11 @@ export default async function handler(
       throw htmlOutput.errors;
     }
 
+    const req = await request.json()
+
     const mailData = {
       from: process.env.SMTP_USER,
-      to: req.body.email,
+      to: req.email,
       subject: `Invitation to the SacTech Slack`,
       text: "Testing",
       html: htmlOutput.html
@@ -127,10 +122,10 @@ export default async function handler(
         resolve(info)
       })
     });
-    return res.status(200).json({ message: "Success" });
+    return Response.json({ message: "Success" });
 
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ message: "Error" });;
+    return Response.json({ message: "Error" }, {status: 500});
   }
 }
