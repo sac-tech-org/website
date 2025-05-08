@@ -1,27 +1,10 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import mjml2html from 'mjml'
 
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 export async function POST(request: Request) {
-  const transporter = nodemailer.createTransport({
-    port: Number(process.env.SMTP_PORT),
-    host: process.env.SMTP_HOST,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    secure: true,
-  })
-
   try {
-    await new Promise<void>((resolve, reject) => transporter.verify((error) => {
-      if (error) {
-        reject(error);
-        return;
-      } else {
-        resolve();
-      }
-    }))
-
     // https://mjml.io/try-it-live
     const htmlOutput = mjml2html(`
     <mjml>
@@ -104,24 +87,17 @@ export async function POST(request: Request) {
 
     const req = await request.json()
 
-    const mailData = {
-      from: process.env.SMTP_USER,
-      to: req.email,
-      subject: `Invitation to the SacTech Slack`,
-      text: "Testing",
-      html: htmlOutput.html
+      const { data, error } = await resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: req.email,
+        subject: `Invitation to the SacTech Slack`,
+        html: htmlOutput.html
+      });
+
+    if (error) {
+      throw error;
     }
 
-    await new Promise((resolve, reject) => {
-      transporter.sendMail(mailData, (err, info) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(info)
-      })
-    });
     return Response.json({ message: "Success" });
 
   } catch (e) {
