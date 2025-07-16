@@ -4,9 +4,7 @@ import {FormEvent, useCallback, useState} from "react";
 import {Signup} from "./signup";
 
 export function HomeClient() {
-  const [email, setEmail] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
-  const [isSendLoading, setIsSendLoading] = useState<boolean>(false);
   const [sendSuccess, setSendSuccess] = useState<boolean>(false);
   const [cocAgree, setCocAgree] = useState<boolean>(false);
 
@@ -17,29 +15,8 @@ export function HomeClient() {
       setSendError("You must accept the Code of Conduct first")
     }
     setSendError(null);
-    setIsSendLoading(true);
-    fetch("/api/mail", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email
-      })
-    })
-      .then(res => {
-        if (res.status !== 200) throw res;
-        return res.json();
-      })
-      .then(() => {
-        setIsSendLoading(false);
-        setSendSuccess(true);
-      })
-      .catch(() => {
-        setIsSendLoading(false);
-        setSendError("There was an error sending your email");
-      })
-  }, [email, cocAgree]);
+    setSendSuccess(true);
+  }, [cocAgree]);
 
   return (
     <main className="splash">
@@ -141,10 +118,7 @@ export function HomeClient() {
 
       <Signup
         sendError={sendError}
-        isSendLoading={isSendLoading}
         onSubmit={sendEmail}
-        email={email}
-        setEmail={setEmail}
         sendSuccess={sendSuccess}
         cocAgree={cocAgree}
         setCocAgree={setCocAgree}

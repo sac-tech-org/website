@@ -3,28 +3,16 @@ import { FormEventHandler } from "react"
 
 interface SignupProps {
   onSubmit: FormEventHandler;
-  email: string;
-  setEmail: (val: string) => void;
   sendError: string | null;
-  isSendLoading: boolean;
   sendSuccess: boolean;
   cocAgree: boolean;
   setCocAgree: (val: boolean) => void;
 }
 
-export const Signup = ({ onSubmit, email, setEmail, sendError, isSendLoading, sendSuccess, cocAgree, setCocAgree }: SignupProps) => {
-  if (isSendLoading) {
-    return (
-      <div className="form">
-        <p aria-live="polite">Sending your email to your inbox...</p>
-        {sendError && <p aria-live="polite">{sendError}</p>}
-      </div>
-    )
-  }
-
+export const Signup = ({ onSubmit, sendError, sendSuccess, cocAgree, setCocAgree }: SignupProps) => {
   if (sendSuccess) {
     return <div className="form">
-      <p aria-live="polite" className="success">Email sent - Check your email</p>
+      <a href={process.env.NEXT_PUBLIC_INVITE_LINK} className="button">Join Slack</a>
       {sendError && <p aria-live="polite">{sendError}</p>}
     </div>
   }
@@ -34,7 +22,6 @@ export const Signup = ({ onSubmit, email, setEmail, sendError, isSendLoading, se
       <label className="coc-agreeLabel">
         <input required className="coc-agree" type="checkbox" checked={cocAgree} onChange={e => setCocAgree(e.target.checked)} /> I agree to terms of the Code of Conduct
       </label>
-      <input value={email} required onChange={e => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="you@yourdomain.com" className="form-item" />
       <button>
         Get my Invite
       </button>
