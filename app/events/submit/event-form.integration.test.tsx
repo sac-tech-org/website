@@ -112,9 +112,7 @@ describe("EventForm", () => {
 		render(<EventForm />);
 		await fillRequiredEventFields(user);
 
-		expect(
-			screen.getByText(/Use Pacific time/),
-		).toBeInTheDocument();
+		expect(screen.getByText(/Use Pacific time/)).toBeInTheDocument();
 		expect(
 			screen.getByRole("checkbox", { name: /This event repeats/ }),
 		).not.toBeChecked();
@@ -156,6 +154,22 @@ describe("EventForm", () => {
 					: [field, value],
 			),
 		);
+	});
+
+	it("keeps focus in the title while the description has Markdown content", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		// Vitest's keyboard syntax uses `[[` to enter a literal opening bracket.
+		await user.type(getDescriptionEditor(), "[[SacTech](https://sac-tech.org)");
+		expect(screen.getByRole("link", { name: "SacTech" })).toBeInTheDocument();
+
+		const title = screen.getByLabelText(/Event title/);
+		await user.type(title, "S");
+
+		expect(title).toHaveValue("S");
+		expect(title).toHaveFocus();
+		await user.keyboard("a");
+		expect(title).toHaveValue("Sa");
 	});
 
 	it("submits a daily series that never ends", async () => {

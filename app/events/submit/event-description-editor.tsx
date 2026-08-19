@@ -59,6 +59,7 @@ import {
 	FORMAT_TEXT_COMMAND,
 	REDO_COMMAND,
 	SELECTION_CHANGE_COMMAND,
+	SKIP_DOM_SELECTION_TAG,
 	type TextFormatType,
 	UNDO_COMMAND,
 } from "lexical";
@@ -81,6 +82,10 @@ const EVENT_DESCRIPTION_TRANSFORMERS: Transformer[] = [
 	STRIKETHROUGH,
 	LINK,
 ];
+
+const EVENT_DESCRIPTION_LINK_ATTRIBUTES = Object.freeze({
+	rel: "noopener noreferrer nofollow ugc",
+});
 
 type BlockType =
 	"bullet" | "code" | "heading" | "number" | "paragraph" | "quote";
@@ -455,9 +460,12 @@ function MarkdownValuePlugin({
 		}
 
 		lastMarkdown.current = value;
-		editor.update(() => {
-			$convertFromMarkdownString(value, EVENT_DESCRIPTION_TRANSFORMERS);
-		});
+		editor.update(
+			() => {
+				$convertFromMarkdownString(value, EVENT_DESCRIPTION_TRANSFORMERS);
+			},
+			{ tag: SKIP_DOM_SELECTION_TAG },
+		);
 	}, [editor, value]);
 
 	return (
@@ -559,7 +567,7 @@ export function EventDescriptionEditor({
 				<EditableStatePlugin disabled={disabled} />
 				<HistoryPlugin />
 				<LinkPlugin
-					attributes={{ rel: "noopener noreferrer nofollow ugc" }}
+					attributes={EVENT_DESCRIPTION_LINK_ATTRIBUTES}
 					validateUrl={isSafeLink}
 				/>
 				<ListPlugin />
