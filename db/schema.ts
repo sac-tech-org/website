@@ -13,6 +13,7 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 import { user } from "@/db/auth-schema";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 
 export const eventMode = pgEnum("event_mode", [
 	"online",
@@ -62,7 +63,7 @@ export const event = pgTable(
 			withTimezone: true,
 		}).notNull(),
 		timezone: varchar("timezone", { length: 64 })
-			.default("America/Los_Angeles")
+			.default(SACRAMENTO_TIME_ZONE)
 			.notNull(),
 		mode: eventMode("mode").notNull(),
 		locationName: varchar("location_name", { length: 200 }),

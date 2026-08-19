@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { RecurrenceRule } from "@/app/events/types";
-import { getSubmissionsForUser } from "@/lib/events/queries";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import {
-	getNextFutureOccurrence,
-	RECURRENCE_TIME_ZONE,
-} from "@/lib/events/recurrence";
+	formatRecurrenceSummary,
+	type RecurrenceSummaryInput,
+} from "@/lib/events/format-recurrence-summary";
+import { getSubmissionsForUser } from "@/lib/events/queries";
+import { getNextFutureOccurrence } from "@/lib/events/recurrence";
 import { requireSession, sessionIsAdmin } from "@/lib/session";
 import { CancelEventForm } from "./cancel-event-form";
 import { SignOutButton } from "./sign-out-button";
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
 	dateStyle: "medium",
 	timeStyle: "short",
-	timeZone: "America/Los_Angeles",
+	timeZone: SACRAMENTO_TIME_ZONE,
 });
 
 const statusLabels = {
@@ -37,114 +39,9 @@ const cancellationDateFormatter = new Intl.DateTimeFormat("en-US", {
 const pacificDatePartsFormatter = new Intl.DateTimeFormat("en-US", {
 	day: "2-digit",
 	month: "2-digit",
-	timeZone: RECURRENCE_TIME_ZONE,
+	timeZone: SACRAMENTO_TIME_ZONE,
 	year: "numeric",
 });
-
-const weekdays = [
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday",
-] as const;
-
-interface RecurrenceSummaryInput {
-	startsAt: Date;
-	recurrenceFrequency: "day" | "week" | "month" | "year" | null;
-	recurrenceInterval: number | null;
-	recurrenceWeekdays: number[] | null;
-	recurrenceMonthlyPattern: "day_of_month" | "nth_weekday" | null;
-	recurrenceEndType: "never" | "on_date" | "after_occurrences" | null;
-	recurrenceEndDate: string | null;
-	recurrenceCount: number | null;
-}
-
-function ordinal(value: number) {
-	const remainder = value % 100;
-
-	if (remainder >= 11 && remainder <= 13) {
-		return `${value}th`;
-	}
-
-	switch (value % 10) {
-		case 1:
-			return `${value}st`;
-		case 2:
-			return `${value}nd`;
-		case 3:
-			return `${value}rd`;
-		default:
-			return `${value}th`;
-	}
-}
-
-function formatRecurrenceSummary(rule: RecurrenceSummaryInput) {
-	if (!rule.recurrenceFrequency) {
-		return "Does not repeat";
-	}
-
-	const interval = rule.recurrenceInterval ?? 1;
-	const startParts = new Intl.DateTimeFormat("en-US", {
-		day: "numeric",
-		month: "long",
-		timeZone: "America/Los_Angeles",
-		weekday: "long",
-	}).formatToParts(rule.startsAt);
-	const startDay = Number(
-		startParts.find((part) => part.type === "day")?.value ?? "1",
-	);
-	const startMonth =
-		startParts.find((part) => part.type === "month")?.value ?? "";
-	const startWeekday =
-		startParts.find((part) => part.type === "weekday")?.value ?? "";
-	const unit = rule.recurrenceFrequency;
-	let summary =
-		interval === 1 ? `Every ${unit}` : `Every ${interval} ${unit}s`;
-
-	if (unit === "week" && rule.recurrenceWeekdays?.length) {
-		const dayNames = rule.recurrenceWeekdays
-			.map((day) => weekdays[day])
-			.filter((day): day is (typeof weekdays)[number] => Boolean(day));
-
-		if (dayNames.length) {
-			summary += ` on ${new Intl.ListFormat("en-US", {
-				style: "long",
-				type: "conjunction",
-			}).format(dayNames)}`;
-		}
-	}
-
-	if (unit === "month") {
-		summary +=
-			rule.recurrenceMonthlyPattern === "nth_weekday"
-				? ` on the ${ordinal(Math.ceil(startDay / 7))} ${startWeekday}`
-				: ` on day ${startDay}`;
-	}
-
-	if (unit === "year") {
-		summary += ` on ${startMonth} ${startDay}`;
-	}
-
-	if (rule.recurrenceEndType === "on_date" && rule.recurrenceEndDate) {
-		const endDate = new Date(`${rule.recurrenceEndDate}T12:00:00Z`);
-		summary += ` through ${new Intl.DateTimeFormat("en-US", {
-			dateStyle: "medium",
-			timeZone: "UTC",
-		}).format(endDate)}`;
-	} else if (
-		rule.recurrenceEndType === "after_occurrences" &&
-		rule.recurrenceCount
-	) {
-		summary += ` for ${rule.recurrenceCount} occurrences`;
-	} else {
-		summary += " with no set end";
-	}
-
-	return summary;
-}
 
 function formatPacificDateKey(date: Date) {
 	const parts = pacificDatePartsFormatter.formatToParts(date);
@@ -182,7 +79,9 @@ function getRecurrenceRule(
 		interval: submission.recurrenceInterval,
 		monthlyPattern: submission.recurrenceMonthlyPattern,
 		occurrenceCount: submission.recurrenceCount,
-		weekdays: submission.recurrenceWeekdays,
+		weekdays: submission.recurrenceWeekdays
+			? [...submission.recurrenceWeekdays]
+			: null,
 	};
 }
 
@@ -235,14 +134,14 @@ export default async function AccountPage() {
 						{submissions.map((submission) => {
 							const recurrenceSummary = formatRecurrenceSummary(submission);
 							const recurrenceRule = getRecurrenceRule(submission);
-								const nextOccurrence =
-									!submission.canceledAt && recurrenceRule
-										? getNextFutureOccurrence(
-												submission.startsAt,
-												recurrenceRule,
-												now,
-											)
-										: null;
+							const nextOccurrence =
+								!submission.canceledAt && recurrenceRule
+									? getNextFutureOccurrence(
+											submission.startsAt,
+											recurrenceRule,
+											now,
+										)
+									: null;
 							const defaultOccurrenceDate = nextOccurrence
 								? formatPacificDateKey(nextOccurrence)
 								: null;

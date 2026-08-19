@@ -78,16 +78,49 @@ describe("AuthForm", () => {
 		await fillCredentials(user);
 		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
 
-		expect(
-			await screen.findByText(
-				"That email and password combination did not match.",
-			),
-		).toBeVisible();
-		expect(screen.getByRole("textbox", { name: "Email address" })).toHaveValue(
-			"person@example.com",
+		const message = "That email and password combination did not match.";
+		const alert = await screen.findByRole("alert");
+		const email = screen.getByRole("textbox", { name: "Email address" });
+		const password = screen.getByLabelText("Password");
+
+		expect(alert).toHaveTextContent(message);
+		expect(email).toHaveValue("person@example.com");
+		expect(password).toHaveValue("correct horse");
+		expect(email).toHaveAttribute("aria-invalid", "true");
+		expect(password).toHaveAttribute("aria-invalid", "true");
+		expect(email).toHaveAccessibleDescription(message);
+		expect(password).toHaveAccessibleDescription(
+			`At least 10 characters. ${message}`,
 		);
-		expect(screen.getByLabelText("Password")).toHaveValue("correct horse");
+		await waitFor(() => expect(email).toHaveFocus());
 		expect(authMocks.replace).not.toHaveBeenCalled();
+
+		await user.type(password, "!");
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(email).not.toHaveAttribute("aria-invalid");
+		expect(password).not.toHaveAttribute("aria-invalid");
+	});
+
+	it("focuses and associates a password error returned by the account service", async () => {
+		const user = userEvent.setup();
+		authMocks.signInEmail.mockResolvedValue({
+			error: { code: "PASSWORD_TOO_SHORT" },
+		});
+
+		render(<AuthForm />);
+		await fillCredentials(user);
+		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
+
+		const password = screen.getByLabelText("Password");
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent(
+			"Your password must be at least 10 characters.",
+		);
+		expect(password).toHaveAttribute("aria-invalid", "true");
+		expect(password).toHaveAccessibleDescription(
+			"At least 10 characters. Your password must be at least 10 characters.",
+		);
+		await waitFor(() => expect(password).toHaveFocus());
 	});
 
 	it("creates an account through the sign-up boundary", async () => {
@@ -137,6 +170,9 @@ describe("AuthForm", () => {
 				"An account already exists for that email. Try signing in instead.",
 			),
 		).toBeVisible();
+		const email = screen.getByRole("textbox", { name: "Email address" });
+		expect(email).toHaveAttribute("aria-invalid", "true");
+		await waitFor(() => expect(email).toHaveFocus());
 
 		await user.click(screen.getByRole("button", { name: "Sign in" }));
 		expect(
@@ -156,10 +192,20 @@ describe("AuthForm", () => {
 		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
 
 		expect(
-			await screen.findByText(
-				"We could not reach the account service. Check your connection and try again.",
-			),
-		).toBeVisible();
+			await screen.findByRole("alert"),
+		).toHaveTextContent(
+			"We could not reach the account service. Check your connection and try again.",
+		);
+		await waitFor(() =>
+			expect(
+				screen.getByRole("textbox", { name: "Email address" }),
+			).toHaveFocus(),
+		);
+		const email = screen.getByRole("textbox", { name: "Email address" });
+		expect(email).toHaveAccessibleDescription(
+			"We could not reach the account service. Check your connection and try again.",
+		);
+		expect(email).not.toHaveAttribute("aria-invalid");
 		expect(authMocks.replace).not.toHaveBeenCalled();
 		expect(authMocks.refresh).not.toHaveBeenCalled();
 	});

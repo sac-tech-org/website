@@ -57,8 +57,7 @@ describe("CancelEventForm", () => {
 		expect(dateInput).toHaveAttribute("min", "2026-09-01");
 		expect(dateInput).toHaveAttribute("max", "2026-12-30");
 
-		await user.clear(dateInput);
-		await user.type(dateInput, "2026-09-16");
+		await user.fill(dateInput, "2026-09-16");
 		await user.click(
 			screen.getByRole("button", { name: "Cancel this occurrence" }),
 		);
@@ -105,8 +104,7 @@ describe("CancelEventForm", () => {
 
 		render(<CancelEventForm {...recurringProps} />);
 		const dateInput = screen.getByLabelText("Occurrence date");
-		await user.clear(dateInput);
-		await user.type(dateInput, "2026-09-16");
+		await user.fill(dateInput, "2026-09-16");
 		await user.click(
 			screen.getByRole("button", { name: "Cancel this occurrence" }),
 		);

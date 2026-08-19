@@ -34,6 +34,10 @@ export function RecurringEventsCard({
 					starts_at: nextStart,
 				}
 			: null;
+	const primaryLocationUrl =
+		event.location_url && event.location_description
+			? event.location_url
+			: null;
 
 	return (
 		<li className={style.card}>
@@ -86,7 +90,8 @@ export function RecurringEventsCard({
 						<span>Next occurrence</span>
 						<strong>{featuredBlock.location_description}</strong>
 					</div>
-					{featuredBlock.location_url && (
+					{featuredBlock.location_url &&
+						featuredBlock.location_url !== primaryLocationUrl && (
 						<a
 							aria-label={`View details for ${event.title}`}
 							href={featuredBlock.location_url}
@@ -97,11 +102,11 @@ export function RecurringEventsCard({
 				</div>
 			)}
 
-			{event.location_url && event.location_description && (
+			{primaryLocationUrl && event.location_description && (
 				<a
 					aria-label={`${event.location_description}: ${event.title}`}
 					className={style.primaryLink}
-					href={event.location_url}
+					href={primaryLocationUrl}
 				>
 					{event.location_description}
 					<span aria-hidden="true">→</span>

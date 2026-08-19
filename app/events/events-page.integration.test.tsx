@@ -2,12 +2,11 @@ import { within } from "@testing-library/dom";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import { Calendar } from "./components/calendar/calendar";
 import { RecurringEventsCard } from "./components/event-cards/recurring-event-card";
 import EventsPage from "./events-page";
 import type { Event, EventBlock, RecurrenceRule } from "./types";
-
-const timeZone = "America/Los_Angeles";
 
 function createBlock(
 	overrides: Partial<EventBlock> & Pick<EventBlock, "starts_at" | "ends_at">,
@@ -19,7 +18,7 @@ function createBlock(
 		location_url: "https://events.example.com/details",
 		presenters: [],
 		slug: "event-occurrence",
-		timezone: timeZone,
+		timezone: SACRAMENTO_TIME_ZONE,
 		title: "Event occurrence",
 		...overrides,
 	};
@@ -98,6 +97,12 @@ describe("public events experience", () => {
 		render(
 			<Calendar events={[recurringEvent()]} referenceDate="2026-09-01" />,
 		);
+		const selectionStatus = document.getElementById(
+			"events-calendar-selection-status",
+		);
+		expect(selectionStatus).not.toBeNull();
+		expect(selectionStatus).toHaveAttribute("aria-live", "polite");
+		expect(selectionStatus).toHaveTextContent("");
 
 		expect(
 			screen.getByRole("button", { name: "September 2, 2026, 1 event" }),
@@ -111,12 +116,19 @@ describe("public events experience", () => {
 		expect(septemberSixteenth).toBeVisible();
 
 		await user.click(septemberSixteenth);
-		const selectedDayHeading = screen.getByRole("heading", {
+		expect(septemberSixteenth).toHaveFocus();
+		expect(septemberSixteenth).toHaveAttribute("aria-pressed", "true");
+		expect(septemberSixteenth).toHaveAttribute(
+			"aria-controls",
+			"events-calendar-day-details",
+		);
+		expect(selectionStatus).toHaveTextContent(
+			"Showing 1 event for September 16, 2026.",
+		);
+		const selectedDayDetails = screen.getByRole("region", {
 			name: "September 16, 2026",
 		});
-		const selectedDayDetails = selectedDayHeading.parentElement?.parentElement;
-		expect(selectedDayDetails).not.toBeNull();
-		const selectedDay = within(selectedDayDetails as HTMLElement);
+		const selectedDay = within(selectedDayDetails);
 		expect(selectedDay.getByText("Sacramento TypeScript Weekly")).toBeVisible();
 		expect(selectedDay.getByText("10:00 AM")).toBeVisible();
 		expect(
@@ -169,6 +181,27 @@ describe("public events experience", () => {
 		expect(screen.queryByText(/September 9/, { selector: "time" })).not.toBeInTheDocument();
 	});
 
+	it("renders one call to action when recurring-event links share a destination", () => {
+		render(
+			<ul>
+				<RecurringEventsCard
+					event={recurringEvent()}
+					referenceDate="2026-09-01"
+				/>
+			</ul>,
+		);
+
+		const links = screen.getAllByRole("link");
+		expect(links).toHaveLength(1);
+		expect(links[0]).toHaveAccessibleName(
+			"Online: Sacramento TypeScript Weekly",
+		);
+		expect(links[0]).toHaveAttribute(
+			"href",
+			"https://events.example.com/details",
+		);
+	});
+
 	it("reports when exclusions consume every remaining finite occurrence", () => {
 		const event = recurringEvent({
 			recurrence_rule: weeklyRule({
@@ -212,7 +245,7 @@ describe("public events experience", () => {
 			screen.getByRole("heading", { name: "Sacramento Design Summit" }),
 		).toBeVisible();
 
-		await user.click(filters.getByRole("radio", { name: "Online" }));
+		await user.click(filters.getByText("Online"));
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Showing 1 event for online.",
 		);
@@ -229,7 +262,7 @@ describe("public events experience", () => {
 			screen.queryByRole("button", { name: "September 5, 2026, 1 event" }),
 		).not.toBeInTheDocument();
 
-		await user.click(filters.getByRole("radio", { name: "In person" }));
+		await user.click(filters.getByText("In person"));
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Showing 1 event for in person.",
 		);

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import { getApprovedEvents } from "@/lib/events/queries";
 import { formatDateKey } from "./date-utils";
 import EventsPage from "./events-page";
@@ -15,7 +16,7 @@ export default async function EventsRoute() {
 
 	const currentSacramentoDate = formatDateKey(
 		new Date(),
-		"America/Los_Angeles",
+		SACRAMENTO_TIME_ZONE,
 	);
 	const events = await getApprovedEvents();
 

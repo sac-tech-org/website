@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitEvent } from "@/lib/events/actions";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import {
 	initialEventFormState,
 	type EventFormField,
@@ -87,6 +88,25 @@ const INITIAL_EVENT_DRAFT: EventDraft = {
 	title: "",
 };
 
+const EVENT_FORM_FIELD_ORDER: EventFormField[] = [
+	"title",
+	"description",
+	"startsAt",
+	"endsAt",
+	"recurring",
+	"recurrenceInterval",
+	"recurrenceFrequency",
+	"recurrenceWeekdays",
+	"recurrenceMonthlyPattern",
+	"recurrenceEndType",
+	"recurrenceEndDate",
+	"recurrenceCount",
+	"mode",
+	"locationName",
+	"locationAddress",
+	"eventUrl",
+];
+
 function getStartDateParts(value: string) {
 	const match = /^(\d{4})-(\d{2})-(\d{2})T/.exec(value);
 
@@ -154,10 +174,14 @@ export function EventForm() {
 		submitEvent,
 		initialEventFormState,
 	);
+	const formRef = useRef<HTMLFormElement>(null);
 	const weekdaysCustomized = useRef(false);
 	const [draft, setDraft] = useState(INITIAL_EVENT_DRAFT);
 	const [recurrence, setRecurrence] = useState(INITIAL_RECURRENCE);
-	const errors = state.errors;
+	const [dismissedFeedbackState, setDismissedFeedbackState] =
+		useState<EventFormState | null>(null);
+	const feedbackIsCurrent = dismissedFeedbackState !== state;
+	const errors = feedbackIsCurrent ? state.errors : undefined;
 	const startsAt = draft.startsAt;
 	const startDate = getStartDateParts(startsAt);
 	const startWeekday = startDate ? WEEKDAYS[startDate.weekday].label : null;
@@ -217,6 +241,12 @@ export function EventForm() {
 		});
 	}
 
+	function dismissFeedback() {
+		if (state.status !== "idle") {
+			setDismissedFeedbackState(state);
+		}
+	}
+
 	// All user-entered fields are controlled because React resets native form
 	// controls after any resolved action, including returned validation errors.
 	useEffect(() => {
@@ -234,18 +264,42 @@ export function EventForm() {
 			return;
 		}
 
-		// React's post-action native reset can mutate radio and checkbox DOM state
-		// after the action-state render. Clone both controlled drafts once the error
-		// arrives so React reapplies the user's selections from the source of truth.
-		setDraft((current) => ({ ...current }));
-		setRecurrence((current) => ({
-			...current,
-			weekdays: [...current.weekdays],
-		}));
+		// React resets the native form after the action-state render. Reapply the
+		// controlled drafts on the next frame so real browsers cannot leave radios
+		// or checkboxes at their initial defaults, then focus the first invalid field.
+		const animationFrame = requestAnimationFrame(() => {
+			setDraft((current) => ({ ...current }));
+			setRecurrence((current) => ({
+				...current,
+				weekdays: [...current.weekdays],
+			}));
+
+			const firstInvalidField = EVENT_FORM_FIELD_ORDER.find(
+				(field) => state.errors?.[field]?.length,
+			);
+			const firstInvalidControl = firstInvalidField
+				? formRef.current?.querySelector<HTMLElement>(
+						`[name="${firstInvalidField}"]`,
+					)
+				: null;
+
+			if (firstInvalidControl && !firstInvalidControl.matches(":disabled")) {
+				firstInvalidControl.focus();
+			}
+		});
+
+		return () => cancelAnimationFrame(animationFrame);
 	}, [state]);
 
 	return (
-		<form action={formAction} aria-busy={pending} className={style.form}>
+		<form
+			action={formAction}
+			aria-busy={pending}
+			className={style.form}
+			onChange={dismissFeedback}
+			onSubmit={dismissFeedback}
+			ref={formRef}
+		>
 			<div className={style.formHeading}>
 				<p className={style.stepLabel}>Event submission</p>
 				<h2>What should the community know?</h2>
@@ -318,7 +372,7 @@ export function EventForm() {
 			<fieldset className={style.fieldGroup} disabled={pending}>
 				<legend>When it happens</legend>
 				<p className={style.groupHint} id="time-zone-hint">
-					Enter both times in Pacific time (America/Los_Angeles). We apply
+					Enter both times in Pacific time ({SACRAMENTO_TIME_ZONE}). We apply
 					PST or PDT automatically for the event date.
 				</p>
 				<div className={style.twoColumns}>
@@ -572,8 +626,8 @@ export function EventForm() {
 						)}
 
 						<p className={style.timezoneNotice}>
-							<strong>Pacific time is fixed for the full series.</strong> We use
-							America/Los_Angeles and apply PST or PDT to each occurrence as
+							<strong>Pacific time is fixed for the full series.</strong> We use{" "}
+							{SACRAMENTO_TIME_ZONE} and apply PST or PDT to each occurrence as
 							needed.
 						</p>
 
@@ -873,7 +927,7 @@ export function EventForm() {
 				</div>
 			</fieldset>
 
-			{state.message && (
+			{feedbackIsCurrent && state.message && (
 				<p
 					aria-atomic="true"
 					className={

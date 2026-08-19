@@ -3,13 +3,12 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { z } from "zod";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import type { EventFormField } from "@/lib/events/state";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-export const SACRAMENTO_TIMEZONE = "America/Los_Angeles";
 
 const optionalTrimmedString = (maxLength: number) =>
 	z.preprocess(
@@ -193,7 +192,7 @@ function addFieldError(
 }
 
 function parseSacramentoDateTime(value: string) {
-	const parsed = dayjs.tz(value, "YYYY-MM-DDTHH:mm", SACRAMENTO_TIMEZONE);
+	const parsed = dayjs.tz(value, "YYYY-MM-DDTHH:mm", SACRAMENTO_TIME_ZONE);
 
 	if (!parsed.isValid() || parsed.format("YYYY-MM-DDTHH:mm") !== value) {
 		return null;
@@ -294,9 +293,9 @@ export function validateEventSubmission(
 
 	if (startsAt && parsedRecurrence?.success) {
 		const startDate = dayjs(startsAt)
-			.tz(SACRAMENTO_TIMEZONE)
+			.tz(SACRAMENTO_TIME_ZONE)
 			.format("YYYY-MM-DD");
-		const startWeekday = dayjs(startsAt).tz(SACRAMENTO_TIMEZONE).day();
+		const startWeekday = dayjs(startsAt).tz(SACRAMENTO_TIME_ZONE).day();
 
 		if (
 			parsedRecurrence.data.frequency === "week" &&

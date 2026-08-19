@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import style from "./auth-form.module.css";
@@ -9,45 +9,89 @@ const ACCOUNT_ROUTE = "/account";
 const MINIMUM_PASSWORD_LENGTH = 10;
 
 type AuthMode = "sign-in" | "sign-up";
+type AuthField = "email" | "name" | "password";
 
 interface AuthError {
 	code?: string;
 	message?: string;
 }
 
-function getAuthErrorMessage(error: AuthError, mode: AuthMode) {
+interface AuthIssue {
+	describedFields: AuthField[];
+	focusField: AuthField;
+	invalidFields: AuthField[];
+	message: string;
+}
+
+function getAuthIssue(error: AuthError, mode: AuthMode): AuthIssue {
 	switch (error.code) {
 		case "INVALID_EMAIL_OR_PASSWORD":
-			return "That email and password combination did not match.";
+			return {
+				describedFields: ["email", "password"],
+				focusField: "email",
+				invalidFields: ["email", "password"],
+				message: "That email and password combination did not match.",
+			};
 		case "PASSWORD_TOO_SHORT":
-			return `Your password must be at least ${MINIMUM_PASSWORD_LENGTH} characters.`;
+			return {
+				describedFields: ["password"],
+				focusField: "password",
+				invalidFields: ["password"],
+				message: `Your password must be at least ${MINIMUM_PASSWORD_LENGTH} characters.`,
+			};
 		case "USER_ALREADY_EXISTS":
 		case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
-			return "An account already exists for that email. Try signing in instead.";
+			return {
+				describedFields: ["email"],
+				focusField: "email",
+				invalidFields: ["email"],
+				message:
+					"An account already exists for that email. Try signing in instead.",
+			};
 		default:
-			return (
-				error.message ??
-				(mode === "sign-in"
-					? "We could not sign you in. Please try again."
-					: "We could not create your account. Please try again.")
-			);
+			return {
+				describedFields: ["email"],
+				focusField: "email",
+				invalidFields: [],
+				message:
+					error.message ??
+					(mode === "sign-in"
+						? "We could not sign you in. Please try again."
+						: "We could not create your account. Please try again."),
+			};
 	}
 }
 
 export function AuthForm() {
 	const router = useRouter();
 	const [mode, setMode] = useState<AuthMode>("sign-in");
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [issue, setIssue] = useState<AuthIssue | null>(null);
 	const [isPending, setIsPending] = useState(false);
+	const emailRef = useRef<HTMLInputElement>(null);
+	const nameRef = useRef<HTMLInputElement>(null);
+	const passwordRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (!issue || isPending) {
+			return;
+		}
+
+		const focusTargets: Record<AuthField, HTMLInputElement | null> = {
+			email: emailRef.current,
+			name: nameRef.current,
+			password: passwordRef.current,
+		};
+		focusTargets[issue.focusField]?.focus();
+	}, [isPending, issue]);
 
 	function selectMode(nextMode: AuthMode) {
 		setMode(nextMode);
-		setErrorMessage(null);
+		setIssue(null);
 	}
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		setErrorMessage(null);
+		setIssue(null);
 
 		const formData = new FormData(event.currentTarget);
 		const email = String(formData.get("email") ?? "").trim();
@@ -55,14 +99,22 @@ export function AuthForm() {
 		const password = String(formData.get("password") ?? "");
 
 		if (mode === "sign-up" && !name) {
-			setErrorMessage("Enter your name to create an account.");
+			setIssue({
+				describedFields: ["name"],
+				focusField: "name",
+				invalidFields: ["name"],
+				message: "Enter your name to create an account.",
+			});
 			return;
 		}
 
 		if (password.length < MINIMUM_PASSWORD_LENGTH) {
-			setErrorMessage(
-				`Your password must be at least ${MINIMUM_PASSWORD_LENGTH} characters.`,
-			);
+			setIssue({
+				describedFields: ["password"],
+				focusField: "password",
+				invalidFields: ["password"],
+				message: `Your password must be at least ${MINIMUM_PASSWORD_LENGTH} characters.`,
+			});
 			return;
 		}
 
@@ -79,7 +131,7 @@ export function AuthForm() {
 					: await authClient.signIn.email({ email, password });
 
 			if (result.error) {
-				setErrorMessage(getAuthErrorMessage(result.error, mode));
+				setIssue(getAuthIssue(result.error, mode));
 				return;
 			}
 
@@ -87,9 +139,13 @@ export function AuthForm() {
 			router.replace(ACCOUNT_ROUTE);
 			router.refresh();
 		} catch {
-			setErrorMessage(
-				"We could not reach the account service. Check your connection and try again.",
-			);
+			setIssue({
+				describedFields: ["email"],
+				focusField: "email",
+				invalidFields: [],
+				message:
+					"We could not reach the account service. Check your connection and try again.",
+			});
 		} finally {
 			setIsPending(false);
 		}
@@ -133,15 +189,29 @@ export function AuthForm() {
 				</p>
 			</div>
 
-			<form aria-busy={isPending} className={style.form} onSubmit={handleSubmit}>
+			<form
+				aria-busy={isPending}
+				className={style.form}
+				onChange={() => setIssue(null)}
+				onSubmit={handleSubmit}
+			>
 				{isCreatingAccount && (
 					<div className={style.field}>
 						<label htmlFor="auth-name">Name</label>
 						<input
+							aria-describedby={
+								issue?.describedFields.includes("name")
+									? "auth-error"
+									: undefined
+							}
+							aria-invalid={
+								issue?.invalidFields.includes("name") || undefined
+							}
 							autoComplete="name"
 							disabled={isPending}
 							id="auth-name"
 							name="name"
+							ref={nameRef}
 							required
 							type="text"
 						/>
@@ -151,12 +221,21 @@ export function AuthForm() {
 				<div className={style.field}>
 					<label htmlFor="auth-email">Email address</label>
 					<input
+						aria-describedby={
+							issue?.describedFields.includes("email")
+								? "auth-error"
+								: undefined
+						}
+						aria-invalid={
+							issue?.invalidFields.includes("email") || undefined
+						}
 						autoCapitalize="none"
 						autoComplete="email"
 						disabled={isPending}
 						id="auth-email"
 						inputMode="email"
 						name="email"
+						ref={emailRef}
 						required
 						spellCheck={false}
 						type="email"
@@ -166,7 +245,14 @@ export function AuthForm() {
 				<div className={style.field}>
 					<label htmlFor="auth-password">Password</label>
 					<input
-						aria-describedby="auth-password-hint"
+						aria-describedby={
+							issue?.describedFields.includes("password")
+								? "auth-password-hint auth-error"
+								: "auth-password-hint"
+						}
+						aria-invalid={
+							issue?.invalidFields.includes("password") || undefined
+						}
 						autoComplete={
 							isCreatingAccount ? "new-password" : "current-password"
 						}
@@ -175,6 +261,7 @@ export function AuthForm() {
 						maxLength={128}
 						minLength={MINIMUM_PASSWORD_LENGTH}
 						name="password"
+						ref={passwordRef}
 						required
 						type="password"
 					/>
@@ -194,13 +281,12 @@ export function AuthForm() {
 					<span aria-hidden="true">→</span>
 				</button>
 
-				<div
-					aria-atomic="true"
-					aria-live="polite"
-					className={style.status}
-					role="status"
-				>
-					{errorMessage && <p>{errorMessage}</p>}
+				<div className={style.status}>
+					{issue && (
+						<p aria-atomic="true" id="auth-error" role="alert">
+							{issue.message}
+						</p>
+					)}
 				</div>
 			</form>
 		</div>

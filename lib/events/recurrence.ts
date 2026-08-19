@@ -1,6 +1,5 @@
 import type { RecurrenceRule } from "@/app/events/types";
-
-export const RECURRENCE_TIME_ZONE = "America/Los_Angeles";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 const dateKeyPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -11,7 +10,7 @@ const localDateTimeFormatter = new Intl.DateTimeFormat("en-US-u-ca-gregory", {
 	minute: "2-digit",
 	month: "2-digit",
 	second: "2-digit",
-	timeZone: RECURRENCE_TIME_ZONE,
+	timeZone: SACRAMENTO_TIME_ZONE,
 	year: "numeric",
 });
 

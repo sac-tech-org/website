@@ -10,6 +10,7 @@ import {
 	eventRecurrence,
 } from "@/db/schema";
 import type { RecurrenceRule } from "@/app/events/types";
+import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import { getCurrentSession, sessionIsAdmin } from "@/lib/session";
 import type {
 	CancellationFormState,
@@ -21,7 +22,6 @@ import {
 	getSacramentoDateKey,
 } from "@/lib/events/recurrence";
 import {
-	SACRAMENTO_TIMEZONE,
 	validateEventSubmission,
 	validateModeration,
 } from "@/lib/events/validation";
@@ -70,7 +70,7 @@ export async function submitEvent(
 					...eventValues,
 					status: "pending",
 					submittedBy: session.user.id,
-					timezone: SACRAMENTO_TIMEZONE,
+					timezone: SACRAMENTO_TIME_ZONE,
 				})
 				.returning({ id: event.id });
 

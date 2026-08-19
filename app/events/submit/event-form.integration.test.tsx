@@ -59,17 +59,23 @@ function eventEntries(recurrenceEntries: Array<[string, string]> = []) {
 async function fillRequiredEventFields(user: ReturnType<typeof userEvent.setup>) {
 	await user.type(screen.getByLabelText(/Event title/), TITLE);
 	await user.type(screen.getByLabelText(/Description/), DESCRIPTION);
-	fireEvent.change(screen.getByLabelText(/Starts/), {
-		target: { value: STARTS_AT },
-	});
-	fireEvent.change(screen.getByLabelText(/Ends/), {
-		target: { value: ENDS_AT },
-	});
+	await user.fill(screen.getByLabelText(/Starts/), STARTS_AT);
+	await user.fill(screen.getByLabelText(/Ends/), ENDS_AT);
 	await user.type(screen.getByLabelText("Venue or location name"), "Central Library");
 	await user.type(
 		screen.getByLabelText("Street address"),
 		"828 I Street, Sacramento, CA",
 	);
+}
+
+function getControlLabel(control: HTMLElement) {
+	const label = control.closest("label");
+
+	if (!label) {
+		throw new Error("Expected the form control to be wrapped in a label.");
+	}
+
+	return label;
 }
 
 async function enableRecurrence(user: ReturnType<typeof userEvent.setup>) {
@@ -146,14 +152,15 @@ describe("EventForm", () => {
 		expect(weekdayGroup).toBeVisible();
 		expect(tuesday).toBeChecked();
 
-		await user.click(tuesday);
+		await user.click(getControlLabel(tuesday));
 		expect(tuesday).toBeChecked();
-		await user.click(thursday);
+		await user.click(getControlLabel(thursday));
 		expect(thursday).toBeChecked();
 		await user.click(screen.getByRole("radio", { name: "On date" }));
-		fireEvent.change(screen.getByLabelText("Recurrence end date"), {
-			target: { value: "2099-08-19" },
-		});
+		await user.fill(
+			screen.getByLabelText("Recurrence end date"),
+			"2099-08-19",
+		);
 
 		await submitAndWaitForSuccess(user);
 
@@ -235,6 +242,7 @@ describe("EventForm", () => {
 		const user = userEvent.setup();
 		serverActions.submitEvent.mockResolvedValue({
 			errors: {
+				eventUrl: ["That registration link is unavailable."],
 				title: ["That title is already in use."],
 			},
 			message: "Check the highlighted fields and try again.",
@@ -256,7 +264,7 @@ describe("EventForm", () => {
 		await user.clear(count);
 		await user.type(count, "8");
 		await user.click(
-			screen.getByRole("radio", { name: /^Hybrid/ }),
+			getControlLabel(screen.getByRole("radio", { name: /^Hybrid/ })),
 		);
 		await user.type(
 			screen.getByLabelText("Event or registration link"),
@@ -268,9 +276,10 @@ describe("EventForm", () => {
 		);
 
 		const alert = await screen.findByRole("alert");
+		const title = screen.getByLabelText(/Event title/);
 		expect(alert).toHaveTextContent("Check the highlighted fields and try again.");
 		expect(screen.getByText("That title is already in use.")).toBeVisible();
-		expect(screen.getByLabelText(/Event title/)).toHaveValue(TITLE);
+		expect(title).toHaveValue(TITLE);
 		expect(screen.getByLabelText(/Description/)).toHaveValue(DESCRIPTION);
 		expect(screen.getByLabelText(/Starts/)).toHaveValue(STARTS_AT);
 		expect(screen.getByLabelText(/Ends/)).toHaveValue(ENDS_AT);
@@ -283,9 +292,11 @@ describe("EventForm", () => {
 		expect(screen.getByLabelText("Event or registration link")).toHaveValue(
 			"https://example.com/demo-night",
 		);
-		expect(
-			screen.getByRole("radio", { name: /^Hybrid/ }),
-		).toBeChecked();
+		await waitFor(() =>
+			expect(
+				screen.getByRole("radio", { name: /^Hybrid/ }),
+			).toBeChecked(),
+		);
 		expect(
 			screen.getByRole("checkbox", { name: /This event repeats/ }),
 		).toBeChecked();
@@ -296,9 +307,52 @@ describe("EventForm", () => {
 		);
 		expect(screen.getByRole("radio", { name: "After" })).toBeChecked();
 		expect(screen.getByLabelText("Number of occurrences")).toHaveValue(8);
-		expect(screen.getByLabelText(/Event title/)).toHaveAttribute(
-			"aria-invalid",
-			"true",
+		expect(title).toHaveAttribute("aria-invalid", "true");
+		expect(title).toHaveAccessibleDescription(
+			"Use the name attendees will recognize. That title is already in use.",
+		);
+		await waitFor(() => expect(title).toHaveFocus());
+
+		await user.type(title, " updated");
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(screen.queryByText("That title is already in use.")).not.toBeInTheDocument();
+		expect(title).not.toHaveAttribute("aria-invalid");
+	});
+
+	it("removes stale validation feedback while a retry is pending", async () => {
+		const user = userEvent.setup();
+		serverActions.submitEvent.mockResolvedValueOnce({
+			errors: {
+				title: ["That title is already in use."],
+			},
+			message: "Check the highlighted fields and try again.",
+			status: "error",
+		} satisfies EventFormState);
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+
+		await user.click(
+			screen.getByRole("button", { name: "Submit event for review" }),
+		);
+		await screen.findByRole("alert");
+
+		const retryResult = deferred<EventFormState>();
+		serverActions.submitEvent.mockReturnValueOnce(retryResult.promise);
+		await user.click(
+			screen.getByRole("button", { name: "Submit event for review" }),
+		);
+
+		const form = screen.getByLabelText(/Event title/).closest("form");
+		await waitFor(() => expect(form).toHaveAttribute("aria-busy", "true"));
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(screen.queryByText("That title is already in use.")).not.toBeInTheDocument();
+
+		await act(async () => {
+			retryResult.resolve(successState);
+			await retryResult.promise;
+		});
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Event submitted for review.",
 		);
 	});
 
@@ -345,7 +399,9 @@ describe("EventForm", () => {
 		await fillRequiredEventFields(user);
 		await enableRecurrence(user);
 		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "day");
-		await user.click(screen.getByRole("radio", { name: /^Hybrid/ }));
+		await user.click(
+			getControlLabel(screen.getByRole("radio", { name: /^Hybrid/ })),
+		);
 		await user.type(
 			screen.getByLabelText("Event or registration link"),
 			"https://example.com/demo-night",
@@ -374,5 +430,8 @@ describe("EventForm", () => {
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Event submitted for review.",
 		);
+
+		await user.type(screen.getByLabelText(/Event title/), "Another meetup");
+		expect(screen.queryByRole("status")).not.toBeInTheDocument();
 	});
 });

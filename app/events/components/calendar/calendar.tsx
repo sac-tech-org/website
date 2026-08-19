@@ -151,6 +151,17 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 	const selectedEntries = selectedDate
 		? (entriesByDate.get(selectedDate) ?? [])
 		: [];
+	const selectedDateLabel = selectedDate
+		? dayjs(selectedDate).format("MMMM D, YYYY")
+		: null;
+	const selectedDayAnnouncement = selectedDateLabel
+		? `Showing ${selectedEntries.length} ${selectedEntries.length === 1 ? "event" : "events"} for ${selectedDateLabel}.`
+		: "";
+
+	function moveCalendarWindow(monthOffset: number) {
+		setSelectedDate(null);
+		setStartMonth((month) => month.add(monthOffset, "month"));
+	}
 
 	return (
 		<section
@@ -162,7 +173,7 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 				<button
 					aria-label="Show previous month"
 					className={style.arrowButton}
-					onClick={() => setStartMonth((month) => month.subtract(1, "month"))}
+					onClick={() => moveCalendarWindow(-1)}
 					type="button"
 				>
 					<span aria-hidden="true">‹</span>
@@ -186,12 +197,21 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 				<button
 					aria-label="Show next month"
 					className={style.arrowButton}
-					onClick={() => setStartMonth((month) => month.add(1, "month"))}
+					onClick={() => moveCalendarWindow(1)}
 					type="button"
 				>
 					<span aria-hidden="true">›</span>
 				</button>
 			</header>
+
+			<p
+				aria-atomic="true"
+				aria-live="polite"
+				className={style.visuallyHidden}
+				id="events-calendar-selection-status"
+			>
+				{selectedDayAnnouncement}
+			</p>
 
 			<div className={style.months}>
 				{months.map((month) => (
@@ -227,6 +247,11 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 											<td key={key}>
 												{count > 0 ? (
 													<button
+														aria-controls={
+															selectedDate === key
+																? "events-calendar-day-details"
+																: undefined
+														}
 														aria-label={`${date.format("MMMM D, YYYY")}, ${count} ${count === 1 ? "event" : "events"}`}
 														aria-pressed={selectedDate === key}
 														className={style.eventDay}
@@ -256,11 +281,18 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 				</p>
 			)}
 
-			{selectedDate && selectedEntries.length > 0 && (
-				<div aria-live="polite" className={style.dayDetails}>
+			{selectedDate && selectedDateLabel && selectedEntries.length > 0 && (
+				<div
+					aria-labelledby="events-calendar-day-details-title"
+					className={style.dayDetails}
+					id="events-calendar-day-details"
+					role="region"
+				>
 					<div>
 						<p className={style.detailsEyebrow}>On this day</p>
-						<h3>{dayjs(selectedDate).format("MMMM D, YYYY")}</h3>
+						<h3 id="events-calendar-day-details-title">
+							{selectedDateLabel}
+						</h3>
 					</div>
 					<ul role="list">
 						{selectedEntries.map(({ block, event }) => (
