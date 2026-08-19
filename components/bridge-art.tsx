@@ -1,3 +1,5 @@
+import Image from "next/image";
+import bridgeArt from "../bridge.svg";
 import style from "./bridge-art.module.css";
 
 interface BridgeArtProps {
@@ -11,23 +13,14 @@ export function BridgeArt({ compact = false, className = "" }: BridgeArtProps) {
 			aria-hidden="true"
 			className={`${style.art} ${compact ? style.compact : ""} ${className}`}
 		>
-			<span className={style.sun} />
-			<div className={style.bridge}>
-				<span className={style.span} />
-				<span className={`${style.tower} ${style.towerLeft}`}>
-					<span className={style.windows} />
-					<span className={style.brace} />
-				</span>
-				<span className={`${style.tower} ${style.towerRight}`}>
-					<span className={style.windows} />
-					<span className={style.brace} />
-				</span>
-			</div>
-			<div className={style.water}>
-				<span />
-				<span />
-				<span />
-			</div>
+			<Image
+				alt=""
+				className={style.image}
+				height={465}
+				loading="eager"
+				src={bridgeArt}
+				width={893}
+			/>
 		</div>
 	);
 }

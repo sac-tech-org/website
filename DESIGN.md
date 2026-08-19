@@ -88,8 +88,8 @@ Rules:
 
 ### Bridge illustration
 
-- Built from original CSS geometry, not copied artwork.
-- Uses two towers, one horizontal truss, and three restrained river lines.
+- Rendered from the shared `bridge.svg` artwork for consistent page heroes.
+- Uses two towers, a horizontal truss, and layered river lines.
 - Decorative instances are hidden from assistive technology.
 - Never place the motif behind body copy.
 

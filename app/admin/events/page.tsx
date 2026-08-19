@@ -173,9 +173,6 @@ export default async function AdminEventsPage() {
 
 				{pendingEvents.length === 0 ? (
 					<div className={style.emptyState}>
-						<span aria-hidden="true" className={style.emptyMark}>
-							✓
-						</span>
 						<div>
 							<h3>The queue is clear.</h3>
 							<p>New community submissions will appear here for review.</p>

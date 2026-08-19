@@ -161,10 +161,6 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						aria-labelledby="schedule-update-title"
 						className={style.emptyState}
 					>
-						<span aria-hidden="true" className={style.emptyMark}>
-							<span />
-							<span />
-						</span>
 						<div>
 							<p className={style.emptyEyebrow}>Schedule update</p>
 							<h2 id="schedule-update-title">

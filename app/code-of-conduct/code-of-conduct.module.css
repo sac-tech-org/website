@@ -82,19 +82,6 @@
 	position: relative;
 }
 
-.summary::before {
-	background:
-		linear-gradient(55deg, transparent 42%, var(--color-navy) 43% 49%, transparent 50%),
-		linear-gradient(-55deg, transparent 42%, var(--color-navy) 43% 49%, transparent 50%),
-		var(--color-bridge);
-	content: "";
-	height: 3.5rem;
-	position: absolute;
-	right: clamp(1rem, 3vw, 2rem);
-	top: -0.75rem;
-	width: 1.7rem;
-}
-
 .summaryLabel,
 .policyEyebrow {
 	color: var(--color-bridge-deep);

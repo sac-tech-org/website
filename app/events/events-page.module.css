@@ -270,48 +270,6 @@
 	padding: clamp(1.5rem, 4vw, 3rem);
 }
 
-.emptyMark {
-	background: var(--color-navy);
-	display: grid;
-	height: clamp(5rem, 10vw, 7.5rem);
-	place-items: center;
-	position: relative;
-	width: clamp(3.75rem, 8vw, 5.5rem);
-}
-
-.emptyMark::before,
-.emptyMark::after {
-	background: var(--color-bridge);
-	content: "";
-	height: 0.35rem;
-	position: absolute;
-	top: -0.2rem;
-	width: 28%;
-}
-
-.emptyMark::before {
-	left: -5%;
-}
-
-.emptyMark::after {
-	right: -5%;
-}
-
-.emptyMark span {
-	background: var(--color-bridge);
-	height: 0.25rem;
-	position: absolute;
-	width: 72%;
-}
-
-.emptyMark span:first-child {
-	transform: rotate(48deg);
-}
-
-.emptyMark span:last-child {
-	transform: rotate(-48deg);
-}
-
 .emptyState h2 {
 	font-size: clamp(1.65rem, 3vw, 2.5rem);
 	margin: 0;

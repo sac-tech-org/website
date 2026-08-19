@@ -7,11 +7,7 @@ export function SiteHeader() {
 		<header className={style.header}>
 			<div className={style.inner}>
 				<Link aria-label="SacTech home" className={style.brand} href="/">
-					<span>SAC</span>
-					<span aria-hidden="true" className={style.mark}>
-						<span />
-					</span>
-					<span>TECH</span>
+					<span>SACTECH</span>
 				</Link>
 				<SiteNav />
 				<Link className={style.joinLink} href="/#join">

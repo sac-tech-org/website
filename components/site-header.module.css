@@ -31,46 +31,6 @@
 	white-space: nowrap;
 }
 
-.mark {
-	background:
-		linear-gradient(55deg, transparent 42%, var(--color-navy) 43% 49%, transparent 50%),
-		linear-gradient(-55deg, transparent 42%, var(--color-navy) 43% 49%, transparent 50%),
-		var(--color-bridge);
-	border: 2px solid var(--color-bridge-deep);
-	display: inline-block;
-	height: 2.15rem;
-	position: relative;
-	width: 1.15rem;
-}
-
-.mark::before,
-.mark::after {
-	background: var(--color-bridge);
-	content: "";
-	height: 0.45rem;
-	position: absolute;
-	top: -0.35rem;
-	width: 0.28rem;
-}
-
-.mark::before {
-	left: -0.12rem;
-}
-
-.mark::after {
-	right: -0.12rem;
-}
-
-.mark span {
-	border-bottom: 2px solid var(--color-navy);
-	border-top: 2px solid var(--color-navy);
-	height: 0.35rem;
-	left: 0.15rem;
-	position: absolute;
-	top: 0.38rem;
-	width: 0.55rem;
-}
-
 .nav {
 	justify-self: end;
 }
