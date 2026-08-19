@@ -224,7 +224,7 @@ describe("public events experience", () => {
 		const filters = within(filterGroup);
 		expect(
 			screen.getByRole("link", { name: "Submit an event" }),
-		).toHaveAttribute("href", "/events/submit");
+		).toHaveAttribute("href", "/account");
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Showing 2 events for all events.",
 		);
