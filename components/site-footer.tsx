@@ -24,7 +24,13 @@ export function SiteFooter() {
 				</div>
 				<div className={style.inner}>
 					<div>
-						<p className={style.wordmark}>SACTECH</p>
+						<Image
+							alt="SacTech"
+							className={style.logo}
+							height={80}
+							src="/sactech_sticker.png"
+							width={80}
+						/>
 						<p className={style.tagline}>Sacramento tech, built together.</p>
 					</div>
 					<nav aria-label="Footer" className={style.nav}>
