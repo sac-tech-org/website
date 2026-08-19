@@ -259,7 +259,11 @@
 
 .join {
 	background:
-		linear-gradient(90deg, transparent 0 47%, rgb(5 99 106 / 24%) 47% 100%),
+		linear-gradient(
+			90deg,
+			transparent 0 calc(50% + var(--site-gutter)),
+			rgb(5 99 106 / 24%) calc(50% + var(--site-gutter)) 100%
+		),
 		var(--color-river-deep);
 	color: var(--color-cream);
 	padding: var(--section-space) 0;
@@ -272,8 +276,16 @@
 	grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.8fr);
 }
 
+.joinInner > * {
+	min-width: 0;
+}
+
+.joinInner > div {
+	max-width: 34rem;
+}
+
 .join h2 {
-	font-size: clamp(2.3rem, 5vw, 4.25rem);
+	font-size: clamp(2.3rem, 5vw, 4rem);
 }
 
 .joinInner > div > p:last-child {
@@ -281,11 +293,19 @@
 }
 
 @media (max-width: 850px) {
+	.join {
+		background: var(--color-river-deep);
+	}
+
 	.heroInner,
 	.mission .sectionInner,
 	.eventsPreview .sectionInner,
 	.joinInner {
 		grid-template-columns: 1fr;
+	}
+
+	.joinInner {
+		gap: 2.5rem;
 	}
 
 	.heroArt {
