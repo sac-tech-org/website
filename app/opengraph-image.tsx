@@ -9,17 +9,20 @@ export const size = {
 };
 export const contentType = "image/png";
 
-const footerImages = join(process.cwd(), "public", "images", "footer");
+const publicImages = join(process.cwd(), "public", "images");
+const footerImages = join(publicImages, "footer");
 
-const [cityData, flowerData, bridgeData] = await Promise.all([
+const [cityData, flowerData, bridgeData, stickerData] = await Promise.all([
 	readFile(join(footerImages, "city-outline.svg"), "base64"),
 	readFile(join(footerImages, "flower.svg"), "base64"),
 	readFile(join(footerImages, "bridge-part.svg"), "base64"),
+	readFile(join(publicImages, "opengraph", "sactech-sticker.png"), "base64"),
 ]);
 
 const citySrc = `data:image/svg+xml;base64,${cityData}`;
 const flowerSrc = `data:image/svg+xml;base64,${flowerData}`;
 const bridgeSrc = `data:image/svg+xml;base64,${bridgeData}`;
+const stickerSrc = `data:image/png;base64,${stickerData}`;
 const bridgeTiles = Array.from({ length: 9 });
 
 export default function OpenGraphImage() {
@@ -90,19 +93,13 @@ export default function OpenGraphImage() {
 					width: 560,
 				}}
 			>
-				<div
-					style={{
-						display: "flex",
-						fontFamily: "sans-serif",
-						fontSize: 120,
-						fontWeight: 900,
-						letterSpacing: -3,
-						lineHeight: 1,
-						WebkitTextStroke: "3px #fff5e5",
-					}}
-				>
-					SacTech
-				</div>
+				<img
+					alt=""
+					height={480}
+					src={stickerSrc}
+					style={{ height: 480, width: 480 }}
+					width={480}
+				/>
 			</div>
 
 			<div
