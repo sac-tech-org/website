@@ -7,7 +7,7 @@ export function SiteFooter() {
 			<div aria-hidden="true" className={style.truss} />
 			<div className={style.inner}>
 				<div>
-					<p className={style.wordmark}>SAC TECH</p>
+					<p className={style.wordmark}>SACTECH</p>
 					<p className={style.tagline}>Sacramento tech, built together.</p>
 				</div>
 				<nav aria-label="Footer" className={style.nav}>

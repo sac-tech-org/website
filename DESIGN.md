@@ -81,7 +81,7 @@ Rules:
 ### Header
 
 - Cream surface with a gold bottom rule.
-- Wordmark is always visibly spelled **SAC TECH**; bridge geometry may accompany it but must not make the name ambiguous.
+- Wordmark is always visibly spelled **SACTECH**.
 - Primary navigation: Community, Events, Code of Conduct.
 - “Join the community” is the single persistent header action.
 - The current route is shown with both weight and a gold underline, plus `aria-current="page"`.
