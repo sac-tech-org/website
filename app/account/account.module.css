@@ -67,9 +67,20 @@
 	color: var(--color-navy-deep);
 }
 
-.secondaryAction {
+.accountActions .secondaryAction {
 	background: transparent;
+	border-color: var(--color-cream);
+	border-radius: 0;
 	color: var(--color-cream);
+	font-weight: 800;
+	justify-content: center;
+	min-height: 3rem;
+}
+
+.accountActions .secondaryAction:hover:not(:disabled) {
+	background: var(--color-cream);
+	border-color: var(--color-cream);
+	color: var(--color-navy);
 }
 
 .accountActions button {

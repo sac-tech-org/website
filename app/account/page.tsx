@@ -212,7 +212,7 @@ export default async function AccountPage() {
 							Review events
 						</Link>
 					)}
-					<SignOutButton />
+					<SignOutButton className={style.secondaryAction} />
 				</div>
 			</section>
 
