@@ -185,7 +185,7 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 							review the event before it appears publicly.
 						</p>
 					</div>
-					<Link className={style.submitLink} href="/events/submit">
+					<Link className={style.submitLink} href="/account">
 						Submit an event <span aria-hidden="true">→</span>
 					</Link>
 				</section>
