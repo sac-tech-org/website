@@ -118,6 +118,7 @@
 .sectionHeader h2,
 .listHeading,
 .emptyState h2,
+.submitCallout h2,
 .communityCallout h2 {
 	font-family: var(--font-display);
 	letter-spacing: -0.045em;
@@ -323,6 +324,50 @@
 	max-width: 62ch;
 }
 
+.submitCallout {
+	align-items: center;
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-left: 0.45rem solid var(--color-bridge);
+	display: grid;
+	gap: 2rem;
+	grid-template-columns: minmax(0, 1fr) auto;
+	padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.submitCallout .calloutEyebrow {
+	color: var(--color-bridge-deep);
+}
+
+.submitCallout h2 {
+	font-size: clamp(1.65rem, 3vw, 2.5rem);
+	margin: 0;
+}
+
+.submitCallout p:last-child {
+	color: var(--color-ink-muted);
+	margin: 0.8rem 0 0;
+	max-width: 58ch;
+}
+
+.submitLink {
+	align-items: center;
+	background: var(--color-navy);
+	color: var(--color-paper);
+	display: inline-flex;
+	font-weight: 850;
+	gap: 0.65rem;
+	justify-content: center;
+	min-height: 3rem;
+	padding: 0.7rem 1.1rem;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.submitLink:hover {
+	background: var(--color-river);
+}
+
 .communityCallout {
 	align-items: center;
 	background: var(--color-navy);
@@ -413,6 +458,7 @@
 @media (max-width: 48rem) {
 	.heroInner,
 	.sectionHeader,
+	.submitCallout,
 	.communityCallout {
 		grid-template-columns: 1fr;
 	}

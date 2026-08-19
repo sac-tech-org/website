@@ -17,6 +17,11 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [

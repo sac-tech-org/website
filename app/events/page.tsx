@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { getApprovedEvents } from "@/lib/events/queries";
 import { formatDateKey } from "./date-utils";
 import EventsPage from "./events-page";
 
@@ -16,6 +17,7 @@ export default async function EventsRoute() {
 		new Date(),
 		"America/Los_Angeles",
 	);
+	const events = await getApprovedEvents();
 
-	return <EventsPage referenceDate={currentSacramentoDate} />;
+	return <EventsPage events={events} referenceDate={currentSacramentoDate} />;
 }

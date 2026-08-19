@@ -6,12 +6,13 @@ import { BridgeArt } from "../../components/bridge-art";
 import { Calendar } from "./components/calendar/calendar";
 import { NonRecurringEventsCard } from "./components/event-cards/non-recurring-event-card";
 import { RecurringEventsCard } from "./components/event-cards/recurring-event-card";
-import { events } from "./constants";
+import type { Event } from "./types";
 import style from "./events-page.module.css";
 
 type EventType = "all" | "online" | "in-person";
 
 interface EventsPageProps {
+	events: Event[];
 	referenceDate: string;
 }
 
@@ -21,7 +22,7 @@ const eventFilters: Array<{ label: string; value: EventType }> = [
 	{ label: "In person", value: "in-person" },
 ];
 
-export default function EventsPage({ referenceDate }: EventsPageProps) {
+export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 	const [eventTypesToShow, setEventTypesToShow] =
 		useState<EventType>("all");
 
@@ -35,7 +36,7 @@ export default function EventsPage({ referenceDate }: EventsPageProps) {
 		}
 
 		return events;
-	}, [eventTypesToShow]);
+	}, [events, eventTypesToShow]);
 
 	const recurringEvents = filteredEvents.filter((event) => event.is_recurring);
 	const specialEvents = filteredEvents.filter((event) => !event.is_recurring);
@@ -113,6 +114,20 @@ export default function EventsPage({ referenceDate }: EventsPageProps) {
 						key={eventTypesToShow}
 						referenceDate={referenceDate}
 					/>
+				</section>
+
+				<section className={style.submitCallout}>
+					<div>
+						<p className={style.calloutEyebrow}>Add to the calendar</p>
+						<h2>Hosting something for Sacramento tech?</h2>
+						<p>
+							Create an account and send the details to SacTech. An admin
+							will review the event before it appears publicly.
+						</p>
+					</div>
+					<Link className={style.submitLink} href="/events/submit">
+						Submit an event <span aria-hidden="true">→</span>
+					</Link>
 				</section>
 
 				{recurringEvents.length > 0 && (

@@ -8,6 +8,11 @@ const links = [
 	{ href: "/#community", label: "Community", path: "/" },
 	{ href: "/events", label: "Events", path: "/events" },
 	{
+		href: "/events/submit",
+		label: "Submit an event",
+		path: "/events/submit",
+	},
+	{
 		href: "/code-of-conduct",
 		label: "Code of Conduct",
 		path: "/code-of-conduct",
