@@ -37,7 +37,7 @@ describe("Netlify Database migrations", () => {
 		await database.stop();
 	});
 
-	it("creates the Better Auth, event, and recurrence tables", async () => {
+	it("creates the Better Auth, event, recurrence, and cancellation tables", async () => {
 		const result = await database.query<{ table_name: string }>(
 			`SELECT table_name
 			 FROM information_schema.tables
@@ -49,12 +49,41 @@ describe("Netlify Database migrations", () => {
 			expect.arrayContaining([
 				"account",
 				"event",
+				"event_occurrence_cancellation",
 				"event_recurrence",
 				"session",
 				"user",
 				"verification",
 			]),
 		);
+	});
+
+	it("adds event-series cancellation columns", async () => {
+		const result = await database.query<{
+			column_name: string;
+			data_type: string;
+			is_nullable: string;
+		}>(`
+			SELECT column_name, data_type, is_nullable
+			FROM information_schema.columns
+			WHERE table_schema = 'public'
+				AND table_name = 'event'
+				AND column_name IN ('canceled_at', 'canceled_by')
+			ORDER BY column_name
+		`);
+
+		expect(result.rows).toEqual([
+			{
+				column_name: "canceled_at",
+				data_type: "timestamp with time zone",
+				is_nullable: "YES",
+			},
+			{
+				column_name: "canceled_by",
+				data_type: "text",
+				is_nullable: "YES",
+			},
+		]);
 	});
 
 	it("defaults new events to pending", async () => {
@@ -294,5 +323,37 @@ describe("Netlify Database migrations", () => {
 		}
 
 		await database.exec(`DELETE FROM "event" WHERE id = '${eventId}'`);
+	});
+
+	it("stores one cancellation per event occurrence and cascades on event deletion", async () => {
+		const eventId = "10000000-0000-4000-8000-000000000003";
+		await insertEvent(eventId, "Occurrence Cancellation Test");
+		await database.exec(`
+			INSERT INTO "event_occurrence_cancellation" (
+				event_id,
+				occurrence_date
+			)
+			VALUES ('${eventId}', '2026-09-08')
+		`);
+
+		await expect(
+			database.exec(`
+				INSERT INTO "event_occurrence_cancellation" (
+					event_id,
+					occurrence_date
+				)
+				VALUES ('${eventId}', '2026-09-08')
+			`),
+		).rejects.toThrow();
+
+		await database.exec(`DELETE FROM "event" WHERE id = '${eventId}'`);
+
+		const remaining = await database.query<{ count: number }>(`
+			SELECT COUNT(*)::integer AS count
+			FROM "event_occurrence_cancellation"
+			WHERE event_id = '${eventId}'
+		`);
+
+		expect(remaining.rows).toEqual([{ count: 0 }]);
 	});
 });

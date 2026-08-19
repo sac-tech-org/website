@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { RecurrenceRule } from "@/app/events/types";
 import {
+	getNextFutureOccurrence,
 	getNextOccurrence,
 	getOccurrenceEnd,
 	getOccurrencesInRange,
+	getSacramentoDateKey,
 } from "@/lib/events/recurrence";
 
 function recurrenceRule(
@@ -12,6 +14,7 @@ function recurrenceRule(
 	return {
 		endDate: null,
 		endType: "never",
+		excludedDates: [],
 		frequency: "day",
 		interval: 1,
 		monthlyPattern: null,
@@ -25,7 +28,32 @@ function isoDates(dates: Date[]) {
 	return dates.map((date) => date.toISOString());
 }
 
+describe("getSacramentoDateKey", () => {
+	it("uses the Sacramento date near a UTC day boundary", () => {
+		expect(getSacramentoDateKey(new Date("2026-01-01T07:30:00.000Z"))).toBe(
+			"2025-12-31",
+		);
+	});
+});
+
 describe("getOccurrencesInRange", () => {
+	it("omits excluded dates without extending an occurrence-count series", () => {
+		const occurrences = getOccurrencesInRange(
+			new Date("2026-01-01T18:00:00.000Z"),
+			recurrenceRule({
+				endType: "after_occurrences",
+				excludedDates: ["2026-01-02"],
+				occurrenceCount: 3,
+			}),
+			"2026-01-01",
+			"2026-01-10",
+		);
+
+		expect(isoDates(occurrences)).toEqual([
+			"2026-01-01T18:00:00.000Z",
+			"2026-01-03T18:00:00.000Z",
+		]);
+	});
 	it("preserves a daily wall-clock start across the PST to PDT change", () => {
 		const occurrences = getOccurrencesInRange(
 			new Date("2026-03-07T18:00:00.000Z"),
@@ -233,6 +261,16 @@ describe("getOccurrencesInRange", () => {
 });
 
 describe("getNextOccurrence", () => {
+	it("skips a canceled occurrence on the reference date", () => {
+		const occurrence = getNextOccurrence(
+			new Date("2026-01-01T18:00:00.000Z"),
+			recurrenceRule({ excludedDates: ["2026-01-08"] }),
+			"2026-01-08",
+		);
+
+		expect(occurrence?.toISOString()).toBe("2026-01-09T18:00:00.000Z");
+	});
+
 	it("returns an occurrence on the reference date", () => {
 		const occurrence = getNextOccurrence(
 			new Date("2026-01-01T18:00:00.000Z"),
@@ -264,6 +302,28 @@ describe("getNextOccurrence", () => {
 		);
 
 		expect(occurrence).toBeNull();
+	});
+});
+
+describe("getNextFutureOccurrence", () => {
+	it("keeps a later occurrence on the reference day", () => {
+		const occurrence = getNextFutureOccurrence(
+			new Date("2026-08-19T18:00:00.000Z"),
+			recurrenceRule(),
+			new Date("2026-08-19T17:59:00.000Z"),
+		);
+
+		expect(occurrence?.toISOString()).toBe("2026-08-19T18:00:00.000Z");
+	});
+
+	it("skips an occurrence that has already started today", () => {
+		const occurrence = getNextFutureOccurrence(
+			new Date("2026-08-19T18:00:00.000Z"),
+			recurrenceRule(),
+			new Date("2026-08-19T18:00:00.000Z"),
+		);
+
+		expect(occurrence?.toISOString()).toBe("2026-08-20T18:00:00.000Z");
 	});
 });
 

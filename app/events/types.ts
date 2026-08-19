@@ -38,6 +38,7 @@ export interface RecurrenceRule {
 	endType: "never" | "on_date" | "after_occurrences";
 	endDate: string | null;
 	occurrenceCount: number | null;
+	excludedDates: string[];
 }
 
 export interface Event {

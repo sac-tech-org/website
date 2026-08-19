@@ -123,6 +123,12 @@ A recurring event has one `event_recurrence` row whose primary key is the parent
 
 Event date/time input and recurrence calculations use the fixed IANA timezone `America/Los_Angeles`—Pacific time, switching between PST and PDT automatically. The form intentionally has no timezone picker. `end_date` is a calendar date in that same timezone, while event start and end instants remain timezone-aware timestamps.
 
+### Event cancellations
+
+Event owners can cancel without another moderation decision. Setting `event.canceled_at` cancels the one-time event or the entire recurring series; `canceled_by` records the owner who performed the cancellation when that account still exists. Cancellation does not rewrite the approval status, so the moderation history remains intact.
+
+A single occurrence of a recurring event is canceled by inserting its Pacific calendar date into `event_occurrence_cancellation`. The `(event_id, occurrence_date)` pair is unique, preventing duplicate exceptions, and deleting the parent event removes all of its occurrence cancellations. `occurrence_date` is interpreted in `America/Los_Angeles`, matching recurrence generation and avoiding UTC date shifts near midnight.
+
 After changing either schema, generate a SQL migration:
 
 ```sh

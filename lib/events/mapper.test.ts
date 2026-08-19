@@ -5,6 +5,7 @@ import {
 } from "@/lib/events/mapper";
 
 const baseEvent: ApprovedEventRecord = {
+	canceledOccurrenceDates: [],
 	description: "A community event.",
 	endsAt: new Date("2026-09-02T03:00:00.000Z"),
 	eventUrl: "https://example.com/event",
@@ -62,11 +63,30 @@ describe("mapApprovedEventsToCalendar", () => {
 		expect(event.recurrence_rule).toEqual({
 			endDate: null,
 			endType: "after_occurrences",
+			excludedDates: [],
 			frequency: "week",
 			interval: 2,
 			monthlyPattern: null,
 			occurrenceCount: 8,
 			weekdays: [2, 4],
 		});
+	});
+
+	it("maps one-off cancellation dates as recurrence exclusions", () => {
+		const [event] = mapApprovedEventsToCalendar([
+			{
+				...baseEvent,
+				canceledOccurrenceDates: ["2026-09-16", "2026-09-30"],
+				recurrenceEndType: "never",
+				recurrenceFrequency: "week",
+				recurrenceInterval: 1,
+				recurrenceWeekdays: [2],
+			},
+		]);
+
+		expect(event.recurrence_rule?.excludedDates).toEqual([
+			"2026-09-16",
+			"2026-09-30",
+		]);
 	});
 });

@@ -5,6 +5,7 @@ import type {
 import type { EventMode } from "@/db/schema";
 
 export interface ApprovedEventRecord {
+	canceledOccurrenceDates: string[];
 	description: string;
 	endsAt: Date;
 	eventUrl: string | null;
@@ -37,6 +38,7 @@ export function mapApprovedEventsToCalendar(
 				? {
 						endDate: row.recurrenceEndDate,
 						endType: row.recurrenceEndType,
+						excludedDates: row.canceledOccurrenceDates,
 						frequency: row.recurrenceFrequency,
 						interval: row.recurrenceInterval,
 						monthlyPattern: row.recurrenceMonthlyPattern,

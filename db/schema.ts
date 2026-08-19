@@ -8,6 +8,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
+	uniqueIndex,
 	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
@@ -75,6 +76,13 @@ export const event = pgTable(
 		reviewedAt: timestamp("reviewed_at", {
 			mode: "date",
 			withTimezone: true,
+		}),
+		canceledAt: timestamp("canceled_at", {
+			mode: "date",
+			withTimezone: true,
+		}),
+		canceledBy: text("canceled_by").references(() => user.id, {
+			onDelete: "set null",
 		}),
 		createdAt: timestamp("created_at", {
 			mode: "date",
@@ -175,8 +183,37 @@ export const eventRecurrence = pgTable(
 	],
 );
 
+export const eventOccurrenceCancellation = pgTable(
+	"event_occurrence_cancellation",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		eventId: uuid("event_id")
+			.notNull()
+			.references(() => event.id, { onDelete: "cascade" }),
+		occurrenceDate: date("occurrence_date", { mode: "string" }).notNull(),
+		canceledBy: text("canceled_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		createdAt: timestamp("created_at", {
+			mode: "date",
+			withTimezone: true,
+		})
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("event_occurrence_cancellation_event_date_uidx").on(
+			table.eventId,
+			table.occurrenceDate,
+		),
+		index("event_occurrence_cancellation_event_id_idx").on(table.eventId),
+	],
+);
+
 export type EventRow = typeof event.$inferSelect;
 export type EventRecurrenceRow = typeof eventRecurrence.$inferSelect;
+export type EventOccurrenceCancellationRow =
+	typeof eventOccurrenceCancellation.$inferSelect;
 export type EventMode = (typeof eventMode.enumValues)[number];
 export type EventStatus = (typeof eventStatus.enumValues)[number];
 export type RecurrenceFrequency =

@@ -25,6 +25,11 @@ const weekdays = [
 	"Saturday",
 ] as const;
 
+const cancellationDateFormatter = new Intl.DateTimeFormat("en-US", {
+	dateStyle: "long",
+	timeZone: "UTC",
+});
+
 interface RecurrenceSummaryInput {
 	startsAt: Date;
 	recurrenceFrequency: "day" | "week" | "month" | "year" | null;
@@ -133,6 +138,10 @@ function formatDateTime(date: Date, timeZone: string) {
 	}).format(date);
 }
 
+function formatCancellationDate(dateKey: string) {
+	return cancellationDateFormatter.format(new Date(`${dateKey}T12:00:00Z`));
+}
+
 export default async function AdminEventsPage() {
 	await requireAdminSession();
 	const pendingEvents = await getPendingEvents();
@@ -177,6 +186,9 @@ export default async function AdminEventsPage() {
 						{pendingEvents.map((event) => {
 							const titleId = `event-${event.id}-title`;
 							const recurrenceSummary = formatRecurrenceSummary(event);
+							const canceledOccurrences = [
+								...event.canceledOccurrences,
+							].sort();
 
 							return (
 								<li key={event.id}>
@@ -233,6 +245,24 @@ export default async function AdminEventsPage() {
 												<dt>Recurrence</dt>
 												<dd>{recurrenceSummary}</dd>
 											</div>
+											{canceledOccurrences.length > 0 && (
+												<div className={style.cancellationDetail}>
+													<dt>Canceled occurrences</dt>
+													<dd>
+														<ul
+															aria-label={`Canceled dates for ${event.title}`}
+														>
+															{canceledOccurrences.map((date) => (
+																<li key={date}>
+																	<time dateTime={date}>
+																		{formatCancellationDate(date)}
+																	</time>
+																</li>
+															))}
+														</ul>
+													</dd>
+												</div>
+											)}
 											<div>
 												<dt>Venue</dt>
 												<dd>

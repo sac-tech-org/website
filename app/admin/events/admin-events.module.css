@@ -177,6 +177,25 @@
 	font-weight: 750;
 }
 
+.details > div.cancellationDetail {
+	background: rgb(232 86 47 / 8%);
+	border-left: 0.3rem solid var(--color-poppy-deep);
+	grid-column: 1 / -1;
+	padding: 0.85rem 1rem;
+}
+
+.cancellationDetail dd {
+	font-weight: 700;
+}
+
+.cancellationDetail ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 1.35rem;
+	margin: 0;
+	padding-left: 1.2rem;
+}
+
 .details dt {
 	color: var(--color-ink-muted);
 	font-size: 0.78rem;

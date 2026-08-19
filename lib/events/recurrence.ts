@@ -284,6 +284,10 @@ function validateRule(rule: RecurrenceRule) {
 			"An after-occurrences recurrence must include a positive count.",
 		);
 	}
+
+	for (const excludedDate of rule.excludedDates) {
+		parseDateKey(excludedDate, "Excluded occurrence date");
+	}
 }
 
 function getNthWeekdayDate(
@@ -368,6 +372,7 @@ function enumerateOccurrences(
 			: Number.POSITIVE_INFINITY;
 	let occurrenceNumber = 0;
 	let shouldStop = false;
+	const excludedDates = new Set(rule.excludedDates);
 
 	const considerDate = (date: LocalDate) => {
 		if (compareLocalDates(date, startDate) < 0) {
@@ -389,6 +394,12 @@ function enumerateOccurrences(
 
 		if (occurrenceNumber > maximumOccurrences) {
 			shouldStop = true;
+			return;
+		}
+
+		// An exception removes a scheduled date from display without changing its
+		// position in an occurrence-count-limited series.
+		if (excludedDates.has(formatDateKey(date))) {
 			return;
 		}
 
@@ -467,6 +478,11 @@ function enumerateOccurrences(
 	}
 }
 
+/** Formats an instant as its Sacramento-local calendar date. */
+export function getSacramentoDateKey(date: Date): string {
+	return formatDateKey(toLocalDate(date));
+}
+
 /**
  * Expands a recurrence into Sacramento-local calendar dates, inclusive of both
  * range boundaries. A Date boundary is interpreted in Sacramento time.
@@ -521,6 +537,30 @@ export function getNextOccurrence(
 	);
 
 	return nextOccurrence;
+}
+
+/** Returns the first not-yet-started occurrence after an instant. */
+export function getNextFutureOccurrence(
+	startsAt: Date,
+	rule: RecurrenceRule,
+	referenceInstant: Date,
+): Date | null {
+	const referenceDate = toLocalDate(referenceInstant);
+	const candidate = getNextOccurrence(
+		startsAt,
+		rule,
+		formatDateKey(referenceDate),
+	);
+
+	if (!candidate || candidate > referenceInstant) {
+		return candidate;
+	}
+
+	return getNextOccurrence(
+		startsAt,
+		rule,
+		formatDateKey(addDays(referenceDate, 1)),
+	);
 }
 
 /**
