@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { submitEvent } from "@/lib/events/actions";
 import {
 	initialEventFormState,
@@ -47,10 +47,32 @@ export function EventForm() {
 		submitEvent,
 		initialEventFormState,
 	);
+	const formRef = useRef<HTMLFormElement>(null);
+	const allowSuccessfulReset = useRef(false);
 	const errors = state.errors;
 
+	// React resets uncontrolled fields after any resolved action, including validation errors.
+	useEffect(() => {
+		if (state.status !== "success" || !formRef.current) {
+			return;
+		}
+
+		allowSuccessfulReset.current = true;
+		formRef.current.reset();
+		allowSuccessfulReset.current = false;
+	}, [state]);
+
 	return (
-		<form action={formAction} className={style.form}>
+		<form
+			action={formAction}
+			className={style.form}
+			onReset={(event) => {
+				if (!allowSuccessfulReset.current) {
+					event.preventDefault();
+				}
+			}}
+			ref={formRef}
+		>
 			<div className={style.formHeading}>
 				<p className={style.stepLabel}>Event submission</p>
 				<h2>What should the community know?</h2>
