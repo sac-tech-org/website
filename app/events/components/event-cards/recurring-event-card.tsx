@@ -1,4 +1,5 @@
 import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
+import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatDateInTimeZone } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { RecurringEventsCardProps } from "./types";
@@ -71,7 +72,10 @@ export function RecurringEventsCard({
 				)}
 			</ul>
 
-			<p className={style.description}>{event.description}</p>
+			<EventDescriptionMarkdown
+				className={style.description}
+				markdown={event.description}
+			/>
 
 			{featuredBlock?.location_description && (
 				<div className={style.topicCard}>

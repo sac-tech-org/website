@@ -42,6 +42,10 @@ function getSubmittedFormData(callIndex = 0) {
 	return Array.from(formData.entries());
 }
 
+function getDescriptionEditor() {
+	return screen.getByRole("textbox", { name: /Description/ });
+}
+
 function eventEntries(recurrenceEntries: Array<[string, string]> = []) {
 	return [
 		["title", TITLE],
@@ -60,7 +64,7 @@ async function fillRequiredEventFields(
 	user: ReturnType<typeof userEvent.setup>,
 ) {
 	await user.type(screen.getByLabelText(/Event title/), TITLE);
-	await user.type(screen.getByLabelText(/Description/), DESCRIPTION);
+	await user.type(getDescriptionEditor(), DESCRIPTION);
 	await user.fill(screen.getByLabelText(/Starts/), STARTS_AT);
 	await user.fill(screen.getByLabelText(/Ends/), ENDS_AT);
 	await user.type(
@@ -119,6 +123,39 @@ describe("EventForm", () => {
 
 		expect(serverActions.submitEvent).toHaveBeenCalledTimes(1);
 		expect(getSubmittedFormData()).toEqual(eventEntries());
+	});
+
+	it("serializes rich-text formatting as Markdown", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await user.type(screen.getByLabelText(/Event title/), TITLE);
+
+		const description = getDescriptionEditor();
+		await user.click(description);
+		await user.click(screen.getByRole("button", { name: "Bold" }));
+		await user.keyboard(DESCRIPTION);
+		await user.fill(screen.getByLabelText(/Starts/), STARTS_AT);
+		await user.fill(screen.getByLabelText(/Ends/), ENDS_AT);
+		await user.type(
+			screen.getByLabelText("Venue or location name"),
+			"Central Library",
+		);
+		await user.type(
+			screen.getByLabelText("Street address"),
+			"828 I Street, Sacramento, CA",
+		);
+
+		expect(description.querySelector("strong")).toHaveTextContent(DESCRIPTION);
+
+		await submitAndWaitForSuccess(user);
+
+		expect(getSubmittedFormData()).toEqual(
+			eventEntries().map(([field, value]) =>
+				field === "description"
+					? [field, `**${DESCRIPTION}**`]
+					: [field, value],
+			),
+		);
 	});
 
 	it("submits a daily series that never ends", async () => {
@@ -284,7 +321,7 @@ describe("EventForm", () => {
 		);
 		expect(screen.getByText("That title is already in use.")).toBeVisible();
 		expect(title).toHaveValue(TITLE);
-		expect(screen.getByLabelText(/Description/)).toHaveValue(DESCRIPTION);
+		expect(getDescriptionEditor()).toHaveTextContent(DESCRIPTION);
 		expect(screen.getByLabelText(/Starts/)).toHaveValue(STARTS_AT);
 		expect(screen.getByLabelText(/Ends/)).toHaveValue(ENDS_AT);
 		expect(screen.getByLabelText("Venue or location name")).toHaveValue(
@@ -319,6 +356,35 @@ describe("EventForm", () => {
 			screen.queryByText("That title is already in use."),
 		).not.toBeInTheDocument();
 		expect(title).not.toHaveAttribute("aria-invalid");
+	});
+
+	it("focuses the editor and clears feedback for a description error", async () => {
+		const user = userEvent.setup();
+		serverActions.submitEvent.mockResolvedValue({
+			errors: {
+				description: ["Add a little more detail for attendees."],
+			},
+			message: "Check the highlighted fields and try again.",
+			status: "error",
+		} satisfies EventFormState);
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+
+		await user.click(
+			screen.getByRole("button", { name: "Submit event for review" }),
+		);
+
+		const description = getDescriptionEditor();
+		expect(await screen.findByRole("alert")).toBeVisible();
+		expect(description).toHaveAttribute("aria-invalid", "true");
+		expect(description).toHaveAccessibleDescription(
+			"Share what people will do, who the event is for, and anything they should bring or know. Add a little more detail for attendees.",
+		);
+		await waitFor(() => expect(description).toHaveFocus());
+
+		await user.keyboard(" More details.");
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(description).not.toHaveAttribute("aria-invalid");
 	});
 
 	it("removes stale validation feedback while a retry is pending", async () => {
@@ -377,7 +443,8 @@ describe("EventForm", () => {
 		expect(form).not.toBeNull();
 		expect(form).toHaveAttribute("aria-busy", "true");
 		expect(title).toBeDisabled();
-		expect(screen.getByLabelText(/Description/)).toBeDisabled();
+		expect(getDescriptionEditor()).toHaveAttribute("aria-disabled", "true");
+		expect(getDescriptionEditor()).toHaveAttribute("contenteditable", "false");
 		expect(screen.getByLabelText(/Starts/)).toBeDisabled();
 		expect(screen.getByLabelText("Recurrence unit")).toBeDisabled();
 		expect(screen.getByRole("radio", { name: /^In person/ })).toBeDisabled();
@@ -413,7 +480,7 @@ describe("EventForm", () => {
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(/Event title/)).toHaveValue("");
-			expect(screen.getByLabelText(/Description/)).toHaveValue("");
+			expect(getDescriptionEditor()).toHaveTextContent("");
 			expect(screen.getByLabelText(/Starts/)).toHaveValue("");
 			expect(screen.getByLabelText(/Ends/)).toHaveValue("");
 			expect(screen.getByLabelText("Venue or location name")).toHaveValue("");

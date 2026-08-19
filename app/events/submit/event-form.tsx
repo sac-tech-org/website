@@ -8,6 +8,7 @@ import {
 	type EventFormField,
 	type EventFormState,
 } from "@/lib/events/state";
+import { EventDescriptionEditor } from "./event-description-editor";
 import style from "./event-form.module.css";
 
 interface FieldErrorsProps {
@@ -247,6 +248,11 @@ export function EventForm() {
 		}
 	}
 
+	function handleDescriptionChange(description: string) {
+		dismissFeedback();
+		setDraft((current) => ({ ...current, description }));
+	}
+
 	// All user-entered fields are controlled because React resets native form
 	// controls after any resolved action, including returned validation errors.
 	useEffect(() => {
@@ -278,9 +284,12 @@ export function EventForm() {
 				(field) => state.errors?.[field]?.length,
 			);
 			const firstInvalidControl = firstInvalidField
-				? formRef.current?.querySelector<HTMLElement>(
+				? (formRef.current?.querySelector<HTMLElement>(
+						`[data-form-field="${firstInvalidField}"]`,
+					) ??
+					formRef.current?.querySelector<HTMLElement>(
 						`[name="${firstInvalidField}"]`,
-					)
+					))
 				: null;
 
 			if (firstInvalidControl && !firstInvalidControl.matches(":disabled")) {
@@ -337,10 +346,10 @@ export function EventForm() {
 			</div>
 
 			<div className={style.field}>
-				<label htmlFor="description">
+				<label htmlFor="description" id="description-label">
 					Description <span aria-hidden="true">*</span>
 				</label>
-				<textarea
+				<EventDescriptionEditor
 					aria-describedby={describedBy(
 						"description",
 						"description-hint",
@@ -348,18 +357,7 @@ export function EventForm() {
 					)}
 					aria-invalid={errors?.description?.length ? true : undefined}
 					disabled={pending}
-					id="description"
-					maxLength={4_000}
-					minLength={20}
-					name="description"
-					onChange={(event) =>
-						setDraft((current) => ({
-							...current,
-							description: event.target.value,
-						}))
-					}
-					required
-					rows={7}
+					onChange={handleDescriptionChange}
 					value={draft.description}
 				/>
 				<p className={style.hint} id="description-hint">

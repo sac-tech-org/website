@@ -1,0 +1,92 @@
+.prose {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.prose > :first-child {
+	margin-top: 0;
+}
+
+.prose > :last-child {
+	margin-bottom: 0;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+	color: inherit;
+	font-family: var(--font-display);
+	font-weight: 850;
+	letter-spacing: -0.025em;
+	line-height: 1.2;
+	margin: 1.1rem 0 0.45rem;
+}
+
+.prose h4 {
+	font-size: 1.15em;
+}
+
+.prose h5,
+.prose h6 {
+	font-size: 1em;
+}
+
+.prose p,
+.prose blockquote,
+.prose ol,
+.prose pre,
+.prose ul {
+	margin: 0 0 0.75rem;
+}
+
+.prose ol,
+.prose ul {
+	padding-left: 1.4rem;
+}
+
+.prose li + li {
+	margin-top: 0.25rem;
+}
+
+.prose li > ol,
+.prose li > ul {
+	margin-bottom: 0;
+	margin-top: 0.25rem;
+}
+
+.prose blockquote {
+	border-left: 0.25rem solid var(--color-bridge);
+	color: var(--color-ink-muted);
+	padding-left: 0.85rem;
+}
+
+.prose a {
+	color: var(--color-river-deep);
+	font-weight: 750;
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.18em;
+}
+
+.prose code {
+	background: rgb(5 99 106 / 9%);
+	border-radius: 0.2rem;
+	font-size: 0.9em;
+	padding: 0.08em 0.28em;
+}
+
+.prose pre {
+	background: var(--color-navy-deep);
+	border-radius: var(--radius-small);
+	color: var(--color-paper);
+	overflow-x: auto;
+	padding: 0.85rem 1rem;
+	white-space: pre;
+}
+
+.prose pre code {
+	background: transparent;
+	border-radius: 0;
+	color: inherit;
+	font-size: 0.86em;
+	padding: 0;
+}

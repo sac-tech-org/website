@@ -235,10 +235,10 @@
 	margin: 0;
 }
 
-.description p {
+.descriptionContent {
 	color: var(--color-ink-muted);
-	margin: 0.65rem 0 0;
-	white-space: pre-wrap;
+	line-height: 1.65;
+	margin-top: 0.65rem;
 }
 
 .eventLink {

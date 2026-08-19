@@ -190,6 +190,217 @@
 	resize: vertical;
 }
 
+.editorFrame {
+	background: #fff;
+	border: 2px solid #a98d53;
+	border-radius: var(--radius-small);
+	overflow: hidden;
+	transition:
+		border-color 150ms ease,
+		box-shadow 150ms ease;
+}
+
+.editorFrame:hover:not([data-disabled]) {
+	border-color: var(--color-bridge-deep);
+}
+
+.editorFrame:focus-within {
+	border-color: var(--color-river-deep);
+	box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.editorFrame:has(.editorContentEditable[aria-invalid="true"]) {
+	border-color: var(--color-poppy-deep);
+	box-shadow: inset 0.3rem 0 0 rgb(185 54 25 / 16%);
+}
+
+.editorFrame[data-disabled] {
+	cursor: wait;
+	opacity: 0.64;
+}
+
+.editorToolbar {
+	align-items: center;
+	background: var(--color-cream);
+	border-bottom: 1px solid var(--color-line);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	padding: 0.55rem;
+}
+
+.editorToolbarGroup {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+
+.editorToolbarGroup + .editorToolbarGroup {
+	border-left: 1px solid var(--color-line);
+	padding-left: 0.5rem;
+}
+
+.editorToolbarButton {
+	align-items: center;
+	background: #fff;
+	border: 1px solid var(--color-line);
+	border-radius: 0.2rem;
+	color: var(--color-navy-deep);
+	cursor: pointer;
+	display: inline-flex;
+	font-size: 0.78rem;
+	font-weight: 800;
+	justify-content: center;
+	min-height: 2rem;
+	padding: 0.3rem 0.48rem;
+}
+
+.editorToolbarButton:hover:not(:disabled) {
+	background: var(--color-paper);
+	border-color: var(--color-bridge-deep);
+}
+
+.editorToolbarButton[aria-pressed="true"],
+.editorToolbarButton[aria-pressed="true"]:hover:not(:disabled) {
+	background: var(--color-navy);
+	border-color: var(--color-navy);
+	color: var(--color-paper);
+}
+
+.editorToolbarButton:focus-visible {
+	outline: 3px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+.editorToolbarButton:disabled {
+	cursor: not-allowed;
+	opacity: 0.45;
+}
+
+.editorContentShell {
+	position: relative;
+}
+
+.editorContentEditable {
+	color: var(--color-navy-deep);
+	line-height: 1.6;
+	min-height: 11rem;
+	outline: none;
+	overflow-wrap: anywhere;
+	padding: 0.9rem 1rem;
+}
+
+.editorContentEditable[aria-disabled="true"] {
+	cursor: wait;
+}
+
+.editorPlaceholder {
+	color: var(--color-ink-muted);
+	left: 1rem;
+	pointer-events: none;
+	position: absolute;
+	top: 0.9rem;
+}
+
+.editorFooter {
+	align-items: center;
+	background: var(--color-paper);
+	border-top: 1px solid var(--color-line);
+	color: var(--color-ink-muted);
+	display: flex;
+	font-size: 0.76rem;
+	gap: 1rem;
+	justify-content: space-between;
+	padding: 0.45rem 0.65rem;
+}
+
+.editorFooter > span:last-child {
+	white-space: nowrap;
+}
+
+.editorCountError {
+	color: var(--color-poppy-deep);
+	font-weight: 850;
+}
+
+.editorParagraph {
+	margin: 0 0 0.8rem;
+}
+
+.editorParagraph:last-child {
+	margin-bottom: 0;
+}
+
+.editorHeading {
+	font-family: var(--font-display);
+	font-size: 1.2rem;
+	font-weight: 900;
+	letter-spacing: -0.025em;
+	line-height: 1.25;
+	margin: 1rem 0 0.45rem;
+}
+
+.editorHeading:first-child {
+	margin-top: 0;
+}
+
+.editorQuote {
+	border-left: 0.25rem solid var(--color-bridge);
+	color: var(--color-ink-muted);
+	margin: 0.8rem 0;
+	padding-left: 0.9rem;
+}
+
+.editorList {
+	margin: 0.7rem 0;
+	padding-left: 1.55rem;
+}
+
+.editorListItem {
+	margin: 0.2rem 0;
+}
+
+.editorCodeBlock {
+	background: var(--color-navy-deep);
+	border-radius: 0.25rem;
+	color: var(--color-paper);
+	display: block;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 0.82rem;
+	line-height: 1.55;
+	margin: 0.8rem 0;
+	overflow-x: auto;
+	padding: 0.8rem;
+	white-space: pre;
+}
+
+.editorInlineCode {
+	background: rgb(14 48 62 / 9%);
+	border-radius: 0.2rem;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 0.88em;
+	padding: 0.08em 0.25em;
+}
+
+.editorLink {
+	color: var(--color-poppy-deep);
+	font-weight: 750;
+	text-decoration: underline;
+	text-underline-offset: 0.18em;
+}
+
+.editorBold {
+	font-weight: 850;
+}
+
+.editorItalic {
+	font-style: italic;
+}
+
+.editorStrikethrough {
+	text-decoration: line-through;
+}
+
 .field input:hover,
 .field textarea:hover,
 .field select:hover {

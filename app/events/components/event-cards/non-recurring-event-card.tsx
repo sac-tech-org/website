@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { NonRecurringEventsCardProps } from "./types";
@@ -69,7 +70,10 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 					</li>
 				)}
 			</ul>
-			<p className={style.description}>{event.description}</p>
+			<EventDescriptionMarkdown
+				className={style.description}
+				markdown={event.description}
+			/>
 			{event.location_url && (
 				<a
 					aria-label={`View details for ${event.title}`}

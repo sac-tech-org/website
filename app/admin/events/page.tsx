@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
 import { getPendingEvents } from "@/lib/events/queries";
 import { requireAdminSession } from "@/lib/session";
@@ -173,7 +174,10 @@ export default async function AdminEventsPage() {
 
 										<div className={style.description}>
 											<h4>Description</h4>
-											<p>{event.description}</p>
+											<EventDescriptionMarkdown
+												className={style.descriptionContent}
+												markdown={event.description}
+											/>
 										</div>
 
 										{event.eventUrl && (
