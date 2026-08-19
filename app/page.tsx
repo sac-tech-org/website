@@ -15,11 +15,13 @@ export default function Home() {
 			<section className={style.hero}>
 				<div className={style.heroInner}>
 					<div className={style.heroCopy}>
-						<p className={style.eyebrow}>A technology community for Sacramento</p>
+						<p className={style.eyebrow}>
+							A technology community for Sacramento
+						</p>
 						<h1>Sacramento tech, built together.</h1>
 						<p className={style.heroText}>
-							A welcoming home for the people who design, build, teach, and
-							grow technology in our region.
+							A welcoming home for the people who design, build, teach, and grow
+							technology in our region.
 						</p>
 						<div className={style.heroActions}>
 							<Link className={style.primaryAction} href="/events">
@@ -40,9 +42,9 @@ export default function Home() {
 						<p className={style.eyebrowDark}>Our mission</p>
 						<h2>Meet people. Share skills. Build locally.</h2>
 						<p>
-							SacTech brings together technologists, designers, students,
-							career changers, and community members through shared learning
-							and local connection.
+							SacTech brings together technologists, designers, students, career
+							changers, and community members through shared learning and local
+							connection.
 						</p>
 					</div>
 
@@ -114,8 +116,8 @@ export default function Home() {
 						<p className={style.eyebrow}>Join the community</p>
 						<h2>Come build a better Sacramento with us.</h2>
 						<p>
-							Join the SacTech Slack to meet neighbors, share what you know,
-							and find your next local connection.
+							Join the SacTech Slack to meet neighbors, share what you know, and
+							find your next local connection.
 						</p>
 					</div>
 					<JoinCommunity inviteLink={process.env.NEXT_PUBLIC_INVITE_LINK} />

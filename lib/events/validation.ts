@@ -12,12 +12,14 @@ dayjs.extend(timezone);
 
 const optionalTrimmedString = (maxLength: number) =>
 	z.preprocess(
-		(value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+		(value) =>
+			typeof value === "string" && value.trim() === "" ? undefined : value,
 		z.string().trim().max(maxLength).optional(),
 	);
 
 const optionalWebUrl = z.preprocess(
-	(value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+	(value) =>
+		typeof value === "string" && value.trim() === "" ? undefined : value,
 	z
 		.url("Enter a valid web address.")
 		.max(2_048, "The web address is too long.")
@@ -56,9 +58,7 @@ const optionalOccurrenceCount = z.preprocess(
 
 const optionalLocalDate = z.preprocess(
 	(value) =>
-		typeof value === "string" && value.trim() !== ""
-			? value.trim()
-			: undefined,
+		typeof value === "string" && value.trim() !== "" ? value.trim() : undefined,
 	z
 		.string()
 		.regex(/^\d{4}-\d{2}-\d{2}$/, "Choose an ending date.")
@@ -260,7 +260,10 @@ export function validateEventSubmission(
 		}
 	}
 
-	if (!parsedSubmission.success || (parsedRecurrence && !parsedRecurrence.success)) {
+	if (
+		!parsedSubmission.success ||
+		(parsedRecurrence && !parsedRecurrence.success)
+	) {
 		return { errors };
 	}
 
@@ -310,9 +313,7 @@ export function validateEventSubmission(
 
 		if (parsedRecurrence.data.endType === "on_date") {
 			const endDate = parsedRecurrence.data.endDate;
-			const parsedEndDate = endDate
-				? dayjs(endDate, "YYYY-MM-DD", true)
-				: null;
+			const parsedEndDate = endDate ? dayjs(endDate, "YYYY-MM-DD", true) : null;
 
 			if (
 				!endDate ||
@@ -343,32 +344,31 @@ export function validateEventSubmission(
 			...parsedSubmission.data,
 			startsAt,
 			endsAt,
-			recurrence:
-				parsedRecurrence?.success
-					? {
-							frequency: parsedRecurrence.data.frequency,
-							interval: parsedRecurrence.data.interval,
-							weekdays:
-								parsedRecurrence.data.frequency === "week"
-									? [...new Set(parsedRecurrence.data.weekdays)].sort(
-											(left, right) => left - right,
-										)
-									: null,
-							monthlyPattern:
-								parsedRecurrence.data.frequency === "month"
-									? (parsedRecurrence.data.monthlyPattern ?? null)
-									: null,
-							endType: parsedRecurrence.data.endType,
-							endDate:
-								parsedRecurrence.data.endType === "on_date"
-									? (parsedRecurrence.data.endDate ?? null)
-									: null,
-							occurrenceCount:
-								parsedRecurrence.data.endType === "after_occurrences"
-									? (parsedRecurrence.data.occurrenceCount ?? null)
-									: null,
-						}
-						: null,
+			recurrence: parsedRecurrence?.success
+				? {
+						frequency: parsedRecurrence.data.frequency,
+						interval: parsedRecurrence.data.interval,
+						weekdays:
+							parsedRecurrence.data.frequency === "week"
+								? [...new Set(parsedRecurrence.data.weekdays)].sort(
+										(left, right) => left - right,
+									)
+								: null,
+						monthlyPattern:
+							parsedRecurrence.data.frequency === "month"
+								? (parsedRecurrence.data.monthlyPattern ?? null)
+								: null,
+						endType: parsedRecurrence.data.endType,
+						endDate:
+							parsedRecurrence.data.endType === "on_date"
+								? (parsedRecurrence.data.endDate ?? null)
+								: null,
+						occurrenceCount:
+							parsedRecurrence.data.endType === "after_occurrences"
+								? (parsedRecurrence.data.occurrenceCount ?? null)
+								: null,
+					}
+				: null,
 		},
 	};
 }
@@ -379,7 +379,10 @@ const moderationSchema = z
 		note: optionalTrimmedString(500),
 	})
 	.superRefine((value, context) => {
-		if (value.decision === "rejected" && (!value.note || value.note.length < 5)) {
+		if (
+			value.decision === "rejected" &&
+			(!value.note || value.note.length < 5)
+		) {
 			context.addIssue({
 				code: "custom",
 				message: "Add a short note so the submitter knows what to change.",

@@ -104,7 +104,10 @@ function parseDateKey(value: string, label: string): LocalDate {
 		year: Number(match[1]),
 	};
 
-	if (date.year < 1 || formatDateKey(localDateFromCalendarDate(calendarDate(date))) !== value) {
+	if (
+		date.year < 1 ||
+		formatDateKey(localDateFromCalendarDate(calendarDate(date))) !== value
+	) {
 		throw new TypeError(`${label} must be a valid calendar date.`);
 	}
 
@@ -160,8 +163,7 @@ function getTimeZoneOffset(date: Date) {
 		local.minute,
 		local.second,
 	);
-	const instantWithoutMilliseconds =
-		Math.floor(date.valueOf() / 1_000) * 1_000;
+	const instantWithoutMilliseconds = Math.floor(date.valueOf() / 1_000) * 1_000;
 
 	return localAsUtc - instantWithoutMilliseconds;
 }
@@ -232,13 +234,13 @@ function resolveSpringForwardGap(local: LocalDateTime) {
 	const wallClockAsUtc = localDateTimeAsUtc(local);
 	const offsets = new Set(
 		[-36, -12, 12, 36].map((hours) =>
-			getTimeZoneOffset(
-				new Date(wallClockAsUtc + hours * 60 * 60 * 1_000),
-			),
+			getTimeZoneOffset(new Date(wallClockAsUtc + hours * 60 * 60 * 1_000)),
 		),
 	);
-	let closestLaterCandidate: { date: Date; wallClockDifference: number } | null =
-		null;
+	let closestLaterCandidate: {
+		date: Date;
+		wallClockDifference: number;
+	} | null = null;
 
 	for (const offset of offsets) {
 		const candidate = new Date(wallClockAsUtc - offset);
@@ -263,9 +265,7 @@ function validateRule(rule: RecurrenceRule) {
 	}
 
 	if (
-		rule.weekdays?.some(
-			(day) => !Number.isInteger(day) || day < 0 || day > 6,
-		)
+		rule.weekdays?.some((day) => !Number.isInteger(day) || day < 0 || day > 6)
 	) {
 		throw new RangeError("Recurrence weekdays must be integers from 0 to 6.");
 	}
@@ -276,8 +276,7 @@ function validateRule(rule: RecurrenceRule) {
 
 	if (
 		rule.endType === "after_occurrences" &&
-		(!Number.isInteger(rule.occurrenceCount) ||
-			(rule.occurrenceCount ?? 0) < 1)
+		(!Number.isInteger(rule.occurrenceCount) || (rule.occurrenceCount ?? 0) < 1)
 	) {
 		throw new RangeError(
 			"An after-occurrences recurrence must include a positive count.",
@@ -296,8 +295,7 @@ function getNthWeekdayDate(
 	ordinal: number,
 ) {
 	const firstWeekday = weekday({ day: 1, month, year });
-	const day =
-		1 + ((targetWeekday - firstWeekday + 7) % 7) + (ordinal - 1) * 7;
+	const day = 1 + ((targetWeekday - firstWeekday + 7) % 7) + (ordinal - 1) * 7;
 
 	return day <= daysInMonth(year, month) ? { day, month, year } : null;
 }
@@ -322,8 +320,7 @@ function initialPeriodIndex(
 			return Math.max(
 				0,
 				Math.floor(
-					daysBetween(startOfFirstWeek, minimum) /
-						(7 * rule.interval),
+					daysBetween(startOfFirstWeek, minimum) / (7 * rule.interval),
 				),
 			);
 		}
@@ -402,10 +399,7 @@ function enumerateOccurrences(
 			return;
 		}
 
-		if (
-			compareLocalDates(date, minimumDate) >= 0 &&
-			visit(occurrence)
-		) {
+		if (compareLocalDates(date, minimumDate) >= 0 && visit(occurrence)) {
 			shouldStop = true;
 		}
 	};
@@ -421,14 +415,10 @@ function enumerateOccurrences(
 			case "week": {
 				const startWeekday = weekday(startDate);
 				const firstWeek = addDays(startDate, -startWeekday);
-				const weekStart = addDays(
-					firstWeek,
-					periodIndex * rule.interval * 7,
-				);
-				const selectedWeekdays = [...new Set([
-					...(rule.weekdays ?? []),
-					startWeekday,
-				])].sort((left, right) => left - right);
+				const weekStart = addDays(firstWeek, periodIndex * rule.interval * 7);
+				const selectedWeekdays = [
+					...new Set([...(rule.weekdays ?? []), startWeekday]),
+				].sort((left, right) => left - right);
 
 				for (const selectedWeekday of selectedWeekdays) {
 					considerDate(addDays(weekStart, selectedWeekday));
@@ -524,16 +514,10 @@ export function getNextOccurrence(
 	const minimumDate = parseBoundary(referenceDate, "Reference date");
 	let nextOccurrence: Date | null = null;
 
-	enumerateOccurrences(
-		startsAt,
-		rule,
-		minimumDate,
-		null,
-		(occurrence) => {
-			nextOccurrence = occurrence;
-			return true;
-		},
-	);
+	enumerateOccurrences(startsAt, rule, minimumDate, null, (occurrence) => {
+		nextOccurrence = occurrence;
+		return true;
+	});
 
 	return nextOccurrence;
 }

@@ -68,10 +68,12 @@ describe("ModerationForm", () => {
 			status: "idle",
 		});
 		expect(getSubmittedFormData()).toEqual([
-		["note", "Looks good for the community calendar."],
-		["decision", "approved"],
-	]);
-	for (const button of formQueries.getAllByRole("button", { name: "Saving…" })) {
+			["note", "Looks good for the community calendar."],
+			["decision", "approved"],
+		]);
+		for (const button of formQueries.getAllByRole("button", {
+			name: "Saving…",
+		})) {
 			expect(button).toBeDisabled();
 		}
 		expect(
@@ -108,9 +110,9 @@ describe("ModerationForm", () => {
 		expect(serverActions.moderateEvent).toHaveBeenCalledTimes(1);
 		expect(serverActions.moderateEvent.mock.calls[0]?.[0]).toBe(EVENT_ID);
 		expect(getSubmittedFormData()).toEqual([
-		["note", "No"],
-		["decision", "rejected"],
-	]);
+			["note", "No"],
+			["decision", "rejected"],
+		]);
 		const alert = await screen.findByRole("alert");
 		expect(alert).toHaveTextContent(
 			"Add a short note so the submitter knows what to change.",

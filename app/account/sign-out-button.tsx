@@ -25,7 +25,8 @@ export function SignOutButton({ className }: SignOutButtonProps) {
 
 			if (result.error) {
 				setErrorMessage(
-					result.error.message ?? "We could not sign you out. Please try again.",
+					result.error.message ??
+						"We could not sign you out. Please try again.",
 				);
 				return;
 			}

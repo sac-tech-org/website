@@ -22,11 +22,9 @@ const recurringProps = {
 } as const;
 
 function submittedFields(callIndex = 0) {
-	const [eventId, previousState, formData] = cancelEventMock.mock.calls[callIndex] as [
-		string,
-		typeof initialCancellationFormState,
-		FormData,
-	];
+	const [eventId, previousState, formData] = cancelEventMock.mock.calls[
+		callIndex
+	] as [string, typeof initialCancellationFormState, FormData];
 
 	return {
 		eventId,
@@ -109,9 +107,9 @@ describe("CancelEventForm", () => {
 			screen.getByRole("button", { name: "Cancel this occurrence" }),
 		);
 
-		expect(
-			await screen.findByRole("alert"),
-		).toHaveTextContent("That event occurrence is already canceled.");
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"That event occurrence is already canceled.",
+		);
 		expect(dateInput).toHaveValue("2026-09-16");
 	});
 
@@ -137,7 +135,11 @@ describe("CancelEventForm", () => {
 			fields: { scope: "event" },
 			previousState: initialCancellationFormState,
 		});
-		expect(screen.getByText("Event canceled. It has been removed from the calendar.")).toBeVisible();
+		expect(
+			screen.getByText(
+				"Event canceled. It has been removed from the calendar.",
+			),
+		).toBeVisible();
 	});
 
 	it("only offers whole-event cancellation for a non-repeating event", async () => {
@@ -153,9 +155,7 @@ describe("CancelEventForm", () => {
 			/>,
 		);
 
-		expect(
-			screen.queryByLabelText("Occurrence date"),
-		).not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Occurrence date")).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole("button", { name: "Cancel this occurrence" }),
 		).not.toBeInTheDocument();

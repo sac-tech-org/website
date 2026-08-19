@@ -33,11 +33,7 @@ export interface RecurrenceSummaryInput {
 	readonly recurrenceInterval: number | null;
 	readonly recurrenceWeekdays: readonly number[] | null;
 	readonly recurrenceMonthlyPattern: "day_of_month" | "nth_weekday" | null;
-	readonly recurrenceEndType:
-		| "never"
-		| "on_date"
-		| "after_occurrences"
-		| null;
+	readonly recurrenceEndType: "never" | "on_date" | "after_occurrences" | null;
 	readonly recurrenceEndDate: string | null;
 	readonly recurrenceCount: number | null;
 }
@@ -76,8 +72,7 @@ export function formatRecurrenceSummary(rule: RecurrenceSummaryInput) {
 	const startWeekday =
 		startParts.find((part) => part.type === "weekday")?.value ?? "";
 	const unit = rule.recurrenceFrequency;
-	let summary =
-		interval === 1 ? `Every ${unit}` : `Every ${interval} ${unit}s`;
+	let summary = interval === 1 ? `Every ${unit}` : `Every ${interval} ${unit}s`;
 
 	if (unit === "week" && rule.recurrenceWeekdays?.length) {
 		const dayNames = rule.recurrenceWeekdays

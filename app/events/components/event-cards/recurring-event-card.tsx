@@ -1,7 +1,4 @@
-import {
-	getNextOccurrence,
-	getOccurrenceEnd,
-} from "@/lib/events/recurrence";
+import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
 import { formatDateInTimeZone } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { RecurringEventsCardProps } from "./types";
@@ -16,21 +13,13 @@ export function RecurringEventsCard({
 	)[0];
 	const nextStart =
 		event.recurrence_rule && seed
-			? getNextOccurrence(
-					seed.starts_at,
-					event.recurrence_rule,
-					referenceDate,
-				)
+			? getNextOccurrence(seed.starts_at, event.recurrence_rule, referenceDate)
 			: null;
 	const featuredBlock =
 		seed && nextStart
 			? {
 					...seed,
-					ends_at: getOccurrenceEnd(
-						seed.starts_at,
-						seed.ends_at,
-						nextStart,
-					),
+					ends_at: getOccurrenceEnd(seed.starts_at, seed.ends_at, nextStart),
 					starts_at: nextStart,
 				}
 			: null;
@@ -92,13 +81,13 @@ export function RecurringEventsCard({
 					</div>
 					{featuredBlock.location_url &&
 						featuredBlock.location_url !== primaryLocationUrl && (
-						<a
-							aria-label={`View details for ${event.title}`}
-							href={featuredBlock.location_url}
-						>
-							View details
-						</a>
-					)}
+							<a
+								aria-label={`View details for ${event.title}`}
+								href={featuredBlock.location_url}
+							>
+								View details
+							</a>
+						)}
 				</div>
 			)}
 

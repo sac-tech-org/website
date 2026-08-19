@@ -75,13 +75,13 @@ The local database does not apply migrations automatically. Run `pnpm db:migrate
 
 ## Environment variables
 
-| Variable | Where | Purpose |
-| --- | --- | --- |
-| `BETTER_AUTH_SECRET` | Local and Netlify | Private, high-entropy secret used by Better Auth for encryption and hashing. Never prefix it with `NEXT_PUBLIC_`. |
-| `BETTER_AUTH_URL` | Local and Netlify | Full canonical origin. Use `http://localhost:8888` locally and the primary HTTPS site URL in production. |
-| `BETTER_AUTH_ALLOWED_HOSTS` | Local and Netlify | Comma-separated Better Auth host allowlist. Values are hostnames, optionally with ports or wildcards, and do not include URL paths. |
-| `NETLIFY_DB_URL` | Supplied by Netlify | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution. |
-| `NEXT_PUBLIC_INVITE_LINK` | Optional | Public community invitation displayed by the site. It is intentionally browser-visible. |
+| Variable                    | Where               | Purpose                                                                                                                                                     |
+| --------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`        | Local and Netlify   | Private, high-entropy secret used by Better Auth for encryption and hashing. Never prefix it with `NEXT_PUBLIC_`.                                           |
+| `BETTER_AUTH_URL`           | Local and Netlify   | Full canonical origin. Use `http://localhost:8888` locally and the primary HTTPS site URL in production.                                                    |
+| `BETTER_AUTH_ALLOWED_HOSTS` | Local and Netlify   | Comma-separated Better Auth host allowlist. Values are hostnames, optionally with ports or wildcards, and do not include URL paths.                         |
+| `NETLIFY_DB_URL`            | Supplied by Netlify | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution. |
+| `NEXT_PUBLIC_INVITE_LINK`   | Optional            | Public community invitation displayed by the site. It is intentionally browser-visible.                                                                     |
 
 ### Production and deploy-preview hosts
 
@@ -112,14 +112,14 @@ The Drizzle configuration reads both schemas:
 
 A recurring event has one `event_recurrence` row whose primary key is the parent event ID. An event without that row is a one-time event. Deleting the event deletes its recurrence row automatically.
 
-| Rule | Persisted constraint |
-| --- | --- |
-| Frequency | `day`, `week`, `month`, or `year`, repeated every `interval` units; the interval must be from 1 through 99. |
-| Weekly | `weekdays` is required, must contain 1–7 integers, and may contain only `0` (Sunday) through `6` (Saturday). Other frequencies require it to be `null`. |
-| Monthly | `monthly_pattern` is required and is either `day_of_month` or `nth_weekday`. Other frequencies require it to be `null`. |
-| Never ends | `end_type=never`; both the end date and occurrence count are `null`. |
-| Ends on a date | `end_type=on_date`; `end_date` is required and the occurrence count is `null`. |
-| Ends after a count | `end_type=after_occurrences`; `occurrence_count` is required from 2 through 1000 and the end date is `null`. |
+| Rule               | Persisted constraint                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frequency          | `day`, `week`, `month`, or `year`, repeated every `interval` units; the interval must be from 1 through 99.                                             |
+| Weekly             | `weekdays` is required, must contain 1–7 integers, and may contain only `0` (Sunday) through `6` (Saturday). Other frequencies require it to be `null`. |
+| Monthly            | `monthly_pattern` is required and is either `day_of_month` or `nth_weekday`. Other frequencies require it to be `null`.                                 |
+| Never ends         | `end_type=never`; both the end date and occurrence count are `null`.                                                                                    |
+| Ends on a date     | `end_type=on_date`; `end_date` is required and the occurrence count is `null`.                                                                          |
+| Ends after a count | `end_type=after_occurrences`; `occurrence_count` is required from 2 through 1000 and the end date is `null`.                                            |
 
 Event date/time input and recurrence calculations use the fixed IANA timezone `America/Los_Angeles`—Pacific time, switching between PST and PDT automatically. The form intentionally has no timezone picker. `end_date` is a calendar date in that same timezone, while event start and end instants remain timezone-aware timestamps.
 
@@ -201,22 +201,24 @@ After the production deploy succeeds:
 
 ## Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Start Netlify Dev, the local database, and the Next.js app on port 8888. |
-| `pnpm dev:next` | Start only Next.js on port 3000; useful for UI-only work, but no Netlify database is injected. |
-| `pnpm build` | Create a production Next.js build. |
-| `pnpm start` | Serve an already-built Next.js app. |
-| `pnpm lint` | Run ESLint. |
-| `pnpm typecheck` | Run TypeScript without emitting files. |
-| `pnpm test` | Run the Vitest test suite once. |
-| `pnpm test:watch` | Run Vitest in watch mode while developing. |
-| `pnpm verify` | Run the complete CI/deploy gate: lint, typecheck, tests, and one production build. |
-| `pnpm db:generate` | Generate SQL migrations from the Drizzle schemas. |
-| `pnpm db:migrate` | Apply pending migrations to the running local Netlify database. |
-| `pnpm db:status` | Show local database connection and migration status. |
-| `pnpm auth:generate` | Regenerate Better Auth's Drizzle schema after auth-model changes. |
-| `pnpm auth:create-admin` | Create an initial Better Auth admin when `NETLIFY_DB_URL` is available. |
+| Command                  | Purpose                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `pnpm dev`               | Start Netlify Dev, the local database, and the Next.js app on port 8888.                       |
+| `pnpm dev:next`          | Start only Next.js on port 3000; useful for UI-only work, but no Netlify database is injected. |
+| `pnpm build`             | Create a production Next.js build.                                                             |
+| `pnpm start`             | Serve an already-built Next.js app.                                                            |
+| `pnpm format`            | Format supported project files with the pinned Prettier version.                               |
+| `pnpm format:check`      | Check formatting without changing files.                                                       |
+| `pnpm lint`              | Run ESLint.                                                                                    |
+| `pnpm typecheck`         | Run TypeScript without emitting files.                                                         |
+| `pnpm test`              | Run the Vitest test suite once.                                                                |
+| `pnpm test:watch`        | Run Vitest in watch mode while developing.                                                     |
+| `pnpm verify`            | Run the complete CI/deploy gate: formatting, lint, typecheck, tests, and one production build. |
+| `pnpm db:generate`       | Generate SQL migrations from the Drizzle schemas.                                              |
+| `pnpm db:migrate`        | Apply pending migrations to the running local Netlify database.                                |
+| `pnpm db:status`         | Show local database connection and migration status.                                           |
+| `pnpm auth:generate`     | Regenerate Better Auth's Drizzle schema after auth-model changes.                              |
+| `pnpm auth:create-admin` | Create an initial Better Auth admin when `NETLIFY_DB_URL` is available.                        |
 
 Before opening a pull request, run:
 

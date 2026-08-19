@@ -60,8 +60,8 @@ export default function CodeOfConductPage() {
 								immediately.
 							</li>
 							<li>
-								Organizers and moderators may warn, restrict, or remove people who
-								violate the policy.
+								Organizers and moderators may warn, restrict, or remove people
+								who violate the policy.
 							</li>
 						</ul>
 						<a className={style.readPolicyLink} href="#full-policy">
@@ -109,19 +109,19 @@ export default function CodeOfConductPage() {
 								organizers, and moderators participating there are also covered.
 							</p>
 							<p>
-								The values and behavioral standards in this policy extend to every
-								SacTech community space, even where a formal reporting or
+								The values and behavioral standards in this policy extend to
+								every SacTech community space, even where a formal reporting or
 								enforcement process is not yet established. SacTech is still
-								defining those processes for in-person events, SacTech social media,
-								and other spaces outside Slack.
+								defining those processes for in-person events, SacTech social
+								media, and other spaces outside Slack.
 							</p>
 						</section>
 
 						<section aria-labelledby="harassment-title" id="harassment">
 							<h3 id="harassment-title">2. Harassment is not welcome</h3>
 							<p>
-								The SacTech community is dedicated to providing a harassment-free
-								experience for everyone, regardless of gender,
+								The SacTech community is dedicated to providing a
+								harassment-free experience for everyone, regardless of gender,
 								gender identity and expression, age, sexual orientation,
 								disability, physical appearance, body size, race, or religion
 								(or lack of religion). We do not tolerate harassment of
@@ -130,10 +130,10 @@ export default function CodeOfConductPage() {
 							<p>
 								Harassment includes offensive comments related to gender, gender
 								identity and expression, age, sexual orientation, disability,
-								physical appearance, body size, race, or religion; sexual images;
-								deliberate intimidation; stalking; sustained disruption of
-								channels, events, or other community communication; and unwelcome
-								sexual attention.
+								physical appearance, body size, race, or religion; sexual
+								images; deliberate intimidation; stalking; sustained disruption
+								of channels, events, or other community communication; and
+								unwelcome sexual attention.
 							</p>
 							<p>
 								Sexual language and imagery are not appropriate in any SacTech
@@ -159,9 +159,9 @@ export default function CodeOfConductPage() {
 						>
 							<h3 id="shared-responsibility-title">4. Shared responsibility</h3>
 							<p>
-								Sponsors participating in SacTech community spaces are subject to
-								this anti-harassment standard. They must not use sexualized images,
-								activities, or other material in those spaces. SacTech
+								Sponsors participating in SacTech community spaces are subject
+								to this anti-harassment standard. They must not use sexualized
+								images, activities, or other material in those spaces. SacTech
 								organizers, moderators, and volunteers must not use sexualized
 								content or otherwise create a sexualized environment.
 							</p>
@@ -172,8 +172,8 @@ export default function CodeOfConductPage() {
 							<p>
 								If a participant engages in harassing behavior, SacTech
 								organizers and moderators may take any action they consider
-								appropriate, including warning the participant, restricting their
-								participation, or removing them from the Slack workspace.
+								appropriate, including warning the participant, restricting
+								their participation, or removing them from the Slack workspace.
 							</p>
 						</section>
 
@@ -187,8 +187,8 @@ export default function CodeOfConductPage() {
 								<p>
 									If you are being harassed, notice that someone else is being
 									harassed, or have any other concerns, please contact a SacTech
-									organizer or moderator through the Slack Team Directory as soon
-									as you can safely do so.
+									organizer or moderator through the Slack Team Directory as
+									soon as you can safely do so.
 								</p>
 								<p className={style.publicPathNote}>
 									<strong>For people outside Slack:</strong> SacTech is still

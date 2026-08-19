@@ -94,9 +94,7 @@ describe("public events experience", () => {
 	it("expands a series, omits its canceled date, and shows selected-day details", async () => {
 		const user = userEvent.setup();
 
-		render(
-			<Calendar events={[recurringEvent()]} referenceDate="2026-09-01" />,
-		);
+		render(<Calendar events={[recurringEvent()]} referenceDate="2026-09-01" />);
 		const selectionStatus = document.getElementById(
 			"events-calendar-selection-status",
 		);
@@ -141,24 +139,16 @@ describe("public events experience", () => {
 	it("navigates the three-month calendar window", async () => {
 		const user = userEvent.setup();
 
-		render(
-			<Calendar events={[recurringEvent()]} referenceDate="2026-09-01" />,
-		);
-		expect(
-			screen.getByRole("table", { name: "September 2026" }),
-		).toBeVisible();
-		expect(
-			screen.getByRole("table", { name: "November 2026" }),
-		).toBeVisible();
+		render(<Calendar events={[recurringEvent()]} referenceDate="2026-09-01" />);
+		expect(screen.getByRole("table", { name: "September 2026" })).toBeVisible();
+		expect(screen.getByRole("table", { name: "November 2026" })).toBeVisible();
 
 		await user.click(screen.getByRole("button", { name: "Show next month" }));
 
 		expect(
 			screen.queryByRole("table", { name: "September 2026" }),
 		).not.toBeInTheDocument();
-		expect(
-			screen.getByRole("table", { name: "December 2026" }),
-		).toBeVisible();
+		expect(screen.getByRole("table", { name: "December 2026" })).toBeVisible();
 	});
 
 	it("uses exclusions when choosing the next occurrence for the recurring card", () => {
@@ -178,7 +168,9 @@ describe("public events experience", () => {
 			"datetime",
 			"2026-09-16T17:00:00.000Z",
 		);
-		expect(screen.queryByText(/September 9/, { selector: "time" })).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(/September 9/, { selector: "time" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("renders one call to action when recurring-event links share a destination", () => {
@@ -216,9 +208,7 @@ describe("public events experience", () => {
 			</ul>,
 		);
 
-		expect(
-			screen.getByText("No upcoming dates are scheduled."),
-		).toBeVisible();
+		expect(screen.getByText("No upcoming dates are scheduled.")).toBeVisible();
 	});
 
 	it("filters both the calendar and event-card collections by attendance type", async () => {

@@ -79,9 +79,7 @@ export default async function AdminEventsPage() {
 						{pendingEvents.map((event) => {
 							const titleId = `event-${event.id}-title`;
 							const recurrenceSummary = formatRecurrenceSummary(event);
-							const canceledOccurrences = [
-								...event.canceledOccurrences,
-							].sort();
+							const canceledOccurrences = [...event.canceledOccurrences].sort();
 
 							return (
 								<li key={event.id}>
@@ -106,7 +104,9 @@ export default async function AdminEventsPage() {
 											<div>
 												<dt>Submitted by</dt>
 												<dd className={style.submitter}>
-													<span>{event.submitterName ?? "Account unavailable"}</span>
+													<span>
+														{event.submitterName ?? "Account unavailable"}
+													</span>
 													{event.submitterEmail && (
 														<a href={`mailto:${event.submitterEmail}`}>
 															{event.submitterEmail}
@@ -160,7 +160,9 @@ export default async function AdminEventsPage() {
 												<dt>Venue</dt>
 												<dd>
 													{event.locationName ??
-														(event.mode === "online" ? "Online" : "Not provided")}
+														(event.mode === "online"
+															? "Online"
+															: "Not provided")}
 												</dd>
 											</div>
 											<div>
@@ -187,7 +189,10 @@ export default async function AdminEventsPage() {
 											</a>
 										)}
 
-										<ModerationForm eventId={event.id} eventTitle={event.title} />
+										<ModerationForm
+											eventId={event.id}
+											eventTitle={event.title}
+										/>
 									</article>
 								</li>
 							);

@@ -47,15 +47,15 @@ describe("AuthForm", () => {
 		authMocks.signInEmail.mockResolvedValue({ error: null });
 
 		render(<AuthForm />);
-		expect(
-			screen.getByRole("heading", { name: "Welcome back" }),
-		).toBeVisible();
+		expect(screen.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 		expect(
 			screen.getByRole("button", { name: "Sign in", pressed: true }),
 		).toBeVisible();
 
 		await fillCredentials(user);
-		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
+		await user.click(
+			screen.getAllByRole("button", { name: "Sign in" }).at(-1)!,
+		);
 
 		await waitFor(() =>
 			expect(authMocks.signInEmail).toHaveBeenCalledWith({
@@ -76,7 +76,9 @@ describe("AuthForm", () => {
 
 		render(<AuthForm />);
 		await fillCredentials(user);
-		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
+		await user.click(
+			screen.getAllByRole("button", { name: "Sign in" }).at(-1)!,
+		);
 
 		const message = "That email and password combination did not match.";
 		const alert = await screen.findByRole("alert");
@@ -109,7 +111,9 @@ describe("AuthForm", () => {
 
 		render(<AuthForm />);
 		await fillCredentials(user);
-		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
+		await user.click(
+			screen.getAllByRole("button", { name: "Sign in" }).at(-1)!,
+		);
 
 		const password = screen.getByLabelText("Password");
 		const alert = await screen.findByRole("alert");
@@ -180,7 +184,9 @@ describe("AuthForm", () => {
 				"An account already exists for that email. Try signing in instead.",
 			),
 		).not.toBeInTheDocument();
-		expect(screen.queryByRole("textbox", { name: "Name" })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("textbox", { name: "Name" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("reports a network failure without attempting navigation", async () => {
@@ -189,11 +195,11 @@ describe("AuthForm", () => {
 
 		render(<AuthForm />);
 		await fillCredentials(user);
-		await user.click(screen.getAllByRole("button", { name: "Sign in" }).at(-1)!);
+		await user.click(
+			screen.getAllByRole("button", { name: "Sign in" }).at(-1)!,
+		);
 
-		expect(
-			await screen.findByRole("alert"),
-		).toHaveTextContent(
+		expect(await screen.findByRole("alert")).toHaveTextContent(
 			"We could not reach the account service. Check your connection and try again.",
 		);
 		await waitFor(() =>

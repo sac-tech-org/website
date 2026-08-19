@@ -17,10 +17,7 @@ interface RecurringChipProps extends BaseEventChipProps {
 	variant: "recurring";
 }
 
-type EventChipProps =
-	| InPersonChipProps
-	| OnlineChipProps
-	| RecurringChipProps;
+type EventChipProps = InPersonChipProps | OnlineChipProps | RecurringChipProps;
 
 export function EventChip(props: EventChipProps) {
 	const label =

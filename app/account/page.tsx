@@ -98,9 +98,7 @@ export default async function AccountPage() {
 				<div>
 					<p className={style.eyebrow}>Your SacTech account</p>
 					<h1>Welcome, {session.user.name}.</h1>
-					<p>
-						Submit community events, then follow their review status here.
-					</p>
+					<p>Submit community events, then follow their review status here.</p>
 				</div>
 				<div className={style.accountActions}>
 					<Link className={style.primaryAction} href="/events/submit">
@@ -115,7 +113,10 @@ export default async function AccountPage() {
 				</div>
 			</section>
 
-			<section aria-labelledby="submissions-title" className={style.submissions}>
+			<section
+				aria-labelledby="submissions-title"
+				className={style.submissions}
+			>
 				<div className={style.sectionHeading}>
 					<p className={style.eyebrow}>Your submissions</p>
 					<h2 id="submissions-title">Events you have sent us</h2>

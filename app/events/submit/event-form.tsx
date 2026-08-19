@@ -363,8 +363,8 @@ export function EventForm() {
 					value={draft.description}
 				/>
 				<p className={style.hint} id="description-hint">
-					Share what people will do, who the event is for, and anything
-					they should bring or know.
+					Share what people will do, who the event is for, and anything they
+					should bring or know.
 				</p>
 				<FieldErrors errors={errors} field="description" />
 			</div>
@@ -402,11 +402,7 @@ export function EventForm() {
 							Ends <span aria-hidden="true">*</span>
 						</label>
 						<input
-							aria-describedby={describedBy(
-								"endsAt",
-								"time-zone-hint",
-								errors,
-							)}
+							aria-describedby={describedBy("endsAt", "time-zone-hint", errors)}
 							aria-invalid={errors?.endsAt?.length ? true : undefined}
 							id="endsAt"
 							name="endsAt"
@@ -575,7 +571,9 @@ export function EventForm() {
 
 						{recurrence.frequency === "month" && (
 							<div className={style.field}>
-								<label htmlFor="recurrenceMonthlyPattern">Monthly pattern</label>
+								<label htmlFor="recurrenceMonthlyPattern">
+									Monthly pattern
+								</label>
 								<select
 									aria-describedby={describedBy(
 										"recurrenceMonthlyPattern",
@@ -583,9 +581,7 @@ export function EventForm() {
 										errors,
 									)}
 									aria-invalid={
-										errors?.recurrenceMonthlyPattern?.length
-											? true
-											: undefined
+										errors?.recurrenceMonthlyPattern?.length ? true : undefined
 									}
 									id="recurrenceMonthlyPattern"
 									name="recurrenceMonthlyPattern"
@@ -603,12 +599,10 @@ export function EventForm() {
 									<option value="nth_weekday">{monthlyWeekdayLabel}</option>
 								</select>
 								<p className={style.hint} id="monthly-pattern-hint">
-									The pattern is calculated from the event&apos;s Pacific start date.
+									The pattern is calculated from the event&apos;s Pacific start
+									date.
 								</p>
-								<FieldErrors
-									errors={errors}
-									field="recurrenceMonthlyPattern"
-								/>
+								<FieldErrors errors={errors} field="recurrenceMonthlyPattern" />
 							</div>
 						)}
 
@@ -838,8 +832,8 @@ export function EventForm() {
 			<fieldset className={style.fieldGroup} disabled={pending}>
 				<legend>Where people attend</legend>
 				<p className={style.groupHint}>
-					A location name is required for in-person and hybrid events. An
-					event link is required for online and hybrid events.
+					A location name is required for in-person and hybrid events. An event
+					link is required for online and hybrid events.
 				</p>
 				<div className={style.field}>
 					<label htmlFor="locationName">Venue or location name</label>
@@ -899,11 +893,7 @@ export function EventForm() {
 				<div className={style.field}>
 					<label htmlFor="eventUrl">Event or registration link</label>
 					<input
-						aria-describedby={describedBy(
-							"eventUrl",
-							"event-url-hint",
-							errors,
-						)}
+						aria-describedby={describedBy("eventUrl", "event-url-hint", errors)}
 						aria-invalid={errors?.eventUrl?.length ? true : undefined}
 						id="eventUrl"
 						inputMode="url"
@@ -920,8 +910,8 @@ export function EventForm() {
 						value={draft.eventUrl}
 					/>
 					<p className={style.hint} id="event-url-hint">
-						Use a public http:// or https:// link where attendees can join
-						or learn more.
+						Use a public http:// or https:// link where attendees can join or
+						learn more.
 					</p>
 					<FieldErrors errors={errors} field="eventUrl" />
 				</div>

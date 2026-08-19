@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
-const devTunnelOrigin = process.env.SAC_TECH_DEV_ORIGIN
+const devTunnelOrigin = process.env.SAC_TECH_DEV_ORIGIN;
 
 const nextConfig = {
-  reactStrictMode: true,
-  ...(devTunnelOrigin ? { allowedDevOrigins: [devTunnelOrigin] } : {}),
-}
+	reactStrictMode: true,
+	...(devTunnelOrigin ? { allowedDevOrigins: [devTunnelOrigin] } : {}),
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

@@ -32,8 +32,10 @@ export function CancelEventForm({
 	minOccurrenceDate,
 }: CancelEventFormProps) {
 	const cancelBoundEvent = cancelEvent.bind(null, eventId);
-	const [occurrenceState, occurrenceAction, occurrencePending] =
-		useActionState(cancelBoundEvent, initialCancellationFormState);
+	const [occurrenceState, occurrenceAction, occurrencePending] = useActionState(
+		cancelBoundEvent,
+		initialCancellationFormState,
+	);
 	const [eventState, eventAction, eventPending] = useActionState(
 		cancelBoundEvent,
 		initialCancellationFormState,
@@ -103,9 +105,7 @@ export function CancelEventForm({
 							onSubmit={confirmOccurrenceCancellation}
 						>
 							<input name="scope" type="hidden" value="occurrence" />
-							<label htmlFor={`occurrence-${eventId}`}>
-								Occurrence date
-							</label>
+							<label htmlFor={`occurrence-${eventId}`}>Occurrence date</label>
 							<div className={style.occurrenceControls}>
 								<input
 									disabled={pending}

@@ -3,7 +3,9 @@ export function formatDateInTimeZone(
 	timeZone: string,
 	options: Intl.DateTimeFormatOptions,
 ) {
-	return new Intl.DateTimeFormat("en-US", { ...options, timeZone }).format(date);
+	return new Intl.DateTimeFormat("en-US", { ...options, timeZone }).format(
+		date,
+	);
 }
 
 export function formatDateKey(date: Date, timeZone: string) {

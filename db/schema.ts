@@ -142,7 +142,7 @@ export const eventRecurrence = pgTable(
 		),
 		check(
 			"event_recurrence_weekdays_consistency",
-				sql`(
+			sql`(
 				${table.frequency} = 'week'
 				AND ${table.weekdays} IS NOT NULL
 				AND array_ndims(${table.weekdays}) = 1

@@ -204,9 +204,7 @@ export function AuthForm() {
 									? "auth-error"
 									: undefined
 							}
-							aria-invalid={
-								issue?.invalidFields.includes("name") || undefined
-							}
+							aria-invalid={issue?.invalidFields.includes("name") || undefined}
 							autoComplete="name"
 							disabled={isPending}
 							id="auth-name"
@@ -226,9 +224,7 @@ export function AuthForm() {
 								? "auth-error"
 								: undefined
 						}
-						aria-invalid={
-							issue?.invalidFields.includes("email") || undefined
-						}
+						aria-invalid={issue?.invalidFields.includes("email") || undefined}
 						autoCapitalize="none"
 						autoComplete="email"
 						disabled={isPending}
@@ -270,7 +266,11 @@ export function AuthForm() {
 					</p>
 				</div>
 
-				<button className={style.submitButton} disabled={isPending} type="submit">
+				<button
+					className={style.submitButton}
+					disabled={isPending}
+					type="submit"
+				>
 					{isPending
 						? isCreatingAccount
 							? "Creating account…"

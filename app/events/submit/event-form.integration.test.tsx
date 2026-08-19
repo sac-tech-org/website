@@ -56,12 +56,17 @@ function eventEntries(recurrenceEntries: Array<[string, string]> = []) {
 	];
 }
 
-async function fillRequiredEventFields(user: ReturnType<typeof userEvent.setup>) {
+async function fillRequiredEventFields(
+	user: ReturnType<typeof userEvent.setup>,
+) {
 	await user.type(screen.getByLabelText(/Event title/), TITLE);
 	await user.type(screen.getByLabelText(/Description/), DESCRIPTION);
 	await user.fill(screen.getByLabelText(/Starts/), STARTS_AT);
 	await user.fill(screen.getByLabelText(/Ends/), ENDS_AT);
-	await user.type(screen.getByLabelText("Venue or location name"), "Central Library");
+	await user.type(
+		screen.getByLabelText("Venue or location name"),
+		"Central Library",
+	);
 	await user.type(
 		screen.getByLabelText("Street address"),
 		"828 I Street, Sacramento, CA",
@@ -157,10 +162,7 @@ describe("EventForm", () => {
 		await user.click(getControlLabel(thursday));
 		expect(thursday).toBeChecked();
 		await user.click(screen.getByRole("radio", { name: "On date" }));
-		await user.fill(
-			screen.getByLabelText("Recurrence end date"),
-			"2099-08-19",
-		);
+		await user.fill(screen.getByLabelText("Recurrence end date"), "2099-08-19");
 
 		await submitAndWaitForSuccess(user);
 
@@ -277,7 +279,9 @@ describe("EventForm", () => {
 
 		const alert = await screen.findByRole("alert");
 		const title = screen.getByLabelText(/Event title/);
-		expect(alert).toHaveTextContent("Check the highlighted fields and try again.");
+		expect(alert).toHaveTextContent(
+			"Check the highlighted fields and try again.",
+		);
 		expect(screen.getByText("That title is already in use.")).toBeVisible();
 		expect(title).toHaveValue(TITLE);
 		expect(screen.getByLabelText(/Description/)).toHaveValue(DESCRIPTION);
@@ -293,18 +297,14 @@ describe("EventForm", () => {
 			"https://example.com/demo-night",
 		);
 		await waitFor(() =>
-			expect(
-				screen.getByRole("radio", { name: /^Hybrid/ }),
-			).toBeChecked(),
+			expect(screen.getByRole("radio", { name: /^Hybrid/ })).toBeChecked(),
 		);
 		expect(
 			screen.getByRole("checkbox", { name: /This event repeats/ }),
 		).toBeChecked();
 		expect(screen.getByLabelText("Recurrence unit")).toHaveValue("month");
 		expect(screen.getByLabelText("Repeat every")).toHaveValue(3);
-		expect(screen.getByLabelText("Monthly pattern")).toHaveValue(
-			"nth_weekday",
-		);
+		expect(screen.getByLabelText("Monthly pattern")).toHaveValue("nth_weekday");
 		expect(screen.getByRole("radio", { name: "After" })).toBeChecked();
 		expect(screen.getByLabelText("Number of occurrences")).toHaveValue(8);
 		expect(title).toHaveAttribute("aria-invalid", "true");
@@ -315,7 +315,9 @@ describe("EventForm", () => {
 
 		await user.type(title, " updated");
 		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-		expect(screen.queryByText("That title is already in use.")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("That title is already in use."),
+		).not.toBeInTheDocument();
 		expect(title).not.toHaveAttribute("aria-invalid");
 	});
 
@@ -345,7 +347,9 @@ describe("EventForm", () => {
 		const form = screen.getByLabelText(/Event title/).closest("form");
 		await waitFor(() => expect(form).toHaveAttribute("aria-busy", "true"));
 		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-		expect(screen.queryByText("That title is already in use.")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("That title is already in use."),
+		).not.toBeInTheDocument();
 
 		await act(async () => {
 			retryResult.resolve(successState);
@@ -378,9 +382,7 @@ describe("EventForm", () => {
 		expect(screen.getByLabelText("Recurrence unit")).toBeDisabled();
 		expect(screen.getByRole("radio", { name: /^In person/ })).toBeDisabled();
 		expect(screen.getByLabelText("Event or registration link")).toBeDisabled();
-		expect(
-			screen.getByRole("button", { name: "Submitting…" }),
-		).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Submitting…" })).toBeDisabled();
 
 		await act(async () => {
 			result.resolve(successState);
@@ -424,9 +426,7 @@ describe("EventForm", () => {
 			).not.toBeChecked();
 		});
 		expect(screen.queryByLabelText("Recurrence unit")).toBeNull();
-		expect(
-			screen.getByRole("radio", { name: /^In person/ }),
-		).toBeChecked();
+		expect(screen.getByRole("radio", { name: /^In person/ })).toBeChecked();
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Event submitted for review.",
 		);

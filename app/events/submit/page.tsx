@@ -19,9 +19,9 @@ export default async function SubmitEventPage() {
 					<p className={style.eyebrow}>Community calendar</p>
 					<h1 id="page-title">Share an event with Sacramento.</h1>
 					<p>
-						Tell us what is happening, when people should arrive, and how
-						they can take part. A SacTech admin will review your submission
-						before it appears on the public calendar.
+						Tell us what is happening, when people should arrive, and how they
+						can take part. A SacTech admin will review your submission before it
+						appears on the public calendar.
 					</p>
 				</div>
 			</section>
@@ -34,8 +34,8 @@ export default async function SubmitEventPage() {
 						<ul>
 							<li>Use the event&apos;s public-facing title and description.</li>
 							<li>
-								Enter the start and end in Pacific time. Daylight saving time
-								is handled automatically.
+								Enter the start and end in Pacific time. Daylight saving time is
+								handled automatically.
 							</li>
 							<li>
 								Include a venue for in-person gatherings and a link for online

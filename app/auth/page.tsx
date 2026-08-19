@@ -22,7 +22,9 @@ export default async function AuthPage() {
 			<section aria-labelledby="auth-page-title" className={style.shell}>
 				<div className={style.intro}>
 					<p className={style.eyebrow}>Community accounts</p>
-					<h1 id="auth-page-title">Share what&apos;s happening in Sacramento.</h1>
+					<h1 id="auth-page-title">
+						Share what&apos;s happening in Sacramento.
+					</h1>
 					<p className={style.introCopy}>
 						Create an account to submit local tech events, or sign in to manage
 						the events you have already shared.
@@ -34,8 +36,8 @@ export default async function AuthPage() {
 							Submit an event for the community calendar.
 						</li>
 						<li>
-							<span aria-hidden="true">02</span>
-							A SacTech admin reviews the details.
+							<span aria-hidden="true">02</span>A SacTech admin reviews the
+							details.
 						</li>
 						<li>
 							<span aria-hidden="true">03</span>

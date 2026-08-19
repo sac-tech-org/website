@@ -1,0 +1,19 @@
+# Dependencies and generated output
+node_modules
+.next
+.netlify
+.vitest
+coverage
+out
+build
+next-env.d.ts
+*.tsbuildinfo
+
+# Package-manager and generated database artifacts
+pnpm-lock.yaml
+deno.lock
+db/auth-schema.ts
+netlify/database/migrations
+
+# Static assets should not be mechanically rewritten
+public

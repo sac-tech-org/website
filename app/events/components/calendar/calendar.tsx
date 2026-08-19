@@ -62,9 +62,11 @@ function getInitialMonth(events: Event[], referenceDate: string) {
 		.sort((a, b) => a.starts_at.valueOf() - b.starts_at.valueOf());
 	const anchorBlock =
 		upcomingBlocks[0] ??
-		allBlocks.sort(
-			(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
-		).at(-1);
+		allBlocks
+			.sort(
+				(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+			)
+			.at(-1);
 
 	if (anchorBlock) {
 		return dayjs(
@@ -165,7 +167,9 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 
 	return (
 		<section
-			aria-describedby={events.length === 0 ? "events-calendar-empty" : undefined}
+			aria-describedby={
+				events.length === 0 ? "events-calendar-empty" : undefined
+			}
 			aria-labelledby="events-calendar-title"
 			className={style.calendar}
 		>
@@ -233,10 +237,7 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 									{week.map((date, dayIndex) => {
 										if (!date) {
 											return (
-												<td
-													aria-hidden="true"
-													key={`blank-${dayIndex}`}
-												/>
+												<td aria-hidden="true" key={`blank-${dayIndex}`} />
 											);
 										}
 
@@ -259,7 +260,10 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 														type="button"
 													>
 														{date.date()}
-														<span aria-hidden="true" className={style.eventDot} />
+														<span
+															aria-hidden="true"
+															className={style.eventDot}
+														/>
 													</button>
 												) : (
 													<span className={style.day}>{date.date()}</span>
@@ -290,9 +294,7 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 				>
 					<div>
 						<p className={style.detailsEyebrow}>On this day</p>
-						<h3 id="events-calendar-day-details-title">
-							{selectedDateLabel}
-						</h3>
+						<h3 id="events-calendar-day-details-title">{selectedDateLabel}</h3>
 					</div>
 					<ul role="list">
 						{selectedEntries.map(({ block, event }) => (

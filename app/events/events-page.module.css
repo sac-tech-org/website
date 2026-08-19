@@ -217,7 +217,10 @@
 	font-weight: 750;
 	min-height: 2.75rem;
 	padding: 0.55rem 0.95rem;
-	transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+	transition:
+		background-color 150ms ease,
+		border-color 150ms ease,
+		color 150ms ease;
 }
 
 .filterLabel:hover > span {

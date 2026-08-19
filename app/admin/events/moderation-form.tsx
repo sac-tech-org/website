@@ -53,8 +53,8 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 					value={note}
 				/>
 				<p id={noteHintId}>
-					A rejection requires a note of at least 5 characters so the
-					submitter knows what to change.
+					A rejection requires a note of at least 5 characters so the submitter
+					knows what to change.
 				</p>
 			</div>
 

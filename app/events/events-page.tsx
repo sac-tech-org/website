@@ -23,8 +23,7 @@ const eventFilters: Array<{ label: string; value: EventType }> = [
 ];
 
 export default function EventsPage({ events, referenceDate }: EventsPageProps) {
-	const [eventTypesToShow, setEventTypesToShow] =
-		useState<EventType>("all");
+	const [eventTypesToShow, setEventTypesToShow] = useState<EventType>("all");
 
 	const filteredEvents = useMemo(() => {
 		if (eventTypesToShow === "online") {
@@ -53,9 +52,9 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						<p className={style.eyebrow}>Gather by the river</p>
 						<h1 id="events-title">Events that connect Sacramento.</h1>
 						<p className={style.intro}>
-							Meet people across the region who design, build, teach, and
-							grow technology. Browse the calendar as we confirm the next
-							round of SacTech gatherings.
+							Meet people across the region who design, build, teach, and grow
+							technology. Browse the calendar as we confirm the next round of
+							SacTech gatherings.
 						</p>
 					</div>
 					<BridgeArt className={style.heroArt} compact />
@@ -168,8 +167,8 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						<p className={style.calloutEyebrow}>Between gatherings</p>
 						<h2 id="events-community-title">The conversation keeps moving.</h2>
 						<p>
-							Join the SacTech community to meet neighbors, share what you
-							know, and hear when new events are announced.
+							Join the SacTech community to meet neighbors, share what you know,
+							and hear when new events are announced.
 						</p>
 					</div>
 					<Link className={style.communityLink} href="/#join">
@@ -182,8 +181,8 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						<p className={style.calloutEyebrow}>Add to the calendar</p>
 						<h2>Hosting something for Sacramento tech?</h2>
 						<p>
-							Create an account and send the details to SacTech. An admin
-							will review the event before it appears publicly.
+							Create an account and send the details to SacTech. An admin will
+							review the event before it appears publicly.
 						</p>
 					</div>
 					<Link className={style.submitLink} href="/events/submit">

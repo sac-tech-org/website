@@ -251,7 +251,9 @@
 	height: 100%;
 	min-height: 5rem;
 	padding: 0.85rem;
-	transition: background-color 150ms ease, border-color 150ms ease;
+	transition:
+		background-color 150ms ease,
+		border-color 150ms ease;
 }
 
 .modeOption strong {

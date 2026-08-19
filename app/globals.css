@@ -12,8 +12,10 @@
 	--color-ink-muted: #4d5c67;
 	--color-line: #dfc07a;
 	--color-focus: #087b84;
-	--font-display: "Avenir Next", "Trebuchet MS", ui-sans-serif, system-ui, sans-serif;
-	--font-body: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--font-display:
+		"Avenir Next", "Trebuchet MS", ui-sans-serif, system-ui, sans-serif;
+	--font-body:
+		ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 	--site-width: 72rem;
 	--site-gutter: clamp(1rem, 4vw, 3rem);
 	--section-space: clamp(4rem, 8vw, 7rem);

@@ -25,20 +25,20 @@ The identity must remain distinct from Playful Programming. Do not reuse its pal
 
 ## Color tokens
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `--color-navy` | `#062a53` | Primary ink, navigation, dark panels |
-| `--color-navy-deep` | `#031f3f` | Footer and high-contrast surfaces |
-| `--color-river` | `#05636a` | Secondary actions, icons, river motifs |
-| `--color-river-deep` | `#00474e` | Hero backgrounds |
-| `--color-bridge` | `#f2ab18` | Structural rules, towers, selected dates |
-| `--color-bridge-deep` | `#9a5c00` | Gold text or borders on light surfaces |
-| `--color-cream` | `#fff5e5` | Primary canvas |
-| `--color-paper` | `#fffdf8` | Cards and reading surfaces |
-| `--color-poppy` | `#e8562f` | Sparing emphasis and calls to action |
-| `--color-poppy-deep` | `#b93619` | Accessible coral button background |
-| `--color-ink-muted` | `#4d5c67` | Supporting copy |
-| `--color-line` | `#dfc07a` | Quiet borders on light surfaces |
+| Token                 | Value     | Use                                      |
+| --------------------- | --------- | ---------------------------------------- |
+| `--color-navy`        | `#062a53` | Primary ink, navigation, dark panels     |
+| `--color-navy-deep`   | `#031f3f` | Footer and high-contrast surfaces        |
+| `--color-river`       | `#05636a` | Secondary actions, icons, river motifs   |
+| `--color-river-deep`  | `#00474e` | Hero backgrounds                         |
+| `--color-bridge`      | `#f2ab18` | Structural rules, towers, selected dates |
+| `--color-bridge-deep` | `#9a5c00` | Gold text or borders on light surfaces   |
+| `--color-cream`       | `#fff5e5` | Primary canvas                           |
+| `--color-paper`       | `#fffdf8` | Cards and reading surfaces               |
+| `--color-poppy`       | `#e8562f` | Sparing emphasis and calls to action     |
+| `--color-poppy-deep`  | `#b93619` | Accessible coral button background       |
+| `--color-ink-muted`   | `#4d5c67` | Supporting copy                          |
+| `--color-line`        | `#dfc07a` | Quiet borders on light surfaces          |
 
 Rules:
 

@@ -515,14 +515,12 @@ describe("event Server Actions and queries", () => {
 		expect(result).toMatchObject({ status: "success" });
 		expect(stored.rows).toEqual([
 			{
-				moderation_note:
-					"Please add more information about who should attend.",
+				moderation_note: "Please add more information about who should attend.",
 				status: "rejected",
 			},
 		]);
 		expect(accountEvent).toMatchObject({
-			moderationNote:
-				"Please add more information about who should attend.",
+			moderationNote: "Please add more information about who should attend.",
 			status: "rejected",
 		});
 		expect(
@@ -732,9 +730,7 @@ describe("event Server Actions and queries", () => {
 		expect(stored.rows[0].occurrence_date.toISOString()).toBe(
 			"2026-09-09T00:00:00.000Z",
 		);
-		expect(publicEvent.recurrence_rule?.excludedDates).toEqual([
-			"2026-09-09",
-		]);
+		expect(publicEvent.recurrence_rule?.excludedDates).toEqual(["2026-09-09"]);
 		expect(accountEvent?.canceledOccurrences).toEqual(["2026-09-09"]);
 		expect(revalidatePathMock.mock.calls).toEqual([
 			["/events"],
@@ -799,7 +795,9 @@ describe("event Server Actions and queries", () => {
 		);
 
 		if (exception.status !== "success") {
-			throw new Error(`Could not seed occurrence exception: ${exception.message}`);
+			throw new Error(
+				`Could not seed occurrence exception: ${exception.message}`,
+			);
 		}
 
 		const pendingRecurringEventId = await submitRecurringEvent({
@@ -838,9 +836,7 @@ describe("event Server Actions and queries", () => {
 		});
 		expect(stored.rows[0].canceled_at).toEqual(FIXED_NOW);
 		expect(publicEvents).toEqual([]);
-		expect(pending.map((event) => event.id)).toEqual([
-			pendingRecurringEventId,
-		]);
+		expect(pending.map((event) => event.id)).toEqual([pendingRecurringEventId]);
 		expect(accountEvent?.canceledAt).toEqual(FIXED_NOW);
 		expect(accountEvent?.canceledOccurrences).toEqual(["2026-09-09"]);
 		expect(revalidatePathMock.mock.calls).toEqual([

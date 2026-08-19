@@ -14,10 +14,7 @@ export const metadata: Metadata = {
 export default async function EventsRoute() {
 	await connection();
 
-	const currentSacramentoDate = formatDateKey(
-		new Date(),
-		SACRAMENTO_TIME_ZONE,
-	);
+	const currentSacramentoDate = formatDateKey(new Date(), SACRAMENTO_TIME_ZONE);
 	const events = await getApprovedEvents();
 
 	return <EventsPage events={events} referenceDate={currentSacramentoDate} />;

@@ -5,8 +5,18 @@
 
 .truss {
 	background:
-		repeating-linear-gradient(45deg, transparent 0 1.25rem, var(--color-bridge) 1.3rem 1.48rem, transparent 1.53rem 2.75rem),
-		repeating-linear-gradient(-45deg, transparent 0 1.25rem, var(--color-bridge) 1.3rem 1.48rem, transparent 1.53rem 2.75rem);
+		repeating-linear-gradient(
+			45deg,
+			transparent 0 1.25rem,
+			var(--color-bridge) 1.3rem 1.48rem,
+			transparent 1.53rem 2.75rem
+		),
+		repeating-linear-gradient(
+			-45deg,
+			transparent 0 1.25rem,
+			var(--color-bridge) 1.3rem 1.48rem,
+			transparent 1.53rem 2.75rem
+		);
 	border-bottom: 3px solid var(--color-bridge);
 	border-top: 3px solid var(--color-bridge);
 	height: 2rem;

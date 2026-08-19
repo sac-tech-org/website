@@ -219,9 +219,7 @@ describe("Netlify Database migrations", () => {
 			weekdays: string;
 		}
 
-		const insertRecurrence = (
-			overrides: Partial<RecurrenceSqlValues> = {},
-		) => {
+		const insertRecurrence = (overrides: Partial<RecurrenceSqlValues> = {}) => {
 			const values: RecurrenceSqlValues = {
 				endDate: "NULL",
 				endType: "'never'",
@@ -292,10 +290,7 @@ describe("Netlify Database migrations", () => {
 					occurrenceCount: "4",
 				},
 			],
-			[
-				"an end date on a never-ending rule",
-				{ endDate: "'2026-12-31'" },
-			],
+			["an end date on a never-ending rule", { endDate: "'2026-12-31'" }],
 			[
 				"an after-occurrences ending without a count",
 				{ endType: "'after_occurrences'" },

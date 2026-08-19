@@ -98,7 +98,8 @@ export async function submitEvent(
 
 	return {
 		status: "success",
-		message: "Event submitted. A SacTech admin will review it before it appears.",
+		message:
+			"Event submitted. A SacTech admin will review it before it appears.",
 	};
 }
 
@@ -124,7 +125,8 @@ export async function moderateEvent(
 			status: "error",
 			message: moderation.success
 				? "That event could not be found."
-				: moderation.error.issues[0]?.message ?? "Check the review and try again.",
+				: (moderation.error.issues[0]?.message ??
+					"Check the review and try again."),
 		};
 	}
 
@@ -227,13 +229,10 @@ export async function cancelEvent(
 				.from(event)
 				.leftJoin(eventRecurrence, eq(event.id, eventRecurrence.eventId))
 				.where(
-					and(
-						eq(event.id, id.data),
-						eq(event.submittedBy, session.user.id),
-					),
-					)
-					.limit(1)
-					.for("update", { of: event });
+					and(eq(event.id, id.data), eq(event.submittedBy, session.user.id)),
+				)
+				.limit(1)
+				.for("update", { of: event });
 
 			if (!ownedEvent) {
 				return {
@@ -311,26 +310,26 @@ export async function cancelEvent(
 				occurrenceCount: ownedEvent.recurrenceCount,
 				weekdays: ownedEvent.recurrenceWeekdays,
 			};
-				const [scheduledOccurrence] = getOccurrencesInRange(
-					ownedEvent.startsAt,
-					recurrenceRule,
-					occurrenceDate,
-					occurrenceDate,
-				);
+			const [scheduledOccurrence] = getOccurrencesInRange(
+				ownedEvent.startsAt,
+				recurrenceRule,
+				occurrenceDate,
+				occurrenceDate,
+			);
 
-				if (!scheduledOccurrence) {
-					return {
-						status: "error",
-						message: "That date is not a scheduled occurrence of this event.",
-					} satisfies CancellationFormState;
-				}
+			if (!scheduledOccurrence) {
+				return {
+					status: "error",
+					message: "That date is not a scheduled occurrence of this event.",
+				} satisfies CancellationFormState;
+			}
 
-				if (scheduledOccurrence <= new Date()) {
-					return {
-						status: "error",
-						message: "Only future event occurrences can be canceled.",
-					} satisfies CancellationFormState;
-				}
+			if (scheduledOccurrence <= new Date()) {
+				return {
+					status: "error",
+					message: "Only future event occurrences can be canceled.",
+				} satisfies CancellationFormState;
+			}
 
 			const [createdCancellation] = await transaction
 				.insert(eventOccurrenceCancellation)

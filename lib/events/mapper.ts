@@ -32,9 +32,7 @@ export function mapApprovedEventsToCalendar(
 		const locationDescription =
 			row.mode === "online" ? "Online" : (row.locationName ?? "Sacramento");
 		const recurrenceRule: RecurrenceRule | null =
-			row.recurrenceFrequency &&
-			row.recurrenceInterval &&
-			row.recurrenceEndType
+			row.recurrenceFrequency && row.recurrenceInterval && row.recurrenceEndType
 				? {
 						endDate: row.recurrenceEndDate,
 						endType: row.recurrenceEndType,

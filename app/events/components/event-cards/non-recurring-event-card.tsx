@@ -48,7 +48,9 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 			<p className={style.eventDate}>
 				<span aria-hidden="true">◷</span>
 				{startBlock ? (
-					<time dateTime={formatDateKey(startBlock.starts_at, startBlock.timezone)}>
+					<time
+						dateTime={formatDateKey(startBlock.starts_at, startBlock.timezone)}
+					>
 						{dateLabel}
 					</time>
 				) : (
