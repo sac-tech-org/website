@@ -6,7 +6,7 @@ import style from "./event-form.module.css";
 export const metadata: Metadata = {
 	title: "Submit an event",
 	description:
-		"Share a Sacramento technology event with the SacTech community calendar.",
+		"Submit a Sacramento technology event to the SacTech community calendar.",
 };
 
 export default async function SubmitEventPage() {
@@ -17,11 +17,11 @@ export default async function SubmitEventPage() {
 			<section aria-labelledby="page-title" className={style.hero}>
 				<div className={style.heroInner}>
 					<p className={style.eyebrow}>Community calendar</p>
-					<h1 id="page-title">Share an event with Sacramento.</h1>
+					<h1 id="page-title">Tell Sacramento about your event.</h1>
 					<p>
-						Tell us what is happening, when people should arrive, and how they
-						can take part. A SacTech admin will review your submission before it
-						appears on the public calendar.
+						Tell us what&apos;s happening, when it starts, and how people can
+						join. A SacTech admin will review it before it appears on the public
+						calendar.
 					</p>
 				</div>
 			</section>
@@ -30,21 +30,21 @@ export default async function SubmitEventPage() {
 				<div className={style.layout}>
 					<aside className={style.guide}>
 						<p className={style.guideEyebrow}>Before you submit</p>
-						<h2 id="form-title">Give reviewers the useful details.</h2>
+						<h2 id="form-title">Give us the details we need.</h2>
 						<ul>
-							<li>Use the event&apos;s public-facing title and description.</li>
+							<li>Use the title and description that attendees will see.</li>
 							<li>
-								Enter the start and end in Pacific time. Daylight saving time is
-								handled automatically.
+								Enter the start and end times in Pacific time. We&apos;ll handle
+								daylight saving time automatically.
 							</li>
 							<li>
-								Include a venue for in-person gatherings and a link for online
-								ones.
+								For in-person events, include a venue. For online events,
+								include a link.
 							</li>
 						</ul>
 						<p className={style.reviewNote}>
-							<strong>Every event starts as pending.</strong> It will only be
-							published after a SacTech admin approves it.
+							<strong>We mark every new event as pending.</strong> A SacTech
+							admin must approve it before it&apos;s published.
 						</p>
 					</aside>
 

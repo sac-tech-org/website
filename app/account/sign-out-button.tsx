@@ -25,8 +25,7 @@ export function SignOutButton({ className }: SignOutButtonProps) {
 
 			if (result.error) {
 				setErrorMessage(
-					result.error.message ??
-						"We could not sign you out. Please try again.",
+					result.error.message ?? "We couldn't sign you out. Try again.",
 				);
 				return;
 			}
@@ -36,7 +35,7 @@ export function SignOutButton({ className }: SignOutButtonProps) {
 			router.refresh();
 		} catch {
 			setErrorMessage(
-				"We could not reach the account service. Check your connection and try again.",
+				"We couldn't connect to the account service. Check your connection and try again.",
 			);
 		} finally {
 			setIsPending(false);

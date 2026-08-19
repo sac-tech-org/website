@@ -36,8 +36,8 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 			className={style.moderationForm}
 		>
 			<div className={style.moderationHeading}>
-				<h4>Review decision</h4>
-				<p>Approval publishes this event to the calendar.</p>
+				<h4>Approve or reject</h4>
+				<p>Approving publishes this event to the calendar.</p>
 			</div>
 
 			<div className={style.noteField}>
@@ -53,8 +53,8 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 					value={note}
 				/>
 				<p id={noteHintId}>
-					A rejection requires a note of at least 5 characters so the submitter
-					knows what to change.
+					A note is optional when you approve. If you reject, write at least 5
+					characters so the submitter knows what to change.
 				</p>
 			</div>
 

@@ -113,7 +113,7 @@ describe("EventForm", () => {
 		await fillRequiredEventFields(user);
 
 		expect(
-			screen.getByText(/Enter both times in Pacific time/),
+			screen.getByText(/Use Pacific time/),
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole("checkbox", { name: /This event repeats/ }),
@@ -166,7 +166,9 @@ describe("EventForm", () => {
 		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "day");
 
 		expect(
-			screen.getByText("Each occurrence starts at the same Pacific time."),
+			screen.getByText(
+				"The event starts at the same Pacific time each time it repeats.",
+			),
 		).toBeVisible();
 		expect(screen.queryByRole("group", { name: /Repeat on/ })).toBeNull();
 
@@ -262,7 +264,7 @@ describe("EventForm", () => {
 
 		const yearlyDate = screen.getByText("May 19");
 		expect(yearlyDate.closest("p")).toHaveTextContent(
-			"Each year repeats on May 19 at the same Pacific time.",
+			"The event repeats every 2 years on May 19 at the same Pacific time.",
 		);
 
 		await submitAndWaitForSuccess(user);
@@ -346,7 +348,7 @@ describe("EventForm", () => {
 		expect(screen.getByLabelText("Number of occurrences")).toHaveValue(8);
 		expect(title).toHaveAttribute("aria-invalid", "true");
 		expect(title).toHaveAccessibleDescription(
-			"Use the name attendees will recognize. That title is already in use.",
+			"Use the event name attendees will see. That title is already in use.",
 		);
 		await waitFor(() => expect(title).toHaveFocus());
 
@@ -378,7 +380,7 @@ describe("EventForm", () => {
 		expect(await screen.findByRole("alert")).toBeVisible();
 		expect(description).toHaveAttribute("aria-invalid", "true");
 		expect(description).toHaveAccessibleDescription(
-			"Share what people will do, who the event is for, and anything they should bring or know. Add a little more detail for attendees.",
+			"Tell people what will happen, who the event is for, and what they should bring or know. Add a little more detail for attendees.",
 		);
 		await waitFor(() => expect(description).toHaveFocus());
 

@@ -6,7 +6,7 @@ import style from "./home.module.css";
 
 export const metadata: Metadata = {
 	description:
-		"Meet, learn, and build with Sacramento's welcoming technology community.",
+		"Meet people, share what you know, and find technology events around Sacramento.",
 };
 
 export default function Home() {
@@ -18,10 +18,10 @@ export default function Home() {
 						<p className={style.eyebrow}>
 							A technology community for Sacramento
 						</p>
-						<h1>Sacramento tech, built together.</h1>
+						<h1>Find your people in Sacramento tech.</h1>
 						<p className={style.heroText}>
-							A welcoming home for the people who design, build, teach, and grow
-							technology in our region.
+							SacTech is a welcoming place for people who design, build, teach,
+							or work with technology across the Sacramento region.
 						</p>
 						<div className={style.heroActions}>
 							<Link className={style.primaryAction} href="/events">
@@ -39,12 +39,12 @@ export default function Home() {
 			<section className={style.mission} id="community">
 				<div className={style.sectionInner}>
 					<div className={style.sectionIntro}>
-						<p className={style.eyebrowDark}>Our mission</p>
-						<h2>Meet people. Share skills. Build locally.</h2>
+						<p className={style.eyebrowDark}>Why SacTech exists</p>
+						<h2>Learn from each other and build close to home.</h2>
 						<p>
-							SacTech brings together technologists, designers, students, career
-							changers, and community members through shared learning and local
-							connection.
+							SacTech brings technologists, designers, students, career
+							changers, and other community members together to share skills and
+							make local connections.
 						</p>
 					</div>
 
@@ -55,8 +55,8 @@ export default function Home() {
 							</span>
 							<h3>Inclusive</h3>
 							<p>
-								Every background, identity, discipline, and experience level
-								belongs here.
+								You belong here, whatever your background, identity, field, or
+								experience level.
 							</p>
 						</article>
 						<article>
@@ -65,8 +65,8 @@ export default function Home() {
 							</span>
 							<h3>Practical</h3>
 							<p>
-								Real skills, generous conversation, and useful connections for
-								our local community.
+								We swap practical skills and make room for generous
+								conversations and useful local connections.
 							</p>
 						</article>
 						<article>
@@ -75,8 +75,8 @@ export default function Home() {
 							</span>
 							<h3>Civic-minded</h3>
 							<p>
-								We use technology to support our neighbors and strengthen the
-								region we share.
+								We use technology to help our neighbors and the Sacramento
+								region.
 							</p>
 						</article>
 					</div>
@@ -86,12 +86,11 @@ export default function Home() {
 			<section className={style.eventsPreview}>
 				<div className={style.sectionInner}>
 					<div className={style.eventsPanel}>
-						<p className={style.eyebrowDark}>Upcoming in Sacramento</p>
-						<h2>The community calendar is getting a local refresh.</h2>
+						<p className={style.eyebrowDark}>Upcoming events</p>
+						<h2>We&apos;re rebuilding the calendar around local events.</h2>
 						<p>
-							We are replacing the imported sample schedule with verified
-							SacTech and community events. The new lineup will appear here as
-							soon as it is ready.
+							The imported sample schedule is gone. We&apos;ll add SacTech and
+							community events as soon as we&apos;ve verified the details.
 						</p>
 						<Link className={style.textAction} href="/events">
 							Visit the events page <span aria-hidden="true">→</span>
@@ -99,13 +98,13 @@ export default function Home() {
 					</div>
 					<div className={style.communityPanel}>
 						<p className={style.eyebrow}>How we gather</p>
-						<h2>There is a place for you at the table.</h2>
+						<h2>Find a way to join in.</h2>
 						<ul>
 							<li>Community conversations</li>
 							<li>Peer-led learning</li>
 							<li>Local and online gatherings</li>
 						</ul>
-						<Link href="/code-of-conduct">How we care for the community</Link>
+						<Link href="/code-of-conduct">Read our Code of Conduct</Link>
 					</div>
 				</div>
 			</section>
@@ -114,10 +113,10 @@ export default function Home() {
 				<div className={style.joinInner}>
 					<div>
 						<p className={style.eyebrow}>Join the community</p>
-						<h2>Come build a better Sacramento with us.</h2>
+						<h2>Meet the community on Slack.</h2>
 						<p>
-							Join the SacTech Slack to meet neighbors, share what you know, and
-							find your next local connection.
+							Join the SacTech Slack to share what you know and meet more people
+							in the local community.
 						</p>
 					</div>
 					<JoinCommunity inviteLink={process.env.NEXT_PUBLIC_INVITE_LINK} />

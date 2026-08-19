@@ -5,7 +5,7 @@ import style from "./code-of-conduct.module.css";
 export const metadata: Metadata = {
 	title: "Code of Conduct",
 	description:
-		"Read the SacTech Code of Conduct, learn what we expect across our community spaces, and find reporting and support guidance.",
+		"Read what SacTech expects in its community spaces and how to report a concern or ask for support.",
 };
 
 const policySections = [

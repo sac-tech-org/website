@@ -208,7 +208,9 @@ describe("public events experience", () => {
 			</ul>,
 		);
 
-		expect(screen.getByText("No upcoming dates are scheduled.")).toBeVisible();
+		expect(
+			screen.getByText("There aren't any upcoming dates yet."),
+		).toBeVisible();
 	});
 
 	it("filters both the calendar and event-card collections by attendance type", async () => {

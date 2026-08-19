@@ -311,7 +311,7 @@ export function EventForm() {
 		>
 			<div className={style.formHeading}>
 				<p className={style.stepLabel}>Event submission</p>
-				<h2>What should the community know?</h2>
+				<h2>Tell us about the event</h2>
 				<p>
 					Fields marked <span aria-hidden="true">*</span> are required.
 				</p>
@@ -340,7 +340,7 @@ export function EventForm() {
 					value={draft.title}
 				/>
 				<p className={style.hint} id="title-hint">
-					Use the name attendees will recognize.
+					Use the event name attendees will see.
 				</p>
 				<FieldErrors errors={errors} field="title" />
 			</div>
@@ -361,7 +361,7 @@ export function EventForm() {
 					value={draft.description}
 				/>
 				<p className={style.hint} id="description-hint">
-					Share what people will do, who the event is for, and anything they
+					Tell people what will happen, who the event is for, and what they
 					should bring or know.
 				</p>
 				<FieldErrors errors={errors} field="description" />
@@ -370,8 +370,8 @@ export function EventForm() {
 			<fieldset className={style.fieldGroup} disabled={pending}>
 				<legend>When it happens</legend>
 				<p className={style.groupHint} id="time-zone-hint">
-					Enter both times in Pacific time ({SACRAMENTO_TIME_ZONE}). We apply
-					PST or PDT automatically for the event date.
+					Use Pacific time ({SACRAMENTO_TIME_ZONE}) for both. We&apos;ll apply
+					PST or PDT based on the event date.
 				</p>
 				<div className={style.twoColumns}>
 					<div className={style.field}>
@@ -445,7 +445,7 @@ export function EventForm() {
 					/>
 					<span>
 						<strong>This event repeats</strong>
-						<small>Build a daily, weekly, monthly, or yearly schedule.</small>
+						<small>Choose a daily, weekly, monthly, or yearly schedule.</small>
 					</span>
 				</label>
 				<p className={style.groupHint} id="recurring-hint">
@@ -524,7 +524,7 @@ export function EventForm() {
 							</select>
 						</div>
 						<p className={style.hint} id="repeat-every-hint">
-							Set how much time passes between occurrences.
+							Choose how often the event repeats.
 						</p>
 						<FieldErrors errors={errors} field="recurrenceInterval" />
 						<FieldErrors errors={errors} field="recurrenceFrequency" />
@@ -542,9 +542,9 @@ export function EventForm() {
 									Repeat on <span aria-hidden="true">*</span>
 								</legend>
 								<p className={style.hint} id="weekdays-hint">
-									Choose one or more days. The event start day is selected by
-									default and must stay selected. Add any other days this event
-									also occurs.
+									The event&apos;s start day is selected automatically and
+									can&apos;t be removed. Add any other days when it also
+									happens.
 								</p>
 								<div className={style.weekdayOptions}>
 									{WEEKDAYS.map((day) => (
@@ -597,7 +597,7 @@ export function EventForm() {
 									<option value="nth_weekday">{monthlyWeekdayLabel}</option>
 								</select>
 								<p className={style.hint} id="monthly-pattern-hint">
-									The pattern is calculated from the event&apos;s Pacific start
+									We calculate this pattern from the event&apos;s Pacific start
 									date.
 								</p>
 								<FieldErrors errors={errors} field="recurrenceMonthlyPattern" />
@@ -606,21 +606,21 @@ export function EventForm() {
 
 						{recurrence.frequency === "day" && (
 							<p className={style.frequencyNote}>
-								Each occurrence starts at the same Pacific time.
+								The event starts at the same Pacific time each time it repeats.
 							</p>
 						)}
 
 						{recurrence.frequency === "year" && (
 							<p className={style.frequencyNote}>
-								Each year repeats on <strong>{yearlyDateLabel}</strong> at the
-								same Pacific time.
+								The event repeats every {recurrence.interval}{" "}
+								{recurrence.interval === "1" ? "year" : "years"} on{" "}
+								<strong>{yearlyDateLabel}</strong> at the same Pacific time.
 							</p>
 						)}
 
 						<p className={style.timezoneNotice}>
-							<strong>Pacific time is fixed for the full series.</strong> We use{" "}
-							{SACRAMENTO_TIME_ZONE} and apply PST or PDT to each occurrence as
-							needed.
+							<strong>The whole series stays on Pacific time.</strong> We use{" "}
+							{SACRAMENTO_TIME_ZONE} and apply PST or PDT based on each date.
 						</p>
 
 						<fieldset
@@ -633,7 +633,7 @@ export function EventForm() {
 						>
 							<legend>Ends</legend>
 							<p className={style.hint} id="recurrence-end-hint">
-								Choose how long this series should continue.
+								Choose when this series ends.
 							</p>
 							<div className={style.endOptions}>
 								<div className={style.endOption}>
@@ -763,7 +763,7 @@ export function EventForm() {
 					How people attend <span aria-hidden="true">*</span>
 				</legend>
 				<p className={style.groupHint} id="mode-hint">
-					Choose the option that describes the complete event.
+					Choose the option that covers every way people can attend.
 				</p>
 				<div className={style.modeOptions}>
 					<label className={style.modeOption}>
@@ -801,7 +801,7 @@ export function EventForm() {
 						/>
 						<span>
 							<strong>Online</strong>
-							<small>Joined through a link</small>
+							<small>Through a link</small>
 						</span>
 					</label>
 					<label className={style.modeOption}>
@@ -830,8 +830,8 @@ export function EventForm() {
 			<fieldset className={style.fieldGroup} disabled={pending}>
 				<legend>Where people attend</legend>
 				<p className={style.groupHint}>
-					A location name is required for in-person and hybrid events. An event
-					link is required for online and hybrid events.
+					In-person and hybrid events need a location name. Online and hybrid
+					events need an event link.
 				</p>
 				<div className={style.field}>
 					<label htmlFor="locationName">Venue or location name</label>
@@ -908,8 +908,8 @@ export function EventForm() {
 						value={draft.eventUrl}
 					/>
 					<p className={style.hint} id="event-url-hint">
-						Use a public http:// or https:// link where attendees can join or
-						learn more.
+						Link to a public page where people can join or learn more. Use
+						http:// or https://.
 					</p>
 					<FieldErrors errors={errors} field="eventUrl" />
 				</div>
@@ -935,8 +935,8 @@ export function EventForm() {
 					<span aria-hidden="true">→</span>
 				</button>
 				<p>
-					Submitting does not publish the event. It sends it to the SacTech
-					review queue.
+					This won&apos;t publish the event. It will go to the SacTech review
+					queue.
 				</p>
 			</div>
 		</form>

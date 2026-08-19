@@ -15,7 +15,8 @@ import style from "./account.module.css";
 
 export const metadata: Metadata = {
 	title: "Your account",
-	description: "Manage your SacTech community event submissions.",
+	description:
+		"Submit events and check their review status in your SacTech account.",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -96,9 +97,9 @@ export default async function AccountPage() {
 		<main className={style.page} id="main-content">
 			<section className={style.hero}>
 				<div>
-					<p className={style.eyebrow}>Your SacTech account</p>
+					<p className={style.eyebrow}>Your account</p>
 					<h1>Welcome, {session.user.name}.</h1>
-					<p>Submit community events, then follow their review status here.</p>
+					<p>Submit an event and check its review status here.</p>
 				</div>
 				<div className={style.accountActions}>
 					<Link className={style.primaryAction} href="/events/submit">
@@ -118,17 +119,16 @@ export default async function AccountPage() {
 				className={style.submissions}
 			>
 				<div className={style.sectionHeading}>
-					<p className={style.eyebrow}>Your submissions</p>
-					<h2 id="submissions-title">Events you have sent us</h2>
+					<h2 id="submissions-title">Events you&apos;ve sent us</h2>
 				</div>
 
 				{submissions.length === 0 ? (
 					<div className={style.emptyState}>
-						<h3>No events submitted yet</h3>
+						<h3>No events here yet</h3>
 						<p>
-							When you send an event for review, its status will appear here.
+							Once you send us an event, you&apos;ll see its review status here.
 						</p>
-						<Link href="/events/submit">Share the first one →</Link>
+						<Link href="/events/submit">Submit an event →</Link>
 					</div>
 				) : (
 					<ul className={style.submissionList} role="list">
@@ -176,7 +176,7 @@ export default async function AccountPage() {
 									)}
 									{canceledOccurrences.length > 0 && (
 										<div className={style.canceledOccurrences}>
-											<h4>Canceled occurrences</h4>
+											<h4>Canceled dates</h4>
 											<ul aria-label={`Canceled dates for ${submission.title}`}>
 												{canceledOccurrences.map((date) => (
 													<li key={date}>
@@ -190,7 +190,7 @@ export default async function AccountPage() {
 									)}
 									{submission.moderationNote && (
 										<div className={style.reviewNote}>
-											<strong>Admin note</strong>
+											<strong>Note from the reviewer</strong>
 											<p>{submission.moderationNote}</p>
 										</div>
 									)}

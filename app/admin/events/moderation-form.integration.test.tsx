@@ -51,7 +51,7 @@ describe("ModerationForm", () => {
 		const formQueries = within(form);
 
 		expect(
-			formQueries.getByText("Approval publishes this event to the calendar."),
+			formQueries.getByText("Approving publishes this event to the calendar."),
 		).toBeVisible();
 		await user.type(
 			formQueries.getByLabelText("Note to submitter (optional)"),

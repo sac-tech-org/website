@@ -8,7 +8,7 @@ import EventsPage from "./events-page";
 export const metadata: Metadata = {
 	title: "Events",
 	description:
-		"Explore the SacTech community calendar while the next verified Sacramento technology events are confirmed.",
+		"Browse approved Sacramento technology events and check back as more dates are confirmed.",
 };
 
 export default async function EventsRoute() {

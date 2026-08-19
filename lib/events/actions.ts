@@ -89,7 +89,7 @@ export async function submitEvent(
 		console.error("Unable to save event submission", error);
 		return {
 			status: "error",
-			message: "We could not save the event right now. Please try again.",
+			message: "We couldn't save your event right now. Try again.",
 		};
 	}
 
@@ -159,7 +159,7 @@ export async function moderateEvent(
 		console.error("Unable to moderate event", error);
 		return {
 			status: "error",
-			message: "We could not save this review. Please try again.",
+			message: "We couldn't save this review. Try again.",
 		};
 	}
 
@@ -365,7 +365,7 @@ export async function cancelEvent(
 		console.error("Unable to cancel event", error);
 		return {
 			status: "error",
-			message: "We could not cancel this event right now. Please try again.",
+			message: "We couldn't cancel this event right now. Try again.",
 		};
 	}
 }

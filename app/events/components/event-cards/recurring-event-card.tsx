@@ -53,10 +53,12 @@ export function RecurringEventsCard({
 							{ hour: "numeric", minute: "2-digit" },
 						)}
 					</time>
-					<span className={style.dateStatus}>Next occurrence</span>
+					<span className={style.dateStatus}>Next date</span>
 				</p>
 			) : (
-				<p className={style.eventDate}>No upcoming dates are scheduled.</p>
+				<p className={style.eventDate}>
+					There aren&apos;t any upcoming dates yet.
+				</p>
 			)}
 
 			<ul aria-label="Event type" className={style.chips}>
@@ -80,7 +82,7 @@ export function RecurringEventsCard({
 			{featuredBlock?.location_description && (
 				<div className={style.topicCard}>
 					<div>
-						<span>Next occurrence</span>
+						<span>Next location</span>
 						<strong>{featuredBlock.location_description}</strong>
 					</div>
 					{featuredBlock.location_url &&

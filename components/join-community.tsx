@@ -21,9 +21,7 @@ export function JoinCommunity({ inviteLink }: JoinCommunityProps) {
 		}
 
 		if (!inviteLink) {
-			setMessage(
-				"The community invite is being refreshed. Please check back soon.",
-			);
+			setMessage("The Slack invite isn't ready yet. Please check back soon.");
 			return;
 		}
 
@@ -33,10 +31,10 @@ export function JoinCommunity({ inviteLink }: JoinCommunityProps) {
 	if (!inviteLink) {
 		return (
 			<div className={style.unavailable}>
-				<strong>Slack invitations are being refreshed.</strong>
+				<strong>We&apos;re updating the Slack invitations.</strong>
 				<p>
-					The new community invite will appear here when it is ready. In the
-					meantime, you can read our{" "}
+					We&apos;ll post the new community invite here when it&apos;s ready.
+					Until then, you can read our{" "}
 					<Link href="/code-of-conduct">Code of Conduct</Link>.
 				</p>
 			</div>

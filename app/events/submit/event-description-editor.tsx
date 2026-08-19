@@ -551,7 +551,7 @@ export function EventDescriptionEditor({
 						ErrorBoundary={LexicalErrorBoundary}
 						placeholder={
 							<div className={style.editorPlaceholder}>
-								Describe the experience, audience, and what to expect…
+								Describe what will happen and who the event is for…
 							</div>
 						}
 					/>
@@ -568,7 +568,7 @@ export function EventDescriptionEditor({
 			</LexicalComposer>
 			<input name="description" type="hidden" value={value} />
 			<div className={style.editorFooter}>
-				<span>Markdown saved automatically.</span>
+				<span>We save your formatting as Markdown automatically.</span>
 				<span
 					aria-live="polite"
 					className={value.length > 4_000 ? style.editorCountError : undefined}

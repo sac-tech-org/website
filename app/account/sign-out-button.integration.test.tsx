@@ -64,7 +64,7 @@ describe("SignOutButton", () => {
 
 		expect(
 			await screen.findByText(
-				"We could not reach the account service. Check your connection and try again.",
+				"We couldn't connect to the account service. Check your connection and try again.",
 			),
 		).toBeVisible();
 		expect(screen.getByRole("button", { name: "Sign out" })).toBeEnabled();

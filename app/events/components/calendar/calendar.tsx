@@ -85,10 +85,10 @@ function getInitialMonth(events: Event[], referenceDate: string) {
 
 function formatMonthRange(startMonth: Dayjs, endMonth: Dayjs) {
 	if (startMonth.year() === endMonth.year()) {
-		return `${startMonth.format("MMMM")}–${endMonth.format("MMMM YYYY")}`;
+		return `${startMonth.format("MMMM")} to ${endMonth.format("MMMM YYYY")}`;
 	}
 
-	return `${startMonth.format("MMMM YYYY")}–${endMonth.format("MMMM YYYY")}`;
+	return `${startMonth.format("MMMM YYYY")} to ${endMonth.format("MMMM YYYY")}`;
 }
 
 function getMonthWeeks(month: Dayjs) {
@@ -280,8 +280,8 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 
 			{events.length === 0 && (
 				<p className={style.emptyNote} id="events-calendar-empty">
-					No verified events are listed yet. You can still explore upcoming
-					months while the schedule is updated.
+					No approved events are listed yet. Browse future months while we
+					update the schedule.
 				</p>
 			)}
 

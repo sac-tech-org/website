@@ -80,7 +80,7 @@ describe("AuthForm", () => {
 			screen.getAllByRole("button", { name: "Sign in" }).at(-1)!,
 		);
 
-		const message = "That email and password combination did not match.";
+		const message = "That email and password don't match.";
 		const alert = await screen.findByRole("alert");
 		const email = screen.getByRole("textbox", { name: "Email address" });
 		const password = screen.getByLabelText("Password");
@@ -134,7 +134,7 @@ describe("AuthForm", () => {
 		render(<AuthForm />);
 		await user.click(screen.getByRole("button", { name: "Create account" }));
 		expect(
-			screen.getByRole("heading", { name: "Create your account" }),
+			screen.getByRole("heading", { name: "Create an account" }),
 		).toBeVisible();
 
 		await user.type(screen.getByRole("textbox", { name: "Name" }), "Pat Lee");
@@ -200,7 +200,7 @@ describe("AuthForm", () => {
 		);
 
 		expect(await screen.findByRole("alert")).toHaveTextContent(
-			"We could not reach the account service. Check your connection and try again.",
+			"We couldn't connect to the account service. Check your connection and try again.",
 		);
 		await waitFor(() =>
 			expect(
@@ -209,7 +209,7 @@ describe("AuthForm", () => {
 		);
 		const email = screen.getByRole("textbox", { name: "Email address" });
 		expect(email).toHaveAccessibleDescription(
-			"We could not reach the account service. Check your connection and try again.",
+			"We couldn't connect to the account service. Check your connection and try again.",
 		);
 		expect(email).not.toHaveAttribute("aria-invalid");
 		expect(authMocks.replace).not.toHaveBeenCalled();

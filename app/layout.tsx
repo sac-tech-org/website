@@ -12,11 +12,11 @@ const siteOrigin =
 export const metadata: Metadata = {
 	metadataBase: new URL(siteOrigin),
 	title: {
-		default: "SacTech — Sacramento tech, built together",
+		default: "SacTech | A tech community for Sacramento",
 		template: "%s | SacTech",
 	},
 	description:
-		"A welcoming home for the people who design, build, teach, and grow technology in the Sacramento region.",
+		"SacTech brings together people who design, build, teach, and learn about technology in the Sacramento region.",
 };
 
 export default function RootLayout({

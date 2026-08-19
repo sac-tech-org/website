@@ -30,7 +30,7 @@ function getAuthIssue(error: AuthError, mode: AuthMode): AuthIssue {
 				describedFields: ["email", "password"],
 				focusField: "email",
 				invalidFields: ["email", "password"],
-				message: "That email and password combination did not match.",
+				message: "That email and password don't match.",
 			};
 		case "PASSWORD_TOO_SHORT":
 			return {
@@ -56,8 +56,8 @@ function getAuthIssue(error: AuthError, mode: AuthMode): AuthIssue {
 				message:
 					error.message ??
 					(mode === "sign-in"
-						? "We could not sign you in. Please try again."
-						: "We could not create your account. Please try again."),
+						? "We couldn't sign you in. Try again."
+						: "We couldn't create your account. Try again."),
 			};
 	}
 }
@@ -144,7 +144,7 @@ export function AuthForm() {
 				focusField: "email",
 				invalidFields: [],
 				message:
-					"We could not reach the account service. Check your connection and try again.",
+					"We couldn't connect to the account service. Check your connection and try again.",
 			});
 		} finally {
 			setIsPending(false);
@@ -156,7 +156,7 @@ export function AuthForm() {
 	return (
 		<div className={style.formCard}>
 			<div
-				aria-label="Choose an account action"
+				aria-label="Sign in or create an account"
 				className={style.modeSwitcher}
 				role="group"
 			>
@@ -181,11 +181,11 @@ export function AuthForm() {
 			</div>
 
 			<div className={style.formHeading}>
-				<h2>{isCreatingAccount ? "Create your account" : "Welcome back"}</h2>
+				<h2>{isCreatingAccount ? "Create an account" : "Welcome back"}</h2>
 				<p>
 					{isCreatingAccount
-						? "Use your account to submit events for SacTech review."
-						: "Sign in to submit an event or check on an existing submission."}
+						? "Create an account to send events to SacTech for review."
+						: "Sign in to submit an event or check one you've already sent."}
 				</p>
 			</div>
 

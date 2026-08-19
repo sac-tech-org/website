@@ -49,19 +49,17 @@ describe("CancelEventForm", () => {
 		render(<CancelEventForm {...recurringProps} />);
 
 		const dateInput = screen.getByLabelText(
-			"Occurrence date",
+			"Date to cancel",
 		) as HTMLInputElement;
 		expect(dateInput).toHaveValue("2026-09-09");
 		expect(dateInput).toHaveAttribute("min", "2026-09-01");
 		expect(dateInput).toHaveAttribute("max", "2026-12-30");
 
 		await user.fill(dateInput, "2026-09-16");
-		await user.click(
-			screen.getByRole("button", { name: "Cancel this occurrence" }),
-		);
+		await user.click(screen.getByRole("button", { name: "Cancel this date" }));
 
 		expect(confirm).toHaveBeenCalledWith(
-			"Cancel the September 16, 2026 occurrence of “Sacramento TypeScript Meetup”? The rest of the series will remain scheduled.",
+			'Cancel "Sacramento TypeScript Meetup" on September 16, 2026? All other dates will stay on the calendar.',
 		);
 		await waitFor(() => expect(cancelEventMock).toHaveBeenCalledTimes(1));
 		expect(submittedFields()).toEqual({
@@ -84,9 +82,7 @@ describe("CancelEventForm", () => {
 		const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
 
 		render(<CancelEventForm {...recurringProps} />);
-		await user.click(
-			screen.getByRole("button", { name: "Cancel this occurrence" }),
-		);
+		await user.click(screen.getByRole("button", { name: "Cancel this date" }));
 
 		expect(confirm).toHaveBeenCalledOnce();
 		expect(cancelEventMock).not.toHaveBeenCalled();
@@ -101,11 +97,9 @@ describe("CancelEventForm", () => {
 		});
 
 		render(<CancelEventForm {...recurringProps} />);
-		const dateInput = screen.getByLabelText("Occurrence date");
+		const dateInput = screen.getByLabelText("Date to cancel");
 		await user.fill(dateInput, "2026-09-16");
-		await user.click(
-			screen.getByRole("button", { name: "Cancel this occurrence" }),
-		);
+		await user.click(screen.getByRole("button", { name: "Cancel this date" }));
 
 		expect(await screen.findByRole("alert")).toHaveTextContent(
 			"That event occurrence is already canceled.",
@@ -123,11 +117,11 @@ describe("CancelEventForm", () => {
 
 		render(<CancelEventForm {...recurringProps} />);
 		await user.click(
-			screen.getByRole("button", { name: "Cancel entire series" }),
+			screen.getByRole("button", { name: "Cancel the whole series" }),
 		);
 
 		expect(confirm).toHaveBeenCalledWith(
-			"Cancel “Sacramento TypeScript Meetup”? This removes the entire series from the calendar, including every future occurrence.",
+			'Cancel "Sacramento TypeScript Meetup"? This will remove the whole series from the calendar, including every future date.',
 		);
 		await waitFor(() => expect(cancelEventMock).toHaveBeenCalledTimes(1));
 		expect(submittedFields()).toEqual({
@@ -155,14 +149,14 @@ describe("CancelEventForm", () => {
 			/>,
 		);
 
-		expect(screen.queryByLabelText("Occurrence date")).not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Date to cancel")).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole("button", { name: "Cancel this occurrence" }),
+			screen.queryByRole("button", { name: "Cancel this date" }),
 		).not.toBeInTheDocument();
 
 		await user.click(screen.getByRole("button", { name: "Cancel event" }));
 		expect(confirm).toHaveBeenCalledWith(
-			"Cancel “Sacramento TypeScript Meetup”? This removes the event from the calendar.",
+			'Cancel "Sacramento TypeScript Meetup"? This will remove the event from the calendar.',
 		);
 		expect(cancelEventMock).not.toHaveBeenCalled();
 	});
@@ -173,12 +167,10 @@ describe("CancelEventForm", () => {
 		);
 
 		expect(
-			screen.getByText(
-				"This series has no upcoming occurrences available to cancel.",
-			),
+			screen.getByText("There are no upcoming dates to cancel in this series."),
 		).toBeVisible();
 		expect(
-			screen.getByRole("button", { name: "Cancel entire series" }),
+			screen.getByRole("button", { name: "Cancel the whole series" }),
 		).toBeEnabled();
 	});
 });

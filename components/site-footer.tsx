@@ -31,7 +31,7 @@ export function SiteFooter() {
 							src="/sactech_sticker.png"
 							width={80}
 						/>
-						<p className={style.tagline}>Sacramento tech, built together.</p>
+						<p className={style.tagline}>A tech community for Sacramento.</p>
 					</div>
 					<nav aria-label="Footer" className={style.nav}>
 						<Link href="/#community">Community</Link>

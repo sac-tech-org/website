@@ -32,7 +32,7 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 				: `${formatDateInTimeZone(startBlock.starts_at, startBlock.timezone, {
 						day: "numeric",
 						month: "long",
-					})} – ${formatDateInTimeZone(endBlock.ends_at, endBlock.timezone, {
+					})} to ${formatDateInTimeZone(endBlock.ends_at, endBlock.timezone, {
 						day: "numeric",
 						month: "long",
 						year: "numeric",

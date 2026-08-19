@@ -50,11 +50,11 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 				<div className={style.heroInner}>
 					<div className={style.heroCopy}>
 						<p className={style.eyebrow}>Gather by the river</p>
-						<h1 id="events-title">Events that connect Sacramento.</h1>
+						<h1 id="events-title">Find your next local tech event.</h1>
 						<p className={style.intro}>
-							Meet people across the region who design, build, teach, and grow
-							technology. Browse the calendar as we confirm the next round of
-							SacTech gatherings.
+							Meet people across the region who design, build, teach, and learn
+							about technology. Browse what&apos;s scheduled now. We&apos;ll add
+							more SacTech gatherings as their details are confirmed.
 						</p>
 					</div>
 					<BridgeArt className={style.heroArt} compact />
@@ -69,12 +69,9 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 					<header className={style.sectionHeader}>
 						<div>
 							<p className={style.sectionEyebrow}>Community calendar</p>
-							<h2 id="calendar-section-title">Find a time to join us</h2>
+							<h2 id="calendar-section-title">See what&apos;s coming up</h2>
 						</div>
-						<p>
-							Filter by gathering type, then use the month controls to explore
-							the schedule.
-						</p>
+						<p>Use the filters and month buttons to browse the schedule.</p>
 					</header>
 
 					<fieldset className={style.filters}>
@@ -149,11 +146,11 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						<div>
 							<p className={style.emptyEyebrow}>Schedule update</p>
 							<h2 id="schedule-update-title">
-								The next SacTech dates are being confirmed.
+								We&apos;re still confirming the next SacTech dates.
 							</h2>
 							<p>
-								We are verifying the next round of event details. Check back
-								soon for confirmed dates, locations, and ways to join.
+								We&apos;ll add events once their dates, locations, and ways to
+								join are confirmed.
 							</p>
 						</div>
 					</section>
@@ -165,10 +162,10 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 				>
 					<div>
 						<p className={style.calloutEyebrow}>Between gatherings</p>
-						<h2 id="events-community-title">The conversation keeps moving.</h2>
+						<h2 id="events-community-title">Stay connected between events.</h2>
 						<p>
-							Join the SacTech community to meet neighbors, share what you know,
-							and hear when new events are announced.
+							Join SacTech to meet people nearby, share what you know, and hear
+							when new events are announced.
 						</p>
 					</div>
 					<Link className={style.communityLink} href="/#join">
@@ -178,11 +175,11 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 
 				<section className={style.submitCallout}>
 					<div>
-						<p className={style.calloutEyebrow}>Add to the calendar</p>
-						<h2>Hosting something for Sacramento tech?</h2>
+						<p className={style.calloutEyebrow}>Share an event</p>
+						<h2>Planning a local tech event?</h2>
 						<p>
-							Create an account and send the details to SacTech. An admin will
-							review the event before it appears publicly.
+							Create an account and send us the details. A SacTech admin will
+							review the event before it appears on the calendar.
 						</p>
 					</div>
 					<Link className={style.submitLink} href="/account">

@@ -7,7 +7,7 @@ import style from "./admin-events.module.css";
 import { ModerationForm } from "./moderation-form";
 
 export const metadata: Metadata = {
-	title: "Event moderation",
+	title: "Review events",
 	description: "Review event submissions for the SacTech community calendar.",
 };
 
@@ -47,11 +47,12 @@ export default async function AdminEventsPage() {
 		<main className={style.page} id="main-content">
 			<section aria-labelledby="page-title" className={style.hero}>
 				<div className={style.heroInner}>
-					<p className={style.eyebrow}>Admin workspace</p>
-					<h1 id="page-title">Review community events.</h1>
+					<p className={style.eyebrow}>SacTech admin</p>
+					<h1 id="page-title">Review submitted events.</h1>
 					<p>
-						Check the details, follow submitted links when needed, and decide
-						what is ready for the public SacTech calendar.
+						Review each submission and decide whether it&apos;s ready for the
+						public SacTech calendar. Open the event link if you need more
+						context.
 					</p>
 				</div>
 			</section>
@@ -59,7 +60,6 @@ export default async function AdminEventsPage() {
 			<section aria-labelledby="queue-title" className={style.queue}>
 				<header className={style.queueHeader}>
 					<div>
-						<p className={style.queueEyebrow}>Review queue</p>
 						<h2 id="queue-title">Pending submissions</h2>
 					</div>
 					<p className={style.queueCount}>
@@ -71,8 +71,8 @@ export default async function AdminEventsPage() {
 				{pendingEvents.length === 0 ? (
 					<div className={style.emptyState}>
 						<div>
-							<h3>The queue is clear.</h3>
-							<p>New community submissions will appear here for review.</p>
+							<h3>Nothing to review right now.</h3>
+							<p>New community event submissions will show up here.</p>
 						</div>
 					</div>
 				) : (
@@ -141,7 +141,7 @@ export default async function AdminEventsPage() {
 											</div>
 											{canceledOccurrences.length > 0 && (
 												<div className={style.cancellationDetail}>
-													<dt>Canceled occurrences</dt>
+													<dt>Canceled dates</dt>
 													<dd>
 														<ul
 															aria-label={`Canceled dates for ${event.title}`}
@@ -182,14 +182,13 @@ export default async function AdminEventsPage() {
 
 										{event.eventUrl && (
 											<a
-												aria-label={`Open submitted event link for ${event.title}`}
+												aria-label={`Open event link for ${event.title}`}
 												className={style.eventLink}
 												href={event.eventUrl}
 												rel="noopener noreferrer"
 												target="_blank"
 											>
-												Open submitted event link{" "}
-												<span aria-hidden="true">↗</span>
+												Open event link <span aria-hidden="true">↗</span>
 											</a>
 										)}
 

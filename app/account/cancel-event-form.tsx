@@ -60,7 +60,7 @@ export function CancelEventForm({
 	) {
 		if (
 			!window.confirm(
-				`Cancel the ${formatOccurrenceDate(occurrenceDate)} occurrence of “${eventTitle}”? The rest of the series will remain scheduled.`,
+				`Cancel "${eventTitle}" on ${formatOccurrenceDate(occurrenceDate)}? All other dates will stay on the calendar.`,
 			)
 		) {
 			event.preventDefault();
@@ -69,10 +69,10 @@ export function CancelEventForm({
 
 	function confirmEventCancellation(event: React.FormEvent<HTMLFormElement>) {
 		const description = isRecurring
-			? "This removes the entire series from the calendar, including every future occurrence."
-			: "This removes the event from the calendar.";
+			? "This will remove the whole series from the calendar, including every future date."
+			: "This will remove the event from the calendar.";
 
-		if (!window.confirm(`Cancel “${eventTitle}”? ${description}`)) {
+		if (!window.confirm(`Cancel "${eventTitle}"? ${description}`)) {
 			event.preventDefault();
 		}
 	}
@@ -85,17 +85,18 @@ export function CancelEventForm({
 			<div className={style.cancellationHeading}>
 				<h4>{isRecurring ? "Manage this series" : "Cancel this event"}</h4>
 				<p>
-					Cancellations take effect immediately and do not need another admin
-					review.
+					Your cancellation takes effect right away. It doesn&apos;t need
+					another admin review.
 				</p>
 			</div>
 
 			{isRecurring && (
 				<div className={style.occurrenceCancellation}>
 					<div>
-						<h5>Cancel one occurrence</h5>
+						<h5>Cancel one date</h5>
 						<p>
-							Choose a scheduled date. Every other date stays on the calendar.
+							Choose a date to remove from the calendar. Every other date stays
+							scheduled.
 						</p>
 					</div>
 					{defaultOccurrenceDate ? (
@@ -105,7 +106,7 @@ export function CancelEventForm({
 							onSubmit={confirmOccurrenceCancellation}
 						>
 							<input name="scope" type="hidden" value="occurrence" />
-							<label htmlFor={`occurrence-${eventId}`}>Occurrence date</label>
+							<label htmlFor={`occurrence-${eventId}`}>Date to cancel</label>
 							<div className={style.occurrenceControls}>
 								<input
 									disabled={pending}
@@ -128,13 +129,13 @@ export function CancelEventForm({
 									disabled={pending}
 									type="submit"
 								>
-									{occurrencePending ? "Canceling…" : "Cancel this occurrence"}
+									{occurrencePending ? "Canceling…" : "Cancel this date"}
 								</button>
 							</div>
 						</form>
 					) : (
 						<p className={style.noUpcomingOccurrences}>
-							This series has no upcoming occurrences available to cancel.
+							There are no upcoming dates to cancel in this series.
 						</p>
 					)}
 					<div
@@ -160,11 +161,11 @@ export function CancelEventForm({
 
 			<div className={style.eventCancellation}>
 				<div>
-					<h5>{isRecurring ? "Cancel the entire series" : "Cancel event"}</h5>
+					<h5>{isRecurring ? "Cancel the whole series" : "Cancel event"}</h5>
 					<p>
 						{isRecurring
-							? "Every occurrence will be removed from the calendar."
-							: "The event will be removed from the calendar."}
+							? "This removes every date in the series from the calendar."
+							: "This removes the event from the calendar."}
 					</p>
 				</div>
 				<form
@@ -181,7 +182,7 @@ export function CancelEventForm({
 						{eventPending
 							? "Canceling…"
 							: isRecurring
-								? "Cancel entire series"
+								? "Cancel the whole series"
 								: "Cancel event"}
 					</button>
 				</form>
