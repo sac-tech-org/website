@@ -205,9 +205,15 @@ describe("event Server Actions and queries", () => {
 	}
 
 	beforeAll(async () => {
-		const databaseUrl = await database.start();
+		const databaseUrl = new URL(await database.start());
 		databaseStarted = true;
-		process.env.NETLIFY_DB_URL = databaseUrl;
+
+		// Netlify's build image does not set USER, so do not make pg infer it.
+		if (!databaseUrl.username) {
+			databaseUrl.username = "postgres";
+		}
+
+		process.env.NETLIFY_DB_URL = databaseUrl.href;
 		process.env.NETLIFY_DB_DRIVER = "server";
 		process.env.BETTER_AUTH_SECRET =
 			"sactech-event-action-integration-test-secret";
