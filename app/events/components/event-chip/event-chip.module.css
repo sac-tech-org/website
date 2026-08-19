@@ -1,0 +1,41 @@
+.container {
+	align-items: center;
+	border: 1px solid currentColor;
+	border-radius: 999px;
+	display: inline-flex;
+	font-size: 0.75rem;
+	font-weight: 700;
+	gap: 0.4rem;
+	line-height: 1;
+	width: fit-content;
+}
+
+.compact {
+	padding: 0.4rem 0.65rem;
+}
+
+.default {
+	padding: 0.55rem 0.8rem;
+}
+
+.online {
+	background: #fff0f6;
+	color: #8e123f;
+}
+
+.in-person {
+	background: #e8f8ef;
+	color: #17663a;
+}
+
+.recurring {
+	background: #eef5ff;
+	color: #1e5ba9;
+}
+
+.dot {
+	background: currentColor;
+	border-radius: 999px;
+	height: 0.38rem;
+	width: 0.38rem;
+}

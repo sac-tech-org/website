@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link";
 import {FormEvent, useCallback, useState} from "react";
 import {Signup} from "./signup";
 
@@ -28,6 +29,9 @@ export function HomeClient() {
         <p>
           Join <b>#SacTech</b> on Slack.
         </p>
+        <Link className="events-link" href="/events">
+          Browse community events →
+        </Link>
       </header>
 
       <aside className="coc">

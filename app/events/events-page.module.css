@@ -1,0 +1,253 @@
+.container {
+	--events-accent: #d9165b;
+	--events-accent-dark: #a90f45;
+	--events-accent-soft: #ffe5ef;
+	--events-blue: #246bce;
+	--events-canvas: #f7f6fb;
+	--events-ink: #1d2433;
+	--events-muted: #606779;
+	--events-border: #dedfea;
+	--events-surface: #ffffff;
+	background: var(--events-canvas);
+	color: var(--events-ink);
+	font-family: Montserrat, "Helvetica Neue", Arial, sans-serif;
+	font-size: 1rem;
+	line-height: 1.5;
+	min-height: 100vh;
+	width: 100%;
+}
+
+.container,
+.container *,
+.container *::before,
+.container *::after {
+	box-sizing: border-box;
+}
+
+.container button,
+.container input {
+	font: inherit;
+}
+
+.hero {
+	background:
+		radial-gradient(circle at 88% 10%, rgb(255 204 90 / 55%), transparent 22rem),
+		linear-gradient(135deg, #fff 0%, #fff0f6 54%, #eef5ff 100%);
+	border-bottom: 1px solid var(--events-border);
+	overflow: hidden;
+}
+
+.heroInner {
+	margin: 0 auto;
+	max-width: 1180px;
+	padding: 2rem clamp(1rem, 5vw, 4rem) 3rem;
+}
+
+.backLink {
+	align-items: center;
+	color: var(--events-accent-dark);
+	display: inline-flex;
+	font-size: 0.9rem;
+	font-weight: 700;
+	gap: 0.45rem;
+	margin-bottom: 2.75rem;
+	text-decoration: none;
+}
+
+.backLink:hover {
+	text-decoration: underline;
+}
+
+.backLink:focus-visible,
+.container a:focus-visible,
+.container button:focus-visible,
+.filterInput:focus-visible + span {
+	border-radius: 0.35rem;
+	outline: 3px solid rgb(36 107 206 / 45%);
+	outline-offset: 3px;
+}
+
+.eyebrow {
+	color: var(--events-accent-dark);
+	font-size: 0.78rem;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	margin: 0 0 0.6rem;
+	text-transform: uppercase;
+}
+
+.eventsTitle {
+	font-size: clamp(3.25rem, 9vw, 7rem);
+	letter-spacing: -0.075em;
+	line-height: 0.92;
+	margin: 0;
+}
+
+.intro {
+	color: var(--events-muted);
+	font-size: clamp(1rem, 2vw, 1.2rem);
+	margin: 1.25rem 0 0;
+	max-width: 42rem;
+}
+
+.filters {
+	align-items: center;
+	border: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+	margin: 2.5rem 0 0;
+	min-width: 0;
+	padding: 0;
+}
+
+.filterLegend {
+	align-items: center;
+	color: var(--events-muted);
+	display: flex;
+	float: left;
+	font-size: 0.85rem;
+	font-weight: 800;
+	gap: 0.4rem;
+	padding: 0.55rem 0;
+	text-transform: uppercase;
+}
+
+.filterIcon {
+	display: inline-block;
+	font-size: 1.25rem;
+	line-height: 1;
+	transform: rotate(90deg);
+}
+
+.filterOptions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.filterLabel {
+	cursor: pointer;
+	position: relative;
+}
+
+.filterInput {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+.filterLabel span {
+	align-items: center;
+	background: rgb(255 255 255 / 78%);
+	border: 1px solid var(--events-border);
+	border-radius: 999px;
+	color: var(--events-ink);
+	display: flex;
+	font-size: 0.9rem;
+	font-weight: 700;
+	min-height: 2.75rem;
+	padding: 0.55rem 0.9rem;
+	transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.filterLabel:hover span {
+	border-color: #b7b9c9;
+}
+
+.filterInput:checked + span {
+	background: var(--events-ink);
+	border-color: var(--events-ink);
+	color: #fff;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(2.5rem, 7vw, 5rem);
+	margin: 0 auto;
+	max-width: 1180px;
+	padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 5vw, 4rem) 6rem;
+}
+
+.listContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.listHeading {
+	font-size: clamp(1.45rem, 3vw, 2rem);
+	letter-spacing: -0.035em;
+	line-height: 1.15;
+	margin: 0;
+	padding-left: 1rem;
+	position: relative;
+}
+
+.listHeading::before {
+	background: var(--events-accent);
+	border-radius: 999px;
+	content: "";
+	height: 100%;
+	left: 0;
+	position: absolute;
+	top: 0;
+	width: 4px;
+}
+
+.list {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.emptyState {
+	background: var(--events-surface);
+	border: 1px dashed var(--events-border);
+	border-radius: 1rem;
+	color: var(--events-muted);
+	margin: 0;
+	padding: 2rem;
+	text-align: center;
+}
+
+.visuallyHidden {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+@media (max-width: 760px) {
+	.heroInner {
+		padding-top: 1.25rem;
+	}
+
+	.backLink {
+		margin-bottom: 2rem;
+	}
+
+	.filters {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.filterLegend {
+		float: none;
+	}
+
+	.list {
+		grid-template-columns: 1fr;
+	}
+}
