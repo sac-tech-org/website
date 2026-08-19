@@ -75,31 +75,27 @@ The local database does not apply migrations automatically. Run `pnpm db:migrate
 
 ## Environment variables
 
-| Variable                    | Where               | Purpose                                                                                                                                                     |
-| --------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BETTER_AUTH_SECRET`        | Local and Netlify   | Private, high-entropy secret used by Better Auth for encryption and hashing. Never prefix it with `NEXT_PUBLIC_`.                                           |
-| `BETTER_AUTH_URL`           | Local and Netlify   | Full canonical origin. Use `http://localhost:8888` locally and the primary HTTPS site URL in production.                                                    |
-| `BETTER_AUTH_ALLOWED_HOSTS` | Local and Netlify   | Comma-separated Better Auth host allowlist. Values are hostnames, optionally with ports or wildcards, and do not include URL paths.                         |
-| `NETLIFY_DB_URL`            | Supplied by Netlify | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution. |
-| `NEXT_PUBLIC_INVITE_LINK`   | Optional            | Public community invitation displayed by the site. It is intentionally browser-visible.                                                                     |
+| Variable                    | Where                   | Purpose                                                                                                                                                     |
+| --------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`        | Local and Netlify       | Private, high-entropy secret used by Better Auth for encryption and hashing. Never prefix it with `NEXT_PUBLIC_`.                                           |
+| `BETTER_AUTH_URL`           | Local; Netlify override | Optional explicit canonical fallback. Normal Netlify deploys derive this from Netlify's read-only `URL` variable.                                           |
+| `BETTER_AUTH_ALLOWED_HOSTS` | Local; Netlify override | Optional comma-separated host allowlist. Setting it replaces the automatic Netlify host list; values do not include URL paths.                              |
+| `NETLIFY_DB_URL`            | Supplied by Netlify     | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution. |
+| `NEXT_PUBLIC_INVITE_LINK`   | Optional                | Public community invitation displayed by the site. It is intentionally browser-visible.                                                                     |
 
 ### Production and deploy-preview hosts
 
-Set `BETTER_AUTH_URL` to the canonical production origin. Replace `SITE` with the exact Netlify site name:
+Normal Netlify deployments do not need either URL variable. At runtime, the app uses Netlify's read-only `URL`, `SITE_NAME`, and `SITE_ID` values to configure:
 
-```dotenv
-BETTER_AUTH_URL=https://SITE.netlify.app
-```
+- the primary custom or `netlify.app` hostname from `URL`;
+- the site's default `SITE_NAME.netlify.app` hostname; and
+- the site-scoped `*--SITE_NAME.netlify.app` pattern for deploy previews, branch deploys, and unique deploy URLs.
 
-Allow the site's default Netlify hostname, that site's deploy-preview/branch-deploy hosts, and any real custom domains:
+Better Auth validates the hostname of each request against that list and uses the matching preview hostname dynamically. The `URL` value is the canonical fallback for request-less server API calls. The build-only `DEPLOY_PRIME_URL` and `DEPLOY_URL` hosts are also added when present, but runtime preview support does not depend on them.
 
-```dotenv
-BETTER_AUTH_ALLOWED_HOSTS=SITE.netlify.app,*--SITE.netlify.app,www.YOUR-DOMAIN.example,YOUR-DOMAIN.example
-```
+Do **not** use `*.netlify.app`: Better Auth automatically adds allowed hosts to its trusted origins, so that broad pattern would trust unrelated and potentially hostile Netlify sites.
 
-The `*--SITE.netlify.app` pattern covers URLs such as `deploy-preview-42--SITE.netlify.app` while remaining scoped to this Netlify site. Do **not** use `*.netlify.app`: Better Auth automatically adds allowed hosts to its trusted origins, so that broad pattern would trust unrelated and potentially hostile Netlify sites.
-
-Better Auth resolves each allowed preview hostname dynamically. The canonical `BETTER_AUTH_URL` remains the fallback and stable production identity.
+Set `BETTER_AUTH_URL` only when an explicit canonical fallback should take precedence over Netlify's `URL`. Set `BETTER_AUTH_ALLOWED_HOSTS` for a nonstandard host policy, additional custom-domain aliases, or a custom automatic deploy subdomain. It is an override, so include every required host—including `SITE.netlify.app` and `*--SITE.netlify.app` if previews should continue to work.
 
 ## Schema and migrations
 
@@ -186,8 +182,8 @@ Changes made through the production database editor take effect immediately. Ver
 ## Deploy to Netlify
 
 1. Push the repository, including `netlify.toml` and all generated migrations, to the Git provider Netlify will use.
-2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration installs Chromium for the browser integration tests, runs `pnpm verify`, publishes `.next`, and selects Node 24.19.0. Verification runs linting, type checking, tests, and one production build, so a failed quality gate blocks the deploy.
-3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AUTH_ALLOWED_HOSTS`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication.
+2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration installs Chromium for the browser integration tests, runs `pnpm verify`, publishes `.next`, and selects Node 24.19.0. Verification runs formatting, linting, type checking, tests, and one production build, so a failed quality gate blocks the deploy.
+3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET` and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication. Netlify supplies the auth URLs and database connection automatically.
 4. Deploy the site.
 
 Because `@netlify/database` is a project dependency, Netlify uses [package-based provisioning](https://docs.netlify.com/build/data-and-storage/netlify-database/getting-started/): on the first deploy it creates the database if needed, injects the branch-specific `NETLIFY_DB_URL`, and applies committed migrations as part of the deploy lifecycle. A database does not need to be created manually first. It can still be provisioned from the Netlify Database page if the team prefers to do that before the first deploy.

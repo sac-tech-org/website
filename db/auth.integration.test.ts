@@ -11,8 +11,14 @@ const environmentKeys = [
 	"BETTER_AUTH_SCHEMA_GENERATION",
 	"BETTER_AUTH_SECRET",
 	"BETTER_AUTH_URL",
+	"DEPLOY_PRIME_URL",
+	"DEPLOY_URL",
+	"NETLIFY",
 	"NETLIFY_DB_DRIVER",
 	"NETLIFY_DB_URL",
+	"SITE_ID",
+	"SITE_NAME",
+	"URL",
 ] as const;
 
 const originalEnvironment = Object.fromEntries(
@@ -33,9 +39,15 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		process.env.NETLIFY_DB_DRIVER = "server";
 		process.env.BETTER_AUTH_SECRET =
 			"sactech-better-auth-integration-test-secret";
-		process.env.BETTER_AUTH_URL = "http://localhost:3000";
-		process.env.BETTER_AUTH_ALLOWED_HOSTS = "localhost:3000";
+		process.env.SITE_ID = "sactech-auth-integration-site-id";
+		process.env.SITE_NAME = "sactech-auth-integration";
+		process.env.URL = "https://auth-integration.sactech.test";
+		delete process.env.BETTER_AUTH_URL;
+		delete process.env.BETTER_AUTH_ALLOWED_HOSTS;
 		delete process.env.BETTER_AUTH_SCHEMA_GENERATION;
+		delete process.env.DEPLOY_PRIME_URL;
+		delete process.env.DEPLOY_URL;
+		delete process.env.NETLIFY;
 
 		await database.applyMigrations(migrationsDirectory);
 		vi.resetModules();
@@ -77,6 +89,19 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 				vi.resetModules();
 			}
 		}
+	});
+
+	it("accepts auth requests from this site's Netlify preview hosts", async () => {
+		const previewOrigin =
+			"https://deploy-preview-42--sactech-auth-integration.netlify.app";
+		const response = await auth.handler(
+			new Request(`${previewOrigin}/api/auth/get-session`, {
+				headers: { origin: previewOrigin },
+			}),
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toBeNull();
 	});
 
 	it("persists an email and password account in the migrated schema", async () => {
