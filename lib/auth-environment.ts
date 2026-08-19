@@ -91,6 +91,12 @@ export function getAuthBaseUrlConfig(
 	const explicitFallbackUrl = getHttpUrl(explicitFallback);
 	const isNetlify = isNetlifyEnvironment(environment);
 
+	if (environment.NODE_ENV !== "production") {
+		for (const host of LOCAL_AUTH_HOSTS) {
+			hosts.add(host);
+		}
+	}
+
 	if (explicitFallbackUrl) {
 		hosts.add(explicitFallbackUrl.host);
 	}

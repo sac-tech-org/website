@@ -109,6 +109,18 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		expect(await response.json()).toBeNull();
 	});
 
+	it("accepts the local Netlify Dev origin outside production", async () => {
+		const localOrigin = "http://localhost:8888";
+		const response = await auth.handler(
+			new Request(`${localOrigin}/api/auth/get-session`, {
+				headers: { origin: localOrigin },
+			}),
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toBeNull();
+	});
+
 	it("persists an email and password account in the migrated schema", async () => {
 		const email = "account-integration@sactech.test";
 		const name = "SacTech Test Member";

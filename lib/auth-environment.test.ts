@@ -14,6 +14,29 @@ describe("getAuthBaseUrlConfig", () => {
 		});
 	});
 
+	it("retains localhost hosts when Netlify Dev exposes site metadata", () => {
+		expect(
+			getAuthBaseUrlConfig({
+				NETLIFY: "true",
+				NODE_ENV: "development",
+				SITE_ID: "linked-site-id",
+				SITE_NAME: "sac-tech-events",
+				URL: "http://localhost:8888",
+			}),
+		).toEqual({
+			allowedHosts: [
+				"localhost:3000",
+				"localhost:8888",
+				"127.0.0.1:3000",
+				"127.0.0.1:8888",
+				"sac-tech-events.netlify.app",
+				"*--sac-tech-events.netlify.app",
+			],
+			fallback: "http://localhost:8888",
+			protocol: "http",
+		});
+	});
+
 	it("derives the production URL and site-scoped Netlify hosts at runtime", () => {
 		expect(
 			getAuthBaseUrlConfig({
