@@ -1,35 +1,65 @@
 .footer {
-	background: var(--color-navy-deep);
+	background: #042849;
+	border-top: 1.125rem solid #ed8403;
 	color: var(--color-cream);
+	overflow: hidden;
 }
 
-.truss {
-	background:
-		repeating-linear-gradient(
-			45deg,
-			transparent 0 1.25rem,
-			var(--color-bridge) 1.3rem 1.48rem,
-			transparent 1.53rem 2.75rem
-		),
-		repeating-linear-gradient(
-			-45deg,
-			transparent 0 1.25rem,
-			var(--color-bridge) 1.3rem 1.48rem,
-			transparent 1.53rem 2.75rem
-		);
-	border-bottom: 3px solid var(--color-bridge);
-	border-top: 3px solid var(--color-bridge);
-	height: 2rem;
+.scene {
+	align-items: center;
+	display: flex;
+	justify-content: center;
+	min-height: 13.125rem;
+	position: relative;
 }
 
 .inner {
-	align-items: end;
+	align-items: center;
 	display: flex;
 	gap: 2rem;
 	justify-content: space-between;
-	margin: 0 auto;
-	max-width: var(--site-width);
-	padding: 3rem var(--site-gutter);
+	max-width: 84rem;
+	min-height: 9.5rem;
+	padding: 2rem 3rem;
+	position: relative;
+	transform: translate(clamp(0rem, 3vw, 4rem), 0.5rem);
+	width: calc(100% - clamp(18rem, 32vw, 36rem));
+	z-index: 2;
+}
+
+.artwork {
+	inset: 0;
+	pointer-events: none;
+	position: absolute;
+	z-index: 1;
+}
+
+.city,
+.flower {
+	position: absolute;
+	user-select: none;
+}
+
+.city {
+	bottom: 0;
+	height: auto;
+	left: clamp(1rem, 4.5vw, 5.75rem);
+	width: clamp(12rem, 16.25vw, 20.5rem);
+}
+
+.flower {
+	height: auto;
+	right: clamp(1rem, 4.5vw, 5.75rem);
+	top: 1.25rem;
+	width: clamp(7rem, 8.7vw, 11rem);
+}
+
+.truss {
+	background: #fbc543 url("/images/footer/bridge-part.svg") left top / 4.75rem
+		3.25rem repeat-x;
+	height: 3.25rem;
+	position: relative;
+	z-index: 3;
 }
 
 .wordmark {
@@ -65,13 +95,55 @@
 	outline-color: var(--color-bridge);
 }
 
-@media (max-width: 650px) {
+@media (max-width: 1000px) {
+	.scene {
+		min-height: 0;
+		padding: 2.5rem 0 8rem;
+	}
+
 	.inner {
 		align-items: flex-start;
 		flex-direction: column;
+		min-height: 0;
+		padding: 2rem;
+		transform: none;
+		width: calc(100% - 4rem);
+	}
+
+	.flower {
+		bottom: 0;
+		top: auto;
 	}
 
 	.nav {
 		justify-content: flex-start;
+	}
+}
+
+@media (max-width: 520px) {
+	.footer {
+		border-top-width: 0.75rem;
+	}
+
+	.scene {
+		padding: 1.5rem 0;
+	}
+
+	.inner {
+		padding: 1.5rem;
+		width: calc(100% - 2rem);
+	}
+
+	.artwork {
+		display: none;
+	}
+
+	.nav {
+		gap: 0.25rem 1rem;
+	}
+
+	.truss {
+		background-size: 3.8rem 2.6rem;
+		height: 2.6rem;
 	}
 }
