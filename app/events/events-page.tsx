@@ -116,20 +116,6 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 					/>
 				</section>
 
-				<section className={style.submitCallout}>
-					<div>
-						<p className={style.calloutEyebrow}>Add to the calendar</p>
-						<h2>Hosting something for Sacramento tech?</h2>
-						<p>
-							Create an account and send the details to SacTech. An admin
-							will review the event before it appears publicly.
-						</p>
-					</div>
-					<Link className={style.submitLink} href="/events/submit">
-						Submit an event <span aria-hidden="true">→</span>
-					</Link>
-				</section>
-
 				{recurringEvents.length > 0 && (
 					<section className={style.listContainer}>
 						<h2 className={style.listHeading}>Recurring events</h2>
@@ -188,6 +174,20 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 					</div>
 					<Link className={style.communityLink} href="/#join">
 						Join the community <span aria-hidden="true">→</span>
+					</Link>
+				</section>
+
+				<section className={style.submitCallout}>
+					<div>
+						<p className={style.calloutEyebrow}>Add to the calendar</p>
+						<h2>Hosting something for Sacramento tech?</h2>
+						<p>
+							Create an account and send the details to SacTech. An admin
+							will review the event before it appears publicly.
+						</p>
+					</div>
+					<Link className={style.submitLink} href="/events/submit">
+						Submit an event <span aria-hidden="true">→</span>
 					</Link>
 				</section>
 			</div>
