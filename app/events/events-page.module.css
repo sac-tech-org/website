@@ -229,10 +229,7 @@
 
 .filterInput:checked + span {
 	background-color: var(--color-navy);
-	background-image: linear-gradient(
-		var(--color-bridge),
-		var(--color-bridge)
-	);
+	background-image: linear-gradient(var(--color-bridge), var(--color-bridge));
 	background-position: bottom;
 	background-repeat: no-repeat;
 	background-size: 100% 0.24rem;
