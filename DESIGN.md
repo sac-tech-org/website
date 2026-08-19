@@ -166,7 +166,7 @@ The copied Playful Programming schedule has been removed and must not be restore
 4. Reporting guidance using the current verified route: SacTech organizers/moderators in the Slack Team Directory.
 5. Transparent note that a public reporting path is still needed for people outside Slack.
 
-The current policy governs the SacTech Slack workspace. Expanding it to in-person events, sponsors, social media, or other spaces is a governance decision, not a design or copy edit.
+The policy defines its current reporting and enforcement process for the SacTech Slack workspace. Its behavioral standards also express SacTech's expectations for in-person events, sponsors, social media, and other community spaces. Establishing formal reporting and enforcement processes outside Slack remains a governance decision, not a design or copy edit.
 
 ## Accessibility and interaction baseline
 

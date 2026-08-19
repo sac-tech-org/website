@@ -5,7 +5,7 @@ import style from "./code-of-conduct.module.css";
 export const metadata: Metadata = {
 	title: "Code of Conduct",
 	description:
-		"Read the SacTech Slack Code of Conduct and learn how to contact an organizer or moderator for help.",
+		"Read the SacTech Code of Conduct, learn what we expect across our community spaces, and find reporting and support guidance.",
 };
 
 const policySections = [
@@ -26,9 +26,9 @@ export default function CodeOfConductPage() {
 						<p className={style.eyebrow}>Code of Conduct</p>
 						<h1 id="page-title">Build community with care.</h1>
 						<p>
-							Everyone deserves to participate in the SacTech Slack without
-							harassment. This policy explains what we expect, how organizers
-							may respond, and where members can ask for help.
+							Everyone deserves to participate in SacTech community spaces
+							without harassment. This policy explains what we expect from each
+							other and how Slack members can report concerns and ask for help.
 						</p>
 					</div>
 					<BridgeArt className={style.heroArt} compact />
@@ -52,14 +52,16 @@ export default function CodeOfConductPage() {
 							the full policy below.
 						</p>
 						<ul>
-							<li>Help keep the SacTech Slack free from harassment.</li>
+							<li>
+								Help keep every SacTech community space free from harassment.
+							</li>
 							<li>
 								If someone asks you to stop harassing behavior, stop
 								immediately.
 							</li>
 							<li>
-								Organizers and moderators may warn or remove people who violate
-								the policy.
+								Organizers and moderators may warn, restrict, or remove people who
+								violate the policy.
 							</li>
 						</ul>
 						<a className={style.readPolicyLink} href="#full-policy">
@@ -89,12 +91,13 @@ export default function CodeOfConductPage() {
 					>
 						<header className={style.policyIntro}>
 							<p className={style.policyEyebrow}>The full policy</p>
-							<h2 id="policy-title">SacTech Slack Code of Conduct</h2>
+							<h2 id="policy-title">SacTech Code of Conduct</h2>
 							<p>
 								Every member of the SacTech Slack is required to agree to this
 								Code of Conduct. SacTech organizers and moderators will enforce
-								it throughout the workspace. We expect every participant to
-								cooperate in helping ensure a safe environment for everyone.
+								it throughout the workspace. We expect everyone participating in
+								SacTech community spaces to cooperate in helping ensure a safe
+								environment for everyone.
 							</p>
 						</header>
 
@@ -106,20 +109,22 @@ export default function CodeOfConductPage() {
 								organizers, and moderators participating there are also covered.
 							</p>
 							<p>
-								It does not currently define SacTech policy for in-person events,
-								independent social media, or other spaces. Expanding that scope
-								will require a separate community policy decision.
+								The values and behavioral standards in this policy extend to every
+								SacTech community space, even where a formal reporting or
+								enforcement process is not yet established. SacTech is still
+								defining those processes for in-person events, SacTech social media,
+								and other spaces outside Slack.
 							</p>
 						</section>
 
 						<section aria-labelledby="harassment-title" id="harassment">
 							<h3 id="harassment-title">2. Harassment is not welcome</h3>
 							<p>
-								The SacTech Slack is dedicated to providing a harassment-free
-								communication experience for everyone, regardless of gender,
+								The SacTech community is dedicated to providing a harassment-free
+								experience for everyone, regardless of gender,
 								gender identity and expression, age, sexual orientation,
 								disability, physical appearance, body size, race, or religion
-								(or lack of religion). We do not tolerate harassment of Slack
+								(or lack of religion). We do not tolerate harassment of
 								participants in any form.
 							</p>
 							<p>
@@ -127,12 +132,13 @@ export default function CodeOfConductPage() {
 								identity and expression, age, sexual orientation, disability,
 								physical appearance, body size, race, or religion; sexual images;
 								deliberate intimidation; stalking; sustained disruption of
-								channels or other Slack communication; and unwelcome sexual
-								attention.
+								channels, events, or other community communication; and unwelcome
+								sexual attention.
 							</p>
 							<p>
-								Sexual language and imagery are not appropriate in the SacTech
-								Slack workspace.
+								Sexual language and imagery are not appropriate in any SacTech
+								community space, including talks, workshops, parties, SacTech
+								social media, or other online communication.
 							</p>
 						</section>
 
@@ -153,9 +159,9 @@ export default function CodeOfConductPage() {
 						>
 							<h3 id="shared-responsibility-title">4. Shared responsibility</h3>
 							<p>
-								Sponsors participating in the SacTech Slack are subject to this
-								anti-harassment policy. They must not use sexualized images,
-								activities, or other material in the workspace. SacTech
+								Sponsors participating in SacTech community spaces are subject to
+								this anti-harassment standard. They must not use sexualized images,
+								activities, or other material in those spaces. SacTech
 								organizers, moderators, and volunteers must not use sexualized
 								content or otherwise create a sexualized environment.
 							</p>
@@ -166,8 +172,8 @@ export default function CodeOfConductPage() {
 							<p>
 								If a participant engages in harassing behavior, SacTech
 								organizers and moderators may take any action they consider
-								appropriate, including warning the participant or removing them
-								from the Slack workspace.
+								appropriate, including warning the participant, restricting their
+								participation, or removing them from the Slack workspace.
 							</p>
 						</section>
 
@@ -180,8 +186,9 @@ export default function CodeOfConductPage() {
 								<h4>Need help or want to report a concern?</h4>
 								<p>
 									If you are being harassed, notice that someone else is being
-									harassed, or have any other concerns, contact a SacTech
-									organizer or moderator through the Slack Team Directory.
+									harassed, or have any other concerns, please contact a SacTech
+									organizer or moderator through the Slack Team Directory as soon
+									as you can safely do so.
 								</p>
 								<p className={style.publicPathNote}>
 									<strong>For people outside Slack:</strong> SacTech is still
@@ -190,10 +197,11 @@ export default function CodeOfConductPage() {
 								</p>
 							</div>
 							<p>
-								If requested, SacTech organizers and moderators can help
+								If requested, SacTech organizers and moderators will help
 								participants contact local law enforcement or otherwise support
-								people experiencing harassment so they can feel safe in the
-								Slack workspace. We value your participation in this community.
+								people experiencing harassment so they can feel safe while
+								participating in SacTech community spaces. We value your
+								contribution to this community.
 							</p>
 						</section>
 					</article>
