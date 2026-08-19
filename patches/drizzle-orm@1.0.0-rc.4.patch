@@ -1,0 +1,60 @@
+diff --git a/netlify-db/session.cjs b/netlify-db/session.cjs
+--- a/netlify-db/session.cjs
++++ b/netlify-db/session.cjs
+@@ -37,23 +37,23 @@ var NetlifyDbSession = class extends __pg_core_async_session_ts.PgAsyncSession {
+ 	}
+ 	prepareQuery(query, mode, _name, mapper, queryMetadata, cacheConfig) {
+ 		const executor = (params) => {
+-			if (mode === "raw") return (async () => this.httpClient(query.sql, params, {
++			if (mode === "raw") return (async () => this.clientQuery(query.sql, params ?? [], {
+ 				arrayMode: false,
+ 				fullResults: true,
+ 				authToken: this.options.authToken
+ 			}))();
+-			return this.httpClient(query.sql, params, {
++			return this.clientQuery(query.sql, params ?? [], {
+ 				arrayMode: mode === "arrays",
+ 				fullResults: true,
+ 				authToken: this.options.authToken
+ 			}).then((it) => it.rows);
+ 		};
+ 		return new __pg_core_async_session_ts.PgAsyncPreparedQuery(executor, query, mapper, mode, this.logger, this.cache, queryMetadata, cacheConfig);
+ 	}
+ 	async batch(queries) {
+ 		const preparedQueries = [];
+ 		const builtQueries = [];
+-		const q = this.httpClient;
++		const q = this.clientQuery;
+ 		for (const query of queries) {
+ 			const preparedQuery = query._prepare();
+ 			const builtQuery = preparedQuery.getQuery();
+diff --git a/netlify-db/session.js b/netlify-db/session.js
+--- a/netlify-db/session.js
++++ b/netlify-db/session.js
+@@ -35,23 +35,23 @@ var NetlifyDbSession = class extends PgAsyncSession {
+ 	}
+ 	prepareQuery(query, mode, _name, mapper, queryMetadata, cacheConfig) {
+ 		const executor = (params) => {
+-			if (mode === "raw") return (async () => this.httpClient(query.sql, params, {
++			if (mode === "raw") return (async () => this.clientQuery(query.sql, params ?? [], {
+ 				arrayMode: false,
+ 				fullResults: true,
+ 				authToken: this.options.authToken
+ 			}))();
+-			return this.httpClient(query.sql, params, {
++			return this.clientQuery(query.sql, params ?? [], {
+ 				arrayMode: mode === "arrays",
+ 				fullResults: true,
+ 				authToken: this.options.authToken
+ 			}).then((it) => it.rows);
+ 		};
+ 		return new PgAsyncPreparedQuery(executor, query, mapper, mode, this.logger, this.cache, queryMetadata, cacheConfig);
+ 	}
+ 	async batch(queries) {
+ 		const preparedQueries = [];
+ 		const builtQueries = [];
+-		const q = this.httpClient;
++		const q = this.clientQuery;
+ 		for (const query of queries) {
+ 			const preparedQuery = query._prepare();
+ 			const builtQuery = preparedQuery.getQuery();
