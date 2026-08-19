@@ -228,9 +228,15 @@
 }
 
 .filterInput:checked + span {
-	background: var(--color-navy);
+	background-color: var(--color-navy);
+	background-image: linear-gradient(
+		var(--color-bridge),
+		var(--color-bridge)
+	);
+	background-position: bottom;
+	background-repeat: no-repeat;
+	background-size: 100% 0.24rem;
 	border-color: var(--color-navy);
-	box-shadow: inset 0 -0.24rem 0 var(--color-bridge);
 	color: var(--color-paper);
 }
 
