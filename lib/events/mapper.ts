@@ -1,4 +1,7 @@
-import type { Event as CalendarEvent } from "@/app/events/types";
+import type {
+	Event as CalendarEvent,
+	RecurrenceRule,
+} from "@/app/events/types";
 import type { EventMode } from "@/db/schema";
 
 export interface ApprovedEventRecord {
@@ -12,6 +15,13 @@ export interface ApprovedEventRecord {
 	startsAt: Date;
 	timezone: string;
 	title: string;
+	recurrenceFrequency: RecurrenceRule["frequency"] | null;
+	recurrenceInterval: number | null;
+	recurrenceWeekdays: number[] | null;
+	recurrenceMonthlyPattern: RecurrenceRule["monthlyPattern"];
+	recurrenceEndType: RecurrenceRule["endType"] | null;
+	recurrenceEndDate: string | null;
+	recurrenceCount: number | null;
 }
 
 export function mapApprovedEventsToCalendar(
@@ -20,6 +30,20 @@ export function mapApprovedEventsToCalendar(
 	return rows.map((row) => {
 		const locationDescription =
 			row.mode === "online" ? "Online" : (row.locationName ?? "Sacramento");
+		const recurrenceRule: RecurrenceRule | null =
+			row.recurrenceFrequency &&
+			row.recurrenceInterval &&
+			row.recurrenceEndType
+				? {
+						endDate: row.recurrenceEndDate,
+						endType: row.recurrenceEndType,
+						frequency: row.recurrenceFrequency,
+						interval: row.recurrenceInterval,
+						monthlyPattern: row.recurrenceMonthlyPattern,
+						occurrenceCount: row.recurrenceCount,
+						weekdays: row.recurrenceWeekdays,
+					}
+				: null;
 
 		return {
 			blocks: [
@@ -40,11 +64,12 @@ export function mapApprovedEventsToCalendar(
 			has_event_page: Boolean(row.eventUrl),
 			in_person: row.mode !== "online",
 			is_online: row.mode !== "in_person",
-			is_recurring: false,
+			is_recurring: recurrenceRule !== null,
 			location_address: row.locationAddress ?? undefined,
 			location_description: locationDescription,
 			location_url: row.eventUrl ?? undefined,
 			organizers: [],
+			recurrence_rule: recurrenceRule,
 			slug: row.id,
 			title: row.title,
 		};

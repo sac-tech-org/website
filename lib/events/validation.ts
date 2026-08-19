@@ -32,6 +32,96 @@ const localDateTime = z
 	.string()
 	.regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Choose a date and time.");
 
+const recurrenceInterval = z.preprocess(
+	(value) =>
+		typeof value === "string" && value.trim() !== "" ? Number(value) : value,
+	z
+		.number({ error: "Enter how often the event repeats." })
+		.int("Use a whole number.")
+		.min(1, "Repeat at least every 1 unit.")
+		.max(99, "Repeat no more than every 99 units."),
+);
+
+const optionalOccurrenceCount = z.preprocess(
+	(value) =>
+		typeof value === "string" && value.trim() !== ""
+			? Number(value)
+			: undefined,
+	z
+		.number({ error: "Enter the number of occurrences." })
+		.int("Use a whole number of occurrences.")
+		.min(2, "Use at least 2 occurrences.")
+		.max(1_000, "Use no more than 1,000 occurrences.")
+		.optional(),
+);
+
+const optionalLocalDate = z.preprocess(
+	(value) =>
+		typeof value === "string" && value.trim() !== ""
+			? value.trim()
+			: undefined,
+	z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, "Choose an ending date.")
+		.optional(),
+);
+
+const recurrenceSchema = z
+	.object({
+		frequency: z.enum(["day", "week", "month", "year"], {
+			error: "Choose how often the event repeats.",
+		}),
+		interval: recurrenceInterval,
+		weekdays: z.array(z.coerce.number().int().min(0).max(6)).max(7),
+		monthlyPattern: z.preprocess(
+			(value) =>
+				typeof value === "string" && value.trim() === "" ? undefined : value,
+			z
+				.enum(["day_of_month", "nth_weekday"], {
+					error: "Choose the monthly pattern.",
+				})
+				.optional(),
+		),
+		endType: z.enum(["never", "on_date", "after_occurrences"], {
+			error: "Choose when the recurrence ends.",
+		}),
+		endDate: optionalLocalDate,
+		occurrenceCount: optionalOccurrenceCount,
+	})
+	.superRefine((value, context) => {
+		if (value.frequency === "week" && value.weekdays.length === 0) {
+			context.addIssue({
+				code: "custom",
+				message: "Choose at least one weekday.",
+				path: ["weekdays"],
+			});
+		}
+
+		if (value.frequency === "month" && !value.monthlyPattern) {
+			context.addIssue({
+				code: "custom",
+				message: "Choose how the monthly event repeats.",
+				path: ["monthlyPattern"],
+			});
+		}
+
+		if (value.endType === "on_date" && !value.endDate) {
+			context.addIssue({
+				code: "custom",
+				message: "Choose the final recurrence date.",
+				path: ["endDate"],
+			});
+		}
+
+		if (value.endType === "after_occurrences" && !value.occurrenceCount) {
+			context.addIssue({
+				code: "custom",
+				message: "Enter how many occurrences to create.",
+				path: ["occurrenceCount"],
+			});
+		}
+	});
+
 const submissionSchema = z
 	.object({
 		title: z.string().trim().min(3, "Use at least 3 characters.").max(160),
@@ -76,6 +166,17 @@ export interface ValidatedEventSubmission {
 	locationName?: string;
 	locationAddress?: string;
 	eventUrl?: string;
+	recurrence: ValidatedRecurrence | null;
+}
+
+export interface ValidatedRecurrence {
+	frequency: "day" | "week" | "month" | "year";
+	interval: number;
+	weekdays: number[] | null;
+	monthlyPattern: "day_of_month" | "nth_weekday" | null;
+	endType: "never" | "on_date" | "after_occurrences";
+	endDate: string | null;
+	occurrenceCount: number | null;
 }
 
 interface SubmissionValidationResult {
@@ -104,7 +205,7 @@ function parseSacramentoDateTime(value: string) {
 export function validateEventSubmission(
 	formData: FormData,
 ): SubmissionValidationResult {
-	const parsed = submissionSchema.safeParse({
+	const parsedSubmission = submissionSchema.safeParse({
 		title: formData.get("title"),
 		description: formData.get("description"),
 		startsAt: formData.get("startsAt"),
@@ -114,23 +215,58 @@ export function validateEventSubmission(
 		locationAddress: formData.get("locationAddress"),
 		eventUrl: formData.get("eventUrl"),
 	});
+	const isRecurring = formData.get("recurring") === "on";
+	const parsedRecurrence = isRecurring
+		? recurrenceSchema.safeParse({
+				frequency: formData.get("recurrenceFrequency"),
+				interval: formData.get("recurrenceInterval"),
+				weekdays: formData.getAll("recurrenceWeekdays"),
+				monthlyPattern: formData.get("recurrenceMonthlyPattern") ?? undefined,
+				endType: formData.get("recurrenceEndType"),
+				endDate: formData.get("recurrenceEndDate"),
+				occurrenceCount: formData.get("recurrenceCount"),
+			})
+		: null;
+	const errors: Partial<Record<EventFormField, string[]>> = {};
 
-	if (!parsed.success) {
-		const errors: Partial<Record<EventFormField, string[]>> = {};
-
-		for (const issue of parsed.error.issues) {
+	if (!parsedSubmission.success) {
+		for (const issue of parsedSubmission.error.issues) {
 			const field = issue.path[0];
 			if (typeof field === "string") {
 				addFieldError(errors, field as EventFormField, issue.message);
 			}
 		}
+	}
 
+	if (parsedRecurrence && !parsedRecurrence.success) {
+		const recurrenceFieldMap = {
+			endDate: "recurrenceEndDate",
+			endType: "recurrenceEndType",
+			frequency: "recurrenceFrequency",
+			interval: "recurrenceInterval",
+			monthlyPattern: "recurrenceMonthlyPattern",
+			occurrenceCount: "recurrenceCount",
+			weekdays: "recurrenceWeekdays",
+		} as const;
+
+		for (const issue of parsedRecurrence.error.issues) {
+			const field = issue.path[0];
+			if (typeof field === "string" && field in recurrenceFieldMap) {
+				addFieldError(
+					errors,
+					recurrenceFieldMap[field as keyof typeof recurrenceFieldMap],
+					issue.message,
+				);
+			}
+		}
+	}
+
+	if (!parsedSubmission.success || (parsedRecurrence && !parsedRecurrence.success)) {
 		return { errors };
 	}
 
-	const startsAt = parseSacramentoDateTime(parsed.data.startsAt);
-	const endsAt = parseSacramentoDateTime(parsed.data.endsAt);
-	const errors: Partial<Record<EventFormField, string[]>> = {};
+	const startsAt = parseSacramentoDateTime(parsedSubmission.data.startsAt);
+	const endsAt = parseSacramentoDateTime(parsedSubmission.data.endsAt);
 
 	if (!startsAt) {
 		addFieldError(errors, "startsAt", "Choose a valid Pacific time.");
@@ -156,15 +292,84 @@ export function validateEventSubmission(
 		addFieldError(errors, "endsAt", "Events cannot span more than 14 days.");
 	}
 
+	if (startsAt && parsedRecurrence?.success) {
+		const startDate = dayjs(startsAt)
+			.tz(SACRAMENTO_TIMEZONE)
+			.format("YYYY-MM-DD");
+		const startWeekday = dayjs(startsAt).tz(SACRAMENTO_TIMEZONE).day();
+
+		if (
+			parsedRecurrence.data.frequency === "week" &&
+			!parsedRecurrence.data.weekdays.includes(startWeekday)
+		) {
+			addFieldError(
+				errors,
+				"recurrenceWeekdays",
+				"Include the weekday of the first event.",
+			);
+		}
+
+		if (parsedRecurrence.data.endType === "on_date") {
+			const endDate = parsedRecurrence.data.endDate;
+			const parsedEndDate = endDate
+				? dayjs(endDate, "YYYY-MM-DD", true)
+				: null;
+
+			if (
+				!endDate ||
+				!parsedEndDate?.isValid() ||
+				parsedEndDate.format("YYYY-MM-DD") !== endDate
+			) {
+				addFieldError(
+					errors,
+					"recurrenceEndDate",
+					"Choose a valid ending date.",
+				);
+			} else if (endDate < startDate) {
+				addFieldError(
+					errors,
+					"recurrenceEndDate",
+					"The recurrence cannot end before the first event.",
+				);
+			}
+		}
+	}
+
 	if (Object.keys(errors).length > 0 || !startsAt || !endsAt) {
 		return { errors };
 	}
 
 	return {
 		data: {
-			...parsed.data,
+			...parsedSubmission.data,
 			startsAt,
 			endsAt,
+			recurrence:
+				parsedRecurrence?.success
+					? {
+							frequency: parsedRecurrence.data.frequency,
+							interval: parsedRecurrence.data.interval,
+							weekdays:
+								parsedRecurrence.data.frequency === "week"
+									? [...new Set(parsedRecurrence.data.weekdays)].sort(
+											(left, right) => left - right,
+										)
+									: null,
+							monthlyPattern:
+								parsedRecurrence.data.frequency === "month"
+									? (parsedRecurrence.data.monthlyPattern ?? null)
+									: null,
+							endType: parsedRecurrence.data.endType,
+							endDate:
+								parsedRecurrence.data.endType === "on_date"
+									? (parsedRecurrence.data.endDate ?? null)
+									: null,
+							occurrenceCount:
+								parsedRecurrence.data.endType === "after_occurrences"
+									? (parsedRecurrence.data.occurrenceCount ?? null)
+									: null,
+						}
+						: null,
 		},
 	};
 }

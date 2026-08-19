@@ -135,7 +135,11 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						<h2 className={style.listHeading}>Recurring events</h2>
 						<ul className={style.list} role="list">
 							{recurringEvents.map((event) => (
-								<RecurringEventsCard event={event} key={event.slug} />
+								<RecurringEventsCard
+									event={event}
+									key={event.slug}
+									referenceDate={referenceDate}
+								/>
 							))}
 						</ul>
 					</section>

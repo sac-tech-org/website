@@ -2,7 +2,7 @@ import "server-only";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
-import { event } from "@/db/schema";
+import { event, eventRecurrence } from "@/db/schema";
 import type { Event as CalendarEvent } from "@/app/events/types";
 import { mapApprovedEventsToCalendar } from "@/lib/events/mapper";
 
@@ -19,8 +19,16 @@ export async function getApprovedEvents(): Promise<CalendarEvent[]> {
 			startsAt: event.startsAt,
 			timezone: event.timezone,
 			title: event.title,
+			recurrenceFrequency: eventRecurrence.frequency,
+			recurrenceInterval: eventRecurrence.interval,
+			recurrenceWeekdays: eventRecurrence.weekdays,
+			recurrenceMonthlyPattern: eventRecurrence.monthlyPattern,
+			recurrenceEndType: eventRecurrence.endType,
+			recurrenceEndDate: eventRecurrence.endDate,
+			recurrenceCount: eventRecurrence.occurrenceCount,
 		})
 		.from(event)
+		.leftJoin(eventRecurrence, eq(event.id, eventRecurrence.eventId))
 		.where(eq(event.status, "approved"))
 		.orderBy(asc(event.startsAt));
 
@@ -37,8 +45,16 @@ export async function getSubmissionsForUser(userId: string) {
 			startsAt: event.startsAt,
 			status: event.status,
 			title: event.title,
+			recurrenceFrequency: eventRecurrence.frequency,
+			recurrenceInterval: eventRecurrence.interval,
+			recurrenceWeekdays: eventRecurrence.weekdays,
+			recurrenceMonthlyPattern: eventRecurrence.monthlyPattern,
+			recurrenceEndType: eventRecurrence.endType,
+			recurrenceEndDate: eventRecurrence.endDate,
+			recurrenceCount: eventRecurrence.occurrenceCount,
 		})
 		.from(event)
+		.leftJoin(eventRecurrence, eq(event.id, eventRecurrence.eventId))
 		.where(eq(event.submittedBy, userId))
 		.orderBy(desc(event.createdAt));
 }
@@ -59,9 +75,17 @@ export async function getPendingEvents() {
 			submitterName: user.name,
 			timezone: event.timezone,
 			title: event.title,
+			recurrenceFrequency: eventRecurrence.frequency,
+			recurrenceInterval: eventRecurrence.interval,
+			recurrenceWeekdays: eventRecurrence.weekdays,
+			recurrenceMonthlyPattern: eventRecurrence.monthlyPattern,
+			recurrenceEndType: eventRecurrence.endType,
+			recurrenceEndDate: eventRecurrence.endDate,
+			recurrenceCount: eventRecurrence.occurrenceCount,
 		})
 		.from(event)
 		.leftJoin(user, eq(event.submittedBy, user.id))
+		.leftJoin(eventRecurrence, eq(event.id, eventRecurrence.eventId))
 		.where(eq(event.status, "pending"))
 		.orderBy(asc(event.createdAt));
 }

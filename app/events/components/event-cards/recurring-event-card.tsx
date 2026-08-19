@@ -1,15 +1,39 @@
-import { useMemo } from "react";
+import {
+	getNextOccurrence,
+	getOccurrenceEnd,
+} from "@/lib/events/recurrence";
 import { formatDateInTimeZone } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { RecurringEventsCardProps } from "./types";
 import style from "./recurring-event-card.module.css";
 
-export function RecurringEventsCard({ event }: RecurringEventsCardProps) {
-	const featuredBlock = useMemo(() => {
-		return [...event.blocks].sort(
-			(a, b) => a.starts_at.valueOf() - b.starts_at.valueOf(),
-		).at(-1);
-	}, [event.blocks]);
+export function RecurringEventsCard({
+	event,
+	referenceDate,
+}: RecurringEventsCardProps) {
+	const seed = [...event.blocks].sort(
+		(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+	)[0];
+	const nextStart =
+		event.recurrence_rule && seed
+			? getNextOccurrence(
+					seed.starts_at,
+					event.recurrence_rule,
+					referenceDate,
+				)
+			: null;
+	const featuredBlock =
+		seed && nextStart
+			? {
+					...seed,
+					ends_at: getOccurrenceEnd(
+						seed.starts_at,
+						seed.ends_at,
+						nextStart,
+					),
+					starts_at: nextStart,
+				}
+			: null;
 
 	return (
 		<li className={style.card}>
@@ -19,7 +43,7 @@ export function RecurringEventsCard({ event }: RecurringEventsCardProps) {
 			</div>
 			<h3 className={style.title}>{event.title}</h3>
 
-			{featuredBlock && (
+			{featuredBlock ? (
 				<p className={style.eventDate}>
 					<span aria-hidden="true">◷</span>
 					<time dateTime={featuredBlock.starts_at.toISOString()}>
@@ -35,8 +59,10 @@ export function RecurringEventsCard({ event }: RecurringEventsCardProps) {
 							{ hour: "numeric", minute: "2-digit" },
 						)}
 					</time>
-					<span className={style.dateStatus}>Latest listed</span>
+					<span className={style.dateStatus}>Next occurrence</span>
 				</p>
+			) : (
+				<p className={style.eventDate}>No upcoming dates are scheduled.</p>
 			)}
 
 			<ul aria-label="Event type" className={style.chips}>
@@ -57,7 +83,7 @@ export function RecurringEventsCard({ event }: RecurringEventsCardProps) {
 			{featuredBlock?.location_description && (
 				<div className={style.topicCard}>
 					<div>
-						<span>Latest listing</span>
+						<span>Next occurrence</span>
 						<strong>{featuredBlock.location_description}</strong>
 					</div>
 					{featuredBlock.location_url && (

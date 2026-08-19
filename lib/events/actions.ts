@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { event } from "@/db/schema";
+import { event, eventRecurrence } from "@/db/schema";
 import { getCurrentSession, sessionIsAdmin } from "@/lib/session";
 import type {
 	EventFormState,
@@ -40,11 +40,29 @@ export async function submitEvent(
 	}
 
 	try {
-		await db.insert(event).values({
-			...validation.data,
-			status: "pending",
-			submittedBy: session.user.id,
-			timezone: SACRAMENTO_TIMEZONE,
+		const { recurrence, ...eventValues } = validation.data;
+
+		await db.transaction(async (transaction) => {
+			const [createdEvent] = await transaction
+				.insert(event)
+				.values({
+					...eventValues,
+					status: "pending",
+					submittedBy: session.user.id,
+					timezone: SACRAMENTO_TIMEZONE,
+				})
+				.returning({ id: event.id });
+
+			if (!createdEvent) {
+				throw new Error("The event insert did not return an id.");
+			}
+
+			if (recurrence) {
+				await transaction.insert(eventRecurrence).values({
+					...recurrence,
+					eventId: createdEvent.id,
+				});
+			}
 		});
 	} catch (error) {
 		console.error("Unable to save event submission", error);

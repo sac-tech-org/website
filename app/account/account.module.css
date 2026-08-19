@@ -143,6 +143,25 @@
 	margin: 0.35rem 0 0;
 }
 
+.cardHeading .recurrenceSummary {
+	align-items: baseline;
+	background: var(--color-cream);
+	border-left: 0.25rem solid var(--color-river);
+	color: var(--color-navy);
+	display: flex;
+	font-size: 0.92rem;
+	font-weight: 750;
+	gap: 0.45rem;
+	margin-top: 0.75rem;
+	max-width: 46rem;
+	padding: 0.55rem 0.7rem;
+}
+
+.recurrenceSummary span {
+	color: var(--color-river-deep);
+	font-size: 1.05rem;
+}
+
 .cardHeading span {
 	border: 2px solid var(--color-line);
 	font-size: 0.78rem;

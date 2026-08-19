@@ -22,6 +22,24 @@ function validFormData(overrides: Record<string, string> = {}) {
 	return formData;
 }
 
+function recurringFormData(overrides: Record<string, string> = {}) {
+	const formData = validFormData();
+	const recurrenceValues = {
+		recurring: "on",
+		recurrenceEndType: "never",
+		recurrenceFrequency: "week",
+		recurrenceInterval: "1",
+		...overrides,
+	};
+
+	for (const [key, value] of Object.entries(recurrenceValues)) {
+		formData.set(key, value);
+	}
+
+	formData.append("recurrenceWeekdays", "0");
+	return formData;
+}
+
 describe("validateEventSubmission", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
@@ -87,5 +105,103 @@ describe("validateEventSubmission", () => {
 
 		expect(result.data).not.toHaveProperty("status");
 		expect(result.data).not.toHaveProperty("reviewedBy");
+	});
+
+	it("normalizes a weekly recurrence rule in Pacific time", () => {
+		const formData = recurringFormData();
+		formData.append("recurrenceWeekdays", "2");
+
+		const result = validateEventSubmission(formData);
+
+		expect(result.errors).toBeUndefined();
+		expect(result.data?.recurrence).toEqual({
+			endDate: null,
+			endType: "never",
+			frequency: "week",
+			interval: 1,
+			monthlyPattern: null,
+			occurrenceCount: null,
+			weekdays: [0, 2],
+		});
+	});
+
+	it("accepts an on-date ending when inactive count controls are omitted", () => {
+		const result = validateEventSubmission(
+			recurringFormData({
+				recurrenceEndDate: "2026-04-05",
+				recurrenceEndType: "on_date",
+			}),
+		);
+
+		expect(result.errors).toBeUndefined();
+		expect(result.data?.recurrence).toMatchObject({
+			endDate: "2026-04-05",
+			endType: "on_date",
+			occurrenceCount: null,
+		});
+	});
+
+	it("accepts an occurrence limit when inactive date controls are omitted", () => {
+		const result = validateEventSubmission(
+			recurringFormData({
+				recurrenceCount: "12",
+				recurrenceEndType: "after_occurrences",
+			}),
+		);
+
+		expect(result.errors).toBeUndefined();
+		expect(result.data?.recurrence).toMatchObject({
+			endDate: null,
+			endType: "after_occurrences",
+			occurrenceCount: 12,
+		});
+	});
+
+	it("requires a weekly rule to include the first event weekday", () => {
+		const formData = recurringFormData();
+		formData.delete("recurrenceWeekdays");
+		formData.append("recurrenceWeekdays", "2");
+
+		const result = validateEventSubmission(formData);
+
+		expect(result.errors?.recurrenceWeekdays).toContain(
+			"Include the weekday of the first event.",
+		);
+	});
+
+	it("rejects a recurrence ending before its first event", () => {
+		const result = validateEventSubmission(
+			recurringFormData({
+				recurrenceEndDate: "2026-03-07",
+				recurrenceEndType: "on_date",
+			}),
+		);
+
+		expect(result.errors?.recurrenceEndDate).toContain(
+			"The recurrence cannot end before the first event.",
+		);
+	});
+
+	it("requires at least two occurrences for a count-limited rule", () => {
+		const result = validateEventSubmission(
+			recurringFormData({
+				recurrenceCount: "1",
+				recurrenceEndType: "after_occurrences",
+			}),
+		);
+
+		expect(result.errors?.recurrenceCount).toContain(
+			"Use at least 2 occurrences.",
+		);
+	});
+
+	it("ignores recurrence fields unless recurrence is enabled", () => {
+		const formData = validFormData();
+		formData.set("recurrenceFrequency", "day");
+		formData.set("recurrenceEndType", "never");
+
+		const result = validateEventSubmission(formData);
+
+		expect(result.data?.recurrence).toBeNull();
 	});
 });

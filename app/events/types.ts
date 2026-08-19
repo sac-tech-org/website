@@ -30,6 +30,16 @@ interface EventOrganizer {
 	person: People;
 }
 
+export interface RecurrenceRule {
+	frequency: "day" | "week" | "month" | "year";
+	interval: number;
+	weekdays: number[] | null;
+	monthlyPattern: "day_of_month" | "nth_weekday" | null;
+	endType: "never" | "on_date" | "after_occurrences";
+	endDate: string | null;
+	occurrenceCount: number | null;
+}
+
 export interface Event {
 	slug: string;
 	banner_image?: string;
@@ -44,5 +54,6 @@ export interface Event {
 	in_person: boolean;
 	is_online: boolean;
 	is_recurring: boolean;
+	recurrence_rule: RecurrenceRule | null;
 	has_event_page: boolean;
 }

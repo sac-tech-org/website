@@ -15,6 +15,111 @@ const modeLabels = {
 	online: "Online",
 } as const;
 
+const weekdays = [
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday",
+] as const;
+
+interface RecurrenceSummaryInput {
+	startsAt: Date;
+	recurrenceFrequency: "day" | "week" | "month" | "year" | null;
+	recurrenceInterval: number | null;
+	recurrenceWeekdays: number[] | null;
+	recurrenceMonthlyPattern: "day_of_month" | "nth_weekday" | null;
+	recurrenceEndType: "never" | "on_date" | "after_occurrences" | null;
+	recurrenceEndDate: string | null;
+	recurrenceCount: number | null;
+}
+
+function ordinal(value: number) {
+	const remainder = value % 100;
+
+	if (remainder >= 11 && remainder <= 13) {
+		return `${value}th`;
+	}
+
+	switch (value % 10) {
+		case 1:
+			return `${value}st`;
+		case 2:
+			return `${value}nd`;
+		case 3:
+			return `${value}rd`;
+		default:
+			return `${value}th`;
+	}
+}
+
+function formatRecurrenceSummary(rule: RecurrenceSummaryInput) {
+	if (!rule.recurrenceFrequency) {
+		return "Does not repeat";
+	}
+
+	const interval = rule.recurrenceInterval ?? 1;
+	const startParts = new Intl.DateTimeFormat("en-US", {
+		day: "numeric",
+		month: "long",
+		timeZone: "America/Los_Angeles",
+		weekday: "long",
+	}).formatToParts(rule.startsAt);
+	const startDay = Number(
+		startParts.find((part) => part.type === "day")?.value ?? "1",
+	);
+	const startMonth =
+		startParts.find((part) => part.type === "month")?.value ?? "";
+	const startWeekday =
+		startParts.find((part) => part.type === "weekday")?.value ?? "";
+	const unit = rule.recurrenceFrequency;
+	let summary =
+		interval === 1 ? `Every ${unit}` : `Every ${interval} ${unit}s`;
+
+	if (unit === "week" && rule.recurrenceWeekdays?.length) {
+		const dayNames = rule.recurrenceWeekdays
+			.map((day) => weekdays[day])
+			.filter((day): day is (typeof weekdays)[number] => Boolean(day));
+
+		if (dayNames.length) {
+			summary += ` on ${new Intl.ListFormat("en-US", {
+				style: "long",
+				type: "conjunction",
+			}).format(dayNames)}`;
+		}
+	}
+
+	if (unit === "month") {
+		summary +=
+			rule.recurrenceMonthlyPattern === "nth_weekday"
+				? ` on the ${ordinal(Math.ceil(startDay / 7))} ${startWeekday}`
+				: ` on day ${startDay}`;
+	}
+
+	if (unit === "year") {
+		summary += ` on ${startMonth} ${startDay}`;
+	}
+
+	if (rule.recurrenceEndType === "on_date" && rule.recurrenceEndDate) {
+		const endDate = new Date(`${rule.recurrenceEndDate}T12:00:00Z`);
+		summary += ` through ${new Intl.DateTimeFormat("en-US", {
+			dateStyle: "medium",
+			timeZone: "UTC",
+		}).format(endDate)}`;
+	} else if (
+		rule.recurrenceEndType === "after_occurrences" &&
+		rule.recurrenceCount
+	) {
+		summary += ` for ${rule.recurrenceCount} occurrences`;
+	} else {
+		summary += " with no set end";
+	}
+
+	return summary;
+}
+
 function formatDateTime(date: Date, timeZone: string) {
 	return new Intl.DateTimeFormat("en-US", {
 		day: "numeric",
@@ -71,6 +176,7 @@ export default async function AdminEventsPage() {
 					<ul className={style.eventList}>
 						{pendingEvents.map((event) => {
 							const titleId = `event-${event.id}-title`;
+							const recurrenceSummary = formatRecurrenceSummary(event);
 
 							return (
 								<li key={event.id}>
@@ -122,6 +228,10 @@ export default async function AdminEventsPage() {
 														{formatDateTime(event.endsAt, event.timezone)}
 													</time>
 												</dd>
+											</div>
+											<div className={style.recurrenceDetail}>
+												<dt>Recurrence</dt>
+												<dd>{recurrenceSummary}</dd>
 											</div>
 											<div>
 												<dt>Venue</dt>

@@ -15,6 +15,13 @@ const baseEvent: ApprovedEventRecord = {
 	startsAt: new Date("2026-09-02T01:00:00.000Z"),
 	timezone: "America/Los_Angeles",
 	title: "Sacramento Meetup",
+	recurrenceCount: null,
+	recurrenceEndDate: null,
+	recurrenceEndType: null,
+	recurrenceFrequency: null,
+	recurrenceInterval: null,
+	recurrenceMonthlyPattern: null,
+	recurrenceWeekdays: null,
 };
 
 describe("mapApprovedEventsToCalendar", () => {
@@ -37,5 +44,29 @@ describe("mapApprovedEventsToCalendar", () => {
 		expect(event).not.toHaveProperty("submittedBy");
 		expect(event).not.toHaveProperty("moderationNote");
 		expect(event.blocks[0].location_url).toBe(baseEvent.eventUrl);
+	});
+
+	it("maps a public recurrence rule without moderation data", () => {
+		const [event] = mapApprovedEventsToCalendar([
+			{
+				...baseEvent,
+				recurrenceCount: 8,
+				recurrenceEndType: "after_occurrences",
+				recurrenceFrequency: "week",
+				recurrenceInterval: 2,
+				recurrenceWeekdays: [2, 4],
+			},
+		]);
+
+		expect(event.is_recurring).toBe(true);
+		expect(event.recurrence_rule).toEqual({
+			endDate: null,
+			endType: "after_occurrences",
+			frequency: "week",
+			interval: 2,
+			monthlyPattern: null,
+			occurrenceCount: 8,
+			weekdays: [2, 4],
+		});
 	});
 });

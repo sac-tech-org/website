@@ -1,5 +1,10 @@
 import dayjs, { type Dayjs } from "dayjs";
 import { useMemo, useState } from "react";
+import {
+	getNextOccurrence,
+	getOccurrenceEnd,
+	getOccurrencesInRange,
+} from "@/lib/events/recurrence";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
 import type { Event, EventBlock } from "../../types";
 import style from "./calendar.module.css";
@@ -16,15 +21,50 @@ interface CalendarEntry {
 	event: Event;
 }
 
+function getRecurrenceSeed(event: Event) {
+	return [...event.blocks].sort(
+		(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+	)[0];
+}
+
+function createOccurrenceBlock(seed: EventBlock, startsAt: Date): EventBlock {
+	return {
+		...seed,
+		ends_at: getOccurrenceEnd(seed.starts_at, seed.ends_at, startsAt),
+		slug: `${seed.slug}-${startsAt.toISOString()}`,
+		starts_at: startsAt,
+	};
+}
+
 function getInitialMonth(events: Event[], referenceDate: string) {
-	const blocks = events
-		.flatMap((event) => event.blocks)
+	const allBlocks = events.flatMap((event) => event.blocks);
+	const upcomingBlocks = events
+		.flatMap((event) => {
+			const seed = getRecurrenceSeed(event);
+
+			if (event.recurrence_rule && seed) {
+				const nextOccurrence = getNextOccurrence(
+					seed.starts_at,
+					event.recurrence_rule,
+					referenceDate,
+				);
+
+				return nextOccurrence
+					? [createOccurrenceBlock(seed, nextOccurrence)]
+					: [];
+			}
+
+			return event.blocks.filter(
+				(block) =>
+					formatDateKey(block.starts_at, block.timezone) >= referenceDate,
+			);
+		})
 		.sort((a, b) => a.starts_at.valueOf() - b.starts_at.valueOf());
-	const nearestUpcomingBlock = blocks.find(
-		(block) =>
-			formatDateKey(block.starts_at, block.timezone) >= referenceDate,
-	);
-	const anchorBlock = nearestUpcomingBlock ?? blocks.at(-1);
+	const anchorBlock =
+		upcomingBlocks[0] ??
+		allBlocks.sort(
+			(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+		).at(-1);
 
 	if (anchorBlock) {
 		return dayjs(
@@ -74,24 +114,40 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 		getInitialMonth(events, referenceDate),
 	);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
+	const months = useMemo(
+		() => [0, 1, 2].map((offset) => startMonth.add(offset, "month")),
+		[startMonth],
+	);
+	const visibleRangeStart = months[0].format("YYYY-MM-DD");
+	const visibleRangeEnd = months[2].endOf("month").format("YYYY-MM-DD");
 
 	const entriesByDate = useMemo(() => {
 		const entries = new Map<string, CalendarEntry[]>();
 
 		for (const event of events) {
-			for (const block of event.blocks) {
+			const seed = getRecurrenceSeed(event);
+			const visibleBlocks =
+				event.recurrence_rule && seed
+					? getOccurrencesInRange(
+							seed.starts_at,
+							event.recurrence_rule,
+							visibleRangeStart,
+							visibleRangeEnd,
+						).map((occurrence) => createOccurrenceBlock(seed, occurrence))
+					: event.blocks.filter((block) => {
+							const key = formatDateKey(block.starts_at, block.timezone);
+							return key >= visibleRangeStart && key <= visibleRangeEnd;
+						});
+
+			for (const block of visibleBlocks) {
 				const key = formatDateKey(block.starts_at, block.timezone);
 				entries.set(key, [...(entries.get(key) ?? []), { block, event }]);
 			}
 		}
 
 		return entries;
-	}, [events]);
+	}, [events, visibleRangeEnd, visibleRangeStart]);
 
-	const months = useMemo(
-		() => [0, 1, 2].map((offset) => startMonth.add(offset, "month")),
-		[startMonth],
-	);
 	const selectedEntries = selectedDate
 		? (entriesByDate.get(selectedDate) ?? [])
 		: [];

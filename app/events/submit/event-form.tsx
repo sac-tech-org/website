@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { submitEvent } from "@/lib/events/actions";
 import {
 	initialEventFormState,
@@ -12,6 +12,91 @@ import style from "./event-form.module.css";
 interface FieldErrorsProps {
 	errors: EventFormState["errors"];
 	field: EventFormField;
+}
+
+type RecurrenceFrequency = "day" | "week" | "month" | "year";
+type RecurrenceMonthlyPattern = "day_of_month" | "nth_weekday";
+type RecurrenceEndType = "never" | "on_date" | "after_occurrences";
+
+interface RecurrenceDraft {
+	recurring: boolean;
+	interval: string;
+	frequency: RecurrenceFrequency;
+	weekdays: number[];
+	monthlyPattern: RecurrenceMonthlyPattern;
+	endType: RecurrenceEndType;
+	endDate: string;
+	count: string;
+}
+
+const WEEKDAYS = [
+	{ label: "Sunday", shortLabel: "Sun", value: 0 },
+	{ label: "Monday", shortLabel: "Mon", value: 1 },
+	{ label: "Tuesday", shortLabel: "Tue", value: 2 },
+	{ label: "Wednesday", shortLabel: "Wed", value: 3 },
+	{ label: "Thursday", shortLabel: "Thu", value: 4 },
+	{ label: "Friday", shortLabel: "Fri", value: 5 },
+	{ label: "Saturday", shortLabel: "Sat", value: 6 },
+] as const;
+
+const MONTHS = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+] as const;
+
+const INITIAL_RECURRENCE: RecurrenceDraft = {
+	count: "10",
+	endDate: "",
+	endType: "never",
+	frequency: "week",
+	interval: "1",
+	monthlyPattern: "day_of_month",
+	recurring: false,
+	weekdays: [0],
+};
+
+function getStartDateParts(value: string) {
+	const match = /^(\d{4})-(\d{2})-(\d{2})T/.exec(value);
+
+	if (!match) {
+		return null;
+	}
+
+	const year = Number(match[1]);
+	const month = Number(match[2]);
+	const day = Number(match[3]);
+	const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+
+	return { day, month, weekday, year };
+}
+
+function ordinal(value: number) {
+	const remainder = value % 100;
+
+	if (remainder >= 11 && remainder <= 13) {
+		return `${value}th`;
+	}
+
+	switch (value % 10) {
+		case 1:
+			return `${value}st`;
+		case 2:
+			return `${value}nd`;
+		case 3:
+			return `${value}rd`;
+		default:
+			return `${value}th`;
+	}
 }
 
 function errorId(field: EventFormField) {
@@ -49,7 +134,67 @@ export function EventForm() {
 	);
 	const formRef = useRef<HTMLFormElement>(null);
 	const allowSuccessfulReset = useRef(false);
+	const weekdaysCustomized = useRef(false);
+	const [startsAt, setStartsAt] = useState("");
+	const [recurrence, setRecurrence] = useState(INITIAL_RECURRENCE);
 	const errors = state.errors;
+	const startDate = getStartDateParts(startsAt);
+	const startWeekday = startDate ? WEEKDAYS[startDate.weekday].label : null;
+	const monthlyDayLabel = startDate
+		? `Day ${startDate.day} of the month`
+		: "Same day of the month";
+	const monthlyWeekdayLabel = startDate
+		? `The ${ordinal(Math.ceil(startDate.day / 7))} ${startWeekday} of the month`
+		: "Same ordinal weekday of the month";
+	const yearlyDateLabel = startDate
+		? `${MONTHS[startDate.month - 1]} ${startDate.day}`
+		: "the event's start month and day";
+
+	function handleStartChange(value: string) {
+		const previousStartDate = getStartDateParts(startsAt);
+		setStartsAt(value);
+		const nextStartDate = getStartDateParts(value);
+		setRecurrence((current) => ({
+			...current,
+			weekdays: weekdaysCustomized.current
+				? [
+						...new Set([
+							...current.weekdays.filter(
+								(day) => day !== (previousStartDate?.weekday ?? 0),
+							),
+							nextStartDate?.weekday ?? 0,
+						]),
+					].sort((first, second) => first - second)
+				: [nextStartDate?.weekday ?? 0],
+		}));
+	}
+
+	function toggleWeekday(day: number, checked: boolean) {
+		if (!checked && day === (startDate?.weekday ?? 0)) {
+			return;
+		}
+
+		weekdaysCustomized.current = true;
+		setRecurrence((current) => {
+			if (checked) {
+				return {
+					...current,
+					weekdays: [...new Set([...current.weekdays, day])].sort(
+						(first, second) => first - second,
+					),
+				};
+			}
+
+			if (current.weekdays.length === 1) {
+				return current;
+			}
+
+			return {
+				...current,
+				weekdays: current.weekdays.filter((weekday) => weekday !== day),
+			};
+		});
+	}
 
 	// React resets uncontrolled fields after any resolved action, including validation errors.
 	useEffect(() => {
@@ -69,7 +214,12 @@ export function EventForm() {
 			onReset={(event) => {
 				if (!allowSuccessfulReset.current) {
 					event.preventDefault();
+					return;
 				}
+
+				weekdaysCustomized.current = false;
+				setStartsAt("");
+				setRecurrence(INITIAL_RECURRENCE);
 			}}
 			ref={formRef}
 		>
@@ -129,7 +279,8 @@ export function EventForm() {
 			<fieldset className={style.fieldGroup}>
 				<legend>When it happens</legend>
 				<p className={style.groupHint} id="time-zone-hint">
-					Enter both times in Pacific time (America/Los_Angeles).
+					Enter both times in Pacific time (America/Los_Angeles). We apply
+					PST or PDT automatically for the event date.
 				</p>
 				<div className={style.twoColumns}>
 					<div className={style.field}>
@@ -145,9 +296,11 @@ export function EventForm() {
 							aria-invalid={errors?.startsAt?.length ? true : undefined}
 							id="startsAt"
 							name="startsAt"
+							onChange={(event) => handleStartChange(event.target.value)}
 							required
 							step={60}
 							type="datetime-local"
+							value={startsAt}
 						/>
 						<FieldErrors errors={errors} field="startsAt" />
 					</div>
@@ -171,6 +324,339 @@ export function EventForm() {
 						<FieldErrors errors={errors} field="endsAt" />
 					</div>
 				</div>
+			</fieldset>
+
+			<fieldset className={`${style.fieldGroup} ${style.recurrenceGroup}`}>
+				<legend>Does it repeat?</legend>
+				<label className={style.recurringToggle}>
+					<input
+						aria-describedby={describedBy(
+							"recurring",
+							"recurring-hint",
+							errors,
+						)}
+						checked={recurrence.recurring}
+						name="recurring"
+						onChange={(event) =>
+							setRecurrence((current) => ({
+								...current,
+								recurring: event.target.checked,
+							}))
+						}
+						type="checkbox"
+						value="on"
+					/>
+					<span>
+						<strong>This event repeats</strong>
+						<small>Build a daily, weekly, monthly, or yearly schedule.</small>
+					</span>
+				</label>
+				<p className={style.groupHint} id="recurring-hint">
+					Leave this off for a one-time event.
+				</p>
+				<FieldErrors errors={errors} field="recurring" />
+
+				{recurrence.recurring && (
+					<div className={style.recurrencePanel}>
+						<div className={style.repeatEvery}>
+							<label htmlFor="recurrenceInterval">Repeat every</label>
+							<input
+								aria-describedby={describedBy(
+									"recurrenceInterval",
+									"repeat-every-hint",
+									errors,
+								)}
+								aria-invalid={
+									errors?.recurrenceInterval?.length ? true : undefined
+								}
+								id="recurrenceInterval"
+								inputMode="numeric"
+								max={99}
+								min={1}
+								name="recurrenceInterval"
+								onChange={(event) =>
+									setRecurrence((current) => ({
+										...current,
+										interval: event.target.value,
+									}))
+								}
+								required
+								type="number"
+								value={recurrence.interval}
+							/>
+							<label className="visuallyHidden" htmlFor="recurrenceFrequency">
+								Recurrence unit
+							</label>
+							<select
+								aria-describedby={describedBy(
+									"recurrenceFrequency",
+									"repeat-every-hint",
+									errors,
+								)}
+								aria-invalid={
+									errors?.recurrenceFrequency?.length ? true : undefined
+								}
+								id="recurrenceFrequency"
+								name="recurrenceFrequency"
+								onChange={(event) => {
+									const frequency = event.target.value as RecurrenceFrequency;
+									setRecurrence((current) => ({
+										...current,
+										frequency,
+										weekdays:
+											frequency === "week" && !weekdaysCustomized.current
+												? [startDate?.weekday ?? 0]
+												: current.weekdays,
+									}));
+								}}
+								required
+								value={recurrence.frequency}
+							>
+								<option value="day">
+									{recurrence.interval === "1" ? "day" : "days"}
+								</option>
+								<option value="week">
+									{recurrence.interval === "1" ? "week" : "weeks"}
+								</option>
+								<option value="month">
+									{recurrence.interval === "1" ? "month" : "months"}
+								</option>
+								<option value="year">
+									{recurrence.interval === "1" ? "year" : "years"}
+								</option>
+							</select>
+						</div>
+						<p className={style.hint} id="repeat-every-hint">
+							Set how much time passes between occurrences.
+						</p>
+						<FieldErrors errors={errors} field="recurrenceInterval" />
+						<FieldErrors errors={errors} field="recurrenceFrequency" />
+
+						{recurrence.frequency === "week" && (
+							<fieldset
+								aria-describedby={describedBy(
+									"recurrenceWeekdays",
+									"weekdays-hint",
+									errors,
+								)}
+								className={style.weekdayGroup}
+							>
+								<legend>
+									Repeat on <span aria-hidden="true">*</span>
+								</legend>
+								<p className={style.hint} id="weekdays-hint">
+									Choose one or more days. The event start day is selected by
+									default and must stay selected. Add any other days this event
+									also occurs.
+								</p>
+								<div className={style.weekdayOptions}>
+									{WEEKDAYS.map((day) => (
+										<label className={style.weekdayOption} key={day.value}>
+											<input
+												checked={recurrence.weekdays.includes(day.value)}
+												name="recurrenceWeekdays"
+												onChange={(event) =>
+													toggleWeekday(day.value, event.target.checked)
+												}
+												type="checkbox"
+												value={day.value}
+											/>
+											<span aria-hidden="true">{day.shortLabel}</span>
+											<span className="visuallyHidden">{day.label}</span>
+										</label>
+									))}
+								</div>
+								<FieldErrors errors={errors} field="recurrenceWeekdays" />
+							</fieldset>
+						)}
+
+						{recurrence.frequency === "month" && (
+							<div className={style.field}>
+								<label htmlFor="recurrenceMonthlyPattern">Monthly pattern</label>
+								<select
+									aria-describedby={describedBy(
+										"recurrenceMonthlyPattern",
+										"monthly-pattern-hint",
+										errors,
+									)}
+									aria-invalid={
+										errors?.recurrenceMonthlyPattern?.length
+											? true
+											: undefined
+									}
+									id="recurrenceMonthlyPattern"
+									name="recurrenceMonthlyPattern"
+									onChange={(event) =>
+										setRecurrence((current) => ({
+											...current,
+											monthlyPattern: event.target
+												.value as RecurrenceMonthlyPattern,
+										}))
+									}
+									required
+									value={recurrence.monthlyPattern}
+								>
+									<option value="day_of_month">{monthlyDayLabel}</option>
+									<option value="nth_weekday">{monthlyWeekdayLabel}</option>
+								</select>
+								<p className={style.hint} id="monthly-pattern-hint">
+									The pattern is calculated from the event&apos;s Pacific start date.
+								</p>
+								<FieldErrors
+									errors={errors}
+									field="recurrenceMonthlyPattern"
+								/>
+							</div>
+						)}
+
+						{recurrence.frequency === "day" && (
+							<p className={style.frequencyNote}>
+								Each occurrence starts at the same Pacific time.
+							</p>
+						)}
+
+						{recurrence.frequency === "year" && (
+							<p className={style.frequencyNote}>
+								Each year repeats on <strong>{yearlyDateLabel}</strong> at the
+								same Pacific time.
+							</p>
+						)}
+
+						<p className={style.timezoneNotice}>
+							<strong>Pacific time is fixed for the full series.</strong> We use
+							America/Los_Angeles and apply PST or PDT to each occurrence as
+							needed.
+						</p>
+
+						<fieldset
+							aria-describedby={describedBy(
+								"recurrenceEndType",
+								"recurrence-end-hint",
+								errors,
+							)}
+							className={style.endGroup}
+						>
+							<legend>Ends</legend>
+							<p className={style.hint} id="recurrence-end-hint">
+								Choose how long this series should continue.
+							</p>
+							<div className={style.endOptions}>
+								<div className={style.endOption}>
+									<label>
+										<input
+											checked={recurrence.endType === "never"}
+											name="recurrenceEndType"
+											onChange={() =>
+												setRecurrence((current) => ({
+													...current,
+													endType: "never",
+												}))
+											}
+											required
+											type="radio"
+											value="never"
+										/>
+										<span>Never</span>
+									</label>
+								</div>
+								<div className={style.endOption}>
+									<label>
+										<input
+											checked={recurrence.endType === "on_date"}
+											name="recurrenceEndType"
+											onChange={() =>
+												setRecurrence((current) => ({
+													...current,
+													endType: "on_date",
+												}))
+											}
+											required
+											type="radio"
+											value="on_date"
+										/>
+										<span>On date</span>
+									</label>
+									<label className="visuallyHidden" htmlFor="recurrenceEndDate">
+										Recurrence end date
+									</label>
+									<input
+										aria-describedby={describedBy(
+											"recurrenceEndDate",
+											"recurrence-end-hint",
+											errors,
+										)}
+										aria-invalid={
+											errors?.recurrenceEndDate?.length ? true : undefined
+										}
+										disabled={recurrence.endType !== "on_date"}
+										id="recurrenceEndDate"
+										min={startsAt ? startsAt.slice(0, 10) : undefined}
+										name="recurrenceEndDate"
+										onChange={(event) =>
+											setRecurrence((current) => ({
+												...current,
+												endDate: event.target.value,
+											}))
+										}
+										required={recurrence.endType === "on_date"}
+										type="date"
+										value={recurrence.endDate}
+									/>
+								</div>
+								<div className={style.endOption}>
+									<label>
+										<input
+											checked={recurrence.endType === "after_occurrences"}
+											name="recurrenceEndType"
+											onChange={() =>
+												setRecurrence((current) => ({
+													...current,
+													endType: "after_occurrences",
+												}))
+											}
+											required
+											type="radio"
+											value="after_occurrences"
+										/>
+										<span>After</span>
+									</label>
+									<label className="visuallyHidden" htmlFor="recurrenceCount">
+										Number of occurrences
+									</label>
+									<input
+										aria-describedby={describedBy(
+											"recurrenceCount",
+											"recurrence-end-hint",
+											errors,
+										)}
+										aria-invalid={
+											errors?.recurrenceCount?.length ? true : undefined
+										}
+										disabled={recurrence.endType !== "after_occurrences"}
+										id="recurrenceCount"
+										inputMode="numeric"
+										max={1_000}
+										min={2}
+										name="recurrenceCount"
+										onChange={(event) =>
+											setRecurrence((current) => ({
+												...current,
+												count: event.target.value,
+											}))
+										}
+										required={recurrence.endType === "after_occurrences"}
+										type="number"
+										value={recurrence.count}
+									/>
+									<span>occurrences</span>
+								</div>
+							</div>
+							<FieldErrors errors={errors} field="recurrenceEndType" />
+							<FieldErrors errors={errors} field="recurrenceEndDate" />
+							<FieldErrors errors={errors} field="recurrenceCount" />
+						</fieldset>
+					</div>
+				)}
 			</fieldset>
 
 			<fieldset

@@ -165,6 +165,18 @@
 	padding-left: 1.5rem;
 }
 
+.details > div.recurrenceDetail {
+	background: var(--color-cream);
+	border-left: 0;
+	grid-column: 1 / -1;
+	margin-top: 0.35rem;
+	padding: 0.85rem 1rem;
+}
+
+.recurrenceDetail dd {
+	font-weight: 750;
+}
+
 .details dt {
 	color: var(--color-ink-muted);
 	font-size: 0.78rem;

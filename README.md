@@ -106,7 +106,22 @@ Better Auth resolves each allowed preview hostname dynamically. The canonical `B
 The Drizzle configuration reads both schemas:
 
 - `db/auth-schema.ts` contains Better Auth's users, sessions, accounts, and verification records.
-- `db/schema.ts` contains the SacTech event and moderation model.
+- `db/schema.ts` contains the SacTech event, moderation, and optional recurrence models.
+
+### Recurring event rules
+
+A recurring event has one `event_recurrence` row whose primary key is the parent event ID. An event without that row is a one-time event. Deleting the event deletes its recurrence row automatically.
+
+| Rule | Persisted constraint |
+| --- | --- |
+| Frequency | `day`, `week`, `month`, or `year`, repeated every `interval` units; the interval must be from 1 through 99. |
+| Weekly | `weekdays` is required, must contain 1–7 integers, and may contain only `0` (Sunday) through `6` (Saturday). Other frequencies require it to be `null`. |
+| Monthly | `monthly_pattern` is required and is either `day_of_month` or `nth_weekday`. Other frequencies require it to be `null`. |
+| Never ends | `end_type=never`; both the end date and occurrence count are `null`. |
+| Ends on a date | `end_type=on_date`; `end_date` is required and the occurrence count is `null`. |
+| Ends after a count | `end_type=after_occurrences`; `occurrence_count` is required from 2 through 1000 and the end date is `null`. |
+
+Event date/time input and recurrence calculations use the fixed IANA timezone `America/Los_Angeles`—Pacific time, switching between PST and PDT automatically. The form intentionally has no timezone picker. `end_date` is a calendar date in that same timezone, while event start and end instants remain timezone-aware timestamps.
 
 After changing either schema, generate a SQL migration:
 

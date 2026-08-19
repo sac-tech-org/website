@@ -6,7 +6,15 @@ export type EventFormField =
 	| "mode"
 	| "locationName"
 	| "locationAddress"
-	| "eventUrl";
+	| "eventUrl"
+	| "recurring"
+	| "recurrenceInterval"
+	| "recurrenceFrequency"
+	| "recurrenceWeekdays"
+	| "recurrenceMonthlyPattern"
+	| "recurrenceEndType"
+	| "recurrenceEndDate"
+	| "recurrenceCount";
 
 export interface EventFormState {
 	status: "idle" | "error" | "success";
