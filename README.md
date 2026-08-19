@@ -210,6 +210,7 @@ After the production deploy succeeds:
 | `pnpm lint` | Run ESLint. |
 | `pnpm typecheck` | Run TypeScript without emitting files. |
 | `pnpm test` | Run the Vitest test suite once. |
+| `pnpm test:watch` | Run Vitest in watch mode while developing. |
 | `pnpm db:generate` | Generate SQL migrations from the Drizzle schemas. |
 | `pnpm db:migrate` | Apply pending migrations to the running local Netlify database. |
 | `pnpm db:status` | Show local database connection and migration status. |
@@ -224,6 +225,30 @@ pnpm typecheck
 pnpm test
 pnpm build
 ```
+
+## Testing
+
+The test suite is pinned to the Vitest 5 beta requested by the project and is
+split across two environments:
+
+- React integration tests run in jsdom with React Testing Library, DOM Testing
+  Library, `user-event`, and `jest-dom`. They interact through accessible labels,
+  roles, and visible status messages, with only the network or Server Action
+  boundary mocked.
+- Server and persistence integration tests run in Node and start an isolated
+  Netlify Database emulator. They apply every committed migration before testing
+  real Drizzle inserts, transactions, authorization decisions, moderation,
+  cancellation, and public-query visibility.
+
+Run the complete suite once with `pnpm test`, or use `pnpm test:watch` for fast
+feedback while editing. The database-backed files start and stop their own
+database, so `pnpm dev` does not need to be running.
+
+The local Netlify Database emulator uses PGlite and does not reproduce
+cross-connection PostgreSQL row-lock blocking. Keep the cancellation concurrency
+guard (`FOR UPDATE` on the parent event) covered in deploy-preview smoke testing,
+and use a real Postgres-compatible test database before changing that locking
+path.
 
 ## Security notes
 
@@ -247,3 +272,6 @@ pnpm build
 - [Better Auth dynamic base URL](https://better-auth.com/docs/guides/dynamic-base-url)
 - [Better Auth CLI and `create-admin`](https://better-auth.com/docs/concepts/cli)
 - [Better Auth Admin plugin](https://better-auth.com/docs/plugins/admin)
+- [Vitest guide](https://main.vitest.dev/guide/)
+- [React Testing Library introduction](https://testing-library.com/docs/react-testing-library/intro/)
+- [DOM Testing Library installation](https://testing-library.com/docs/dom-testing-library/install/)

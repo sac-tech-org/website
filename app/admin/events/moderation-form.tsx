@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { moderateEvent } from "@/lib/events/actions";
 import { initialModerationFormState } from "@/lib/events/state";
 import style from "./admin-events.module.css";
@@ -11,6 +11,7 @@ interface ModerationFormProps {
 }
 
 export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
+	const [note, setNote] = useState("");
 	const moderateBoundEvent = moderateEvent.bind(null, eventId);
 	const [state, formAction, pending] = useActionState(
 		moderateBoundEvent,
@@ -18,6 +19,15 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 	);
 	const noteId = `moderation-${eventId}-note`;
 	const noteHintId = `${noteId}-hint`;
+
+	useEffect(() => {
+		if (state.status === "success") {
+			// The Server Action resets native controls after every result. This
+			// controlled value intentionally clears only after a saved decision.
+			// eslint-disable-next-line react-hooks/set-state-in-effect
+			setNote("");
+		}
+	}, [state]);
 
 	return (
 		<form
@@ -38,7 +48,9 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 					id={noteId}
 					maxLength={500}
 					name="note"
+					onChange={(event) => setNote(event.target.value)}
 					rows={3}
+					value={note}
 				/>
 				<p id={noteHintId}>
 					A rejection requires a note of at least 5 characters so the

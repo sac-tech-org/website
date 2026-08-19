@@ -29,6 +29,17 @@ interface RecurrenceDraft {
 	count: string;
 }
 
+interface EventDraft {
+	description: string;
+	endsAt: string;
+	eventUrl: string;
+	locationAddress: string;
+	locationName: string;
+	mode: "hybrid" | "in_person" | "online";
+	startsAt: string;
+	title: string;
+}
+
 const WEEKDAYS = [
 	{ label: "Sunday", shortLabel: "Sun", value: 0 },
 	{ label: "Monday", shortLabel: "Mon", value: 1 },
@@ -63,6 +74,17 @@ const INITIAL_RECURRENCE: RecurrenceDraft = {
 	monthlyPattern: "day_of_month",
 	recurring: false,
 	weekdays: [0],
+};
+
+const INITIAL_EVENT_DRAFT: EventDraft = {
+	description: "",
+	endsAt: "",
+	eventUrl: "",
+	locationAddress: "",
+	locationName: "",
+	mode: "in_person",
+	startsAt: "",
+	title: "",
 };
 
 function getStartDateParts(value: string) {
@@ -132,12 +154,11 @@ export function EventForm() {
 		submitEvent,
 		initialEventFormState,
 	);
-	const formRef = useRef<HTMLFormElement>(null);
-	const allowSuccessfulReset = useRef(false);
 	const weekdaysCustomized = useRef(false);
-	const [startsAt, setStartsAt] = useState("");
+	const [draft, setDraft] = useState(INITIAL_EVENT_DRAFT);
 	const [recurrence, setRecurrence] = useState(INITIAL_RECURRENCE);
 	const errors = state.errors;
+	const startsAt = draft.startsAt;
 	const startDate = getStartDateParts(startsAt);
 	const startWeekday = startDate ? WEEKDAYS[startDate.weekday].label : null;
 	const monthlyDayLabel = startDate
@@ -152,7 +173,7 @@ export function EventForm() {
 
 	function handleStartChange(value: string) {
 		const previousStartDate = getStartDateParts(startsAt);
-		setStartsAt(value);
+		setDraft((current) => ({ ...current, startsAt: value }));
 		const nextStartDate = getStartDateParts(value);
 		setRecurrence((current) => ({
 			...current,
@@ -196,33 +217,35 @@ export function EventForm() {
 		});
 	}
 
-	// React resets uncontrolled fields after any resolved action, including validation errors.
+	// All user-entered fields are controlled because React resets native form
+	// controls after any resolved action, including returned validation errors.
 	useEffect(() => {
-		if (state.status !== "success" || !formRef.current) {
+		if (state.status === "idle") {
 			return;
 		}
 
-		allowSuccessfulReset.current = true;
-		formRef.current.reset();
-		allowSuccessfulReset.current = false;
+		if (state.status === "success") {
+			weekdaysCustomized.current = false;
+			// These controlled drafts intentionally clear only after the Server Action
+			// confirms success, never after a returned error.
+			// eslint-disable-next-line react-hooks/set-state-in-effect
+			setDraft(INITIAL_EVENT_DRAFT);
+			setRecurrence(INITIAL_RECURRENCE);
+			return;
+		}
+
+		// React's post-action native reset can mutate radio and checkbox DOM state
+		// after the action-state render. Clone both controlled drafts once the error
+		// arrives so React reapplies the user's selections from the source of truth.
+		setDraft((current) => ({ ...current }));
+		setRecurrence((current) => ({
+			...current,
+			weekdays: [...current.weekdays],
+		}));
 	}, [state]);
 
 	return (
-		<form
-			action={formAction}
-			className={style.form}
-			onReset={(event) => {
-				if (!allowSuccessfulReset.current) {
-					event.preventDefault();
-					return;
-				}
-
-				weekdaysCustomized.current = false;
-				setStartsAt("");
-				setRecurrence(INITIAL_RECURRENCE);
-			}}
-			ref={formRef}
-		>
+		<form action={formAction} aria-busy={pending} className={style.form}>
 			<div className={style.formHeading}>
 				<p className={style.stepLabel}>Event submission</p>
 				<h2>What should the community know?</h2>
@@ -238,12 +261,20 @@ export function EventForm() {
 				<input
 					aria-describedby={describedBy("title", "title-hint", errors)}
 					aria-invalid={errors?.title?.length ? true : undefined}
+					disabled={pending}
 					id="title"
 					maxLength={160}
 					minLength={3}
 					name="title"
+					onChange={(event) =>
+						setDraft((current) => ({
+							...current,
+							title: event.target.value,
+						}))
+					}
 					required
 					type="text"
+					value={draft.title}
 				/>
 				<p className={style.hint} id="title-hint">
 					Use the name attendees will recognize.
@@ -262,12 +293,20 @@ export function EventForm() {
 						errors,
 					)}
 					aria-invalid={errors?.description?.length ? true : undefined}
+					disabled={pending}
 					id="description"
 					maxLength={4_000}
 					minLength={20}
 					name="description"
+					onChange={(event) =>
+						setDraft((current) => ({
+							...current,
+							description: event.target.value,
+						}))
+					}
 					required
 					rows={7}
+					value={draft.description}
 				/>
 				<p className={style.hint} id="description-hint">
 					Share what people will do, who the event is for, and anything
@@ -276,7 +315,7 @@ export function EventForm() {
 				<FieldErrors errors={errors} field="description" />
 			</div>
 
-			<fieldset className={style.fieldGroup}>
+			<fieldset className={style.fieldGroup} disabled={pending}>
 				<legend>When it happens</legend>
 				<p className={style.groupHint} id="time-zone-hint">
 					Enter both times in Pacific time (America/Los_Angeles). We apply
@@ -317,16 +356,26 @@ export function EventForm() {
 							aria-invalid={errors?.endsAt?.length ? true : undefined}
 							id="endsAt"
 							name="endsAt"
+							onChange={(event) =>
+								setDraft((current) => ({
+									...current,
+									endsAt: event.target.value,
+								}))
+							}
 							required
 							step={60}
 							type="datetime-local"
+							value={draft.endsAt}
 						/>
 						<FieldErrors errors={errors} field="endsAt" />
 					</div>
 				</div>
 			</fieldset>
 
-			<fieldset className={`${style.fieldGroup} ${style.recurrenceGroup}`}>
+			<fieldset
+				className={`${style.fieldGroup} ${style.recurrenceGroup}`}
+				disabled={pending}
+			>
 				<legend>Does it repeat?</legend>
 				<label className={style.recurringToggle}>
 					<input
@@ -662,6 +711,7 @@ export function EventForm() {
 			<fieldset
 				aria-describedby={describedBy("mode", "mode-hint", errors)}
 				className={style.fieldGroup}
+				disabled={pending}
 			>
 				<legend>
 					How people attend <span aria-hidden="true">*</span>
@@ -672,8 +722,14 @@ export function EventForm() {
 				<div className={style.modeOptions}>
 					<label className={style.modeOption}>
 						<input
-							defaultChecked
+							checked={draft.mode === "in_person"}
 							name="mode"
+							onChange={() =>
+								setDraft((current) => ({
+									...current,
+									mode: "in_person",
+								}))
+							}
 							required
 							type="radio"
 							value="in_person"
@@ -685,7 +741,14 @@ export function EventForm() {
 					</label>
 					<label className={style.modeOption}>
 						<input
+							checked={draft.mode === "online"}
 							name="mode"
+							onChange={() =>
+								setDraft((current) => ({
+									...current,
+									mode: "online",
+								}))
+							}
 							required
 							type="radio"
 							value="online"
@@ -697,7 +760,14 @@ export function EventForm() {
 					</label>
 					<label className={style.modeOption}>
 						<input
+							checked={draft.mode === "hybrid"}
 							name="mode"
+							onChange={() =>
+								setDraft((current) => ({
+									...current,
+									mode: "hybrid",
+								}))
+							}
 							required
 							type="radio"
 							value="hybrid"
@@ -711,7 +781,7 @@ export function EventForm() {
 				<FieldErrors errors={errors} field="mode" />
 			</fieldset>
 
-			<fieldset className={style.fieldGroup}>
+			<fieldset className={style.fieldGroup} disabled={pending}>
 				<legend>Where people attend</legend>
 				<p className={style.groupHint}>
 					A location name is required for in-person and hybrid events. An
@@ -729,7 +799,14 @@ export function EventForm() {
 						id="locationName"
 						maxLength={200}
 						name="locationName"
+						onChange={(event) =>
+							setDraft((current) => ({
+								...current,
+								locationName: event.target.value,
+							}))
+						}
 						type="text"
+						value={draft.locationName}
 					/>
 					<p className={style.hint} id="location-name-hint">
 						For example, a coworking space, library, or community center.
@@ -749,7 +826,14 @@ export function EventForm() {
 						id="locationAddress"
 						maxLength={500}
 						name="locationAddress"
+						onChange={(event) =>
+							setDraft((current) => ({
+								...current,
+								locationAddress: event.target.value,
+							}))
+						}
 						type="text"
+						value={draft.locationAddress}
 					/>
 					<p className={style.hint} id="location-address-hint">
 						Optional. Include the city and postal code when they help people
@@ -771,8 +855,15 @@ export function EventForm() {
 						inputMode="url"
 						maxLength={2_048}
 						name="eventUrl"
+						onChange={(event) =>
+							setDraft((current) => ({
+								...current,
+								eventUrl: event.target.value,
+							}))
+						}
 						placeholder="https://"
 						type="url"
+						value={draft.eventUrl}
 					/>
 					<p className={style.hint} id="event-url-hint">
 						Use a public http:// or https:// link where attendees can join

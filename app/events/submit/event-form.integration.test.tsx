@@ -1,0 +1,380 @@
+// @vitest-environment jsdom
+
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { EventFormState } from "@/lib/events/state";
+import { EventForm } from "./event-form";
+
+const serverActions = vi.hoisted(() => ({
+	submitEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/events/actions", () => ({
+	submitEvent: serverActions.submitEvent,
+}));
+
+const TITLE = "SacTech Community Demo Night";
+const DESCRIPTION =
+	"See project demos from Sacramento developers and meet their creators.";
+const STARTS_AT = "2099-05-19T10:00";
+const ENDS_AT = "2099-05-19T12:00";
+
+const successState: EventFormState = {
+	message: "Event submitted for review.",
+	status: "success",
+};
+
+function deferred<T>() {
+	let resolve!: (value: T) => void;
+	const promise = new Promise<T>((promiseResolve) => {
+		resolve = promiseResolve;
+	});
+
+	return { promise, resolve };
+}
+
+function getSubmittedFormData(callIndex = 0) {
+	const formData = serverActions.submitEvent.mock.calls[callIndex]?.[1];
+
+	if (!(formData instanceof FormData)) {
+		throw new TypeError("submitEvent did not receive FormData.");
+	}
+
+	return Array.from(formData.entries());
+}
+
+function eventEntries(recurrenceEntries: Array<[string, string]> = []) {
+	return [
+		["title", TITLE],
+		["description", DESCRIPTION],
+		["startsAt", STARTS_AT],
+		["endsAt", ENDS_AT],
+		...recurrenceEntries,
+		["mode", "in_person"],
+		["locationName", "Central Library"],
+		["locationAddress", "828 I Street, Sacramento, CA"],
+		["eventUrl", ""],
+	];
+}
+
+async function fillRequiredEventFields(user: ReturnType<typeof userEvent.setup>) {
+	await user.type(screen.getByLabelText(/Event title/), TITLE);
+	await user.type(screen.getByLabelText(/Description/), DESCRIPTION);
+	fireEvent.change(screen.getByLabelText(/Starts/), {
+		target: { value: STARTS_AT },
+	});
+	fireEvent.change(screen.getByLabelText(/Ends/), {
+		target: { value: ENDS_AT },
+	});
+	await user.type(screen.getByLabelText("Venue or location name"), "Central Library");
+	await user.type(
+		screen.getByLabelText("Street address"),
+		"828 I Street, Sacramento, CA",
+	);
+}
+
+async function enableRecurrence(user: ReturnType<typeof userEvent.setup>) {
+	await user.click(
+		screen.getByRole("checkbox", { name: /This event repeats/ }),
+	);
+}
+
+async function submitAndWaitForSuccess(
+	user: ReturnType<typeof userEvent.setup>,
+) {
+	await user.click(
+		screen.getByRole("button", { name: "Submit event for review" }),
+	);
+	await screen.findByRole("status");
+}
+
+describe("EventForm", () => {
+	beforeEach(() => {
+		serverActions.submitEvent.mockResolvedValue(successState);
+	});
+
+	it("submits a one-time event with only the visible event fields", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+
+		expect(
+			screen.getByText(/Enter both times in Pacific time/),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("checkbox", { name: /This event repeats/ }),
+		).not.toBeChecked();
+
+		await submitAndWaitForSuccess(user);
+
+		expect(serverActions.submitEvent).toHaveBeenCalledTimes(1);
+		expect(getSubmittedFormData()).toEqual(eventEntries());
+	});
+
+	it("submits a daily series that never ends", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "day");
+
+		expect(
+			screen.getByText("Each occurrence starts at the same Pacific time."),
+		).toBeVisible();
+		expect(screen.queryByRole("group", { name: /Repeat on/ })).toBeNull();
+
+		await submitAndWaitForSuccess(user);
+
+		expect(getSubmittedFormData()).toEqual(
+			eventEntries([
+				["recurring", "on"],
+				["recurrenceInterval", "1"],
+				["recurrenceFrequency", "day"],
+				["recurrenceEndType", "never"],
+			]),
+		);
+	});
+
+	it("keeps the start weekday selected and submits added weekly days through an end date", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+
+		const weekdayGroup = screen.getByRole("group", { name: /Repeat on/ });
+		const tuesday = screen.getByRole("checkbox", { name: "Tuesday" });
+		const thursday = screen.getByRole("checkbox", { name: "Thursday" });
+		expect(weekdayGroup).toBeVisible();
+		expect(tuesday).toBeChecked();
+
+		await user.click(tuesday);
+		expect(tuesday).toBeChecked();
+		await user.click(thursday);
+		expect(thursday).toBeChecked();
+		await user.click(screen.getByRole("radio", { name: "On date" }));
+		fireEvent.change(screen.getByLabelText("Recurrence end date"), {
+			target: { value: "2099-08-19" },
+		});
+
+		await submitAndWaitForSuccess(user);
+
+		expect(getSubmittedFormData()).toEqual(
+			eventEntries([
+				["recurring", "on"],
+				["recurrenceInterval", "1"],
+				["recurrenceFrequency", "week"],
+				["recurrenceWeekdays", "2"],
+				["recurrenceWeekdays", "4"],
+				["recurrenceEndType", "on_date"],
+				["recurrenceEndDate", "2099-08-19"],
+			]),
+		);
+	});
+
+	it("submits a monthly ordinal-weekday series after a chosen occurrence count", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "month");
+
+		const monthlyPattern = screen.getByLabelText("Monthly pattern");
+		expect(monthlyPattern).toHaveDisplayValue("Day 19 of the month");
+		expect(
+			screen.getByRole("option", {
+				name: "The 3rd Tuesday of the month",
+			}),
+		).toBeInTheDocument();
+		await user.selectOptions(monthlyPattern, "nth_weekday");
+		await user.click(screen.getByRole("radio", { name: "After" }));
+		const occurrenceCount = screen.getByLabelText("Number of occurrences");
+		await user.clear(occurrenceCount);
+		await user.type(occurrenceCount, "12");
+
+		await submitAndWaitForSuccess(user);
+
+		expect(getSubmittedFormData()).toEqual(
+			eventEntries([
+				["recurring", "on"],
+				["recurrenceInterval", "1"],
+				["recurrenceFrequency", "month"],
+				["recurrenceMonthlyPattern", "nth_weekday"],
+				["recurrenceEndType", "after_occurrences"],
+				["recurrenceCount", "12"],
+			]),
+		);
+	});
+
+	it("submits a yearly series and explains the start date that will repeat", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "year");
+		const interval = screen.getByLabelText("Repeat every");
+		await user.clear(interval);
+		await user.type(interval, "2");
+
+		const yearlyDate = screen.getByText("May 19");
+		expect(yearlyDate.closest("p")).toHaveTextContent(
+			"Each year repeats on May 19 at the same Pacific time.",
+		);
+
+		await submitAndWaitForSuccess(user);
+
+		expect(getSubmittedFormData()).toEqual(
+			eventEntries([
+				["recurring", "on"],
+				["recurrenceInterval", "2"],
+				["recurrenceFrequency", "year"],
+				["recurrenceEndType", "never"],
+			]),
+		);
+	});
+
+	it("preserves entered values and recurrence controls when the server returns errors", async () => {
+		const user = userEvent.setup();
+		serverActions.submitEvent.mockResolvedValue({
+			errors: {
+				title: ["That title is already in use."],
+			},
+			message: "Check the highlighted fields and try again.",
+			status: "error",
+		} satisfies EventFormState);
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "month");
+		const recurrenceInterval = screen.getByLabelText("Repeat every");
+		await user.clear(recurrenceInterval);
+		await user.type(recurrenceInterval, "3");
+		await user.selectOptions(
+			screen.getByLabelText("Monthly pattern"),
+			"nth_weekday",
+		);
+		await user.click(screen.getByRole("radio", { name: "After" }));
+		const count = screen.getByLabelText("Number of occurrences");
+		await user.clear(count);
+		await user.type(count, "8");
+		await user.click(
+			screen.getByRole("radio", { name: /^Hybrid/ }),
+		);
+		await user.type(
+			screen.getByLabelText("Event or registration link"),
+			"https://example.com/demo-night",
+		);
+
+		await user.click(
+			screen.getByRole("button", { name: "Submit event for review" }),
+		);
+
+		const alert = await screen.findByRole("alert");
+		expect(alert).toHaveTextContent("Check the highlighted fields and try again.");
+		expect(screen.getByText("That title is already in use.")).toBeVisible();
+		expect(screen.getByLabelText(/Event title/)).toHaveValue(TITLE);
+		expect(screen.getByLabelText(/Description/)).toHaveValue(DESCRIPTION);
+		expect(screen.getByLabelText(/Starts/)).toHaveValue(STARTS_AT);
+		expect(screen.getByLabelText(/Ends/)).toHaveValue(ENDS_AT);
+		expect(screen.getByLabelText("Venue or location name")).toHaveValue(
+			"Central Library",
+		);
+		expect(screen.getByLabelText("Street address")).toHaveValue(
+			"828 I Street, Sacramento, CA",
+		);
+		expect(screen.getByLabelText("Event or registration link")).toHaveValue(
+			"https://example.com/demo-night",
+		);
+		expect(
+			screen.getByRole("radio", { name: /^Hybrid/ }),
+		).toBeChecked();
+		expect(
+			screen.getByRole("checkbox", { name: /This event repeats/ }),
+		).toBeChecked();
+		expect(screen.getByLabelText("Recurrence unit")).toHaveValue("month");
+		expect(screen.getByLabelText("Repeat every")).toHaveValue(3);
+		expect(screen.getByLabelText("Monthly pattern")).toHaveValue(
+			"nth_weekday",
+		);
+		expect(screen.getByRole("radio", { name: "After" })).toBeChecked();
+		expect(screen.getByLabelText("Number of occurrences")).toHaveValue(8);
+		expect(screen.getByLabelText(/Event title/)).toHaveAttribute(
+			"aria-invalid",
+			"true",
+		);
+	});
+
+	it("locks the submitted draft while the server action is pending", async () => {
+		const user = userEvent.setup();
+		const result = deferred<EventFormState>();
+		serverActions.submitEvent.mockReturnValue(result.promise);
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+
+		await user.click(
+			screen.getByRole("button", { name: "Submit event for review" }),
+		);
+
+		const title = screen.getByLabelText(/Event title/);
+		const form = title.closest("form");
+		expect(form).not.toBeNull();
+		expect(form).toHaveAttribute("aria-busy", "true");
+		expect(title).toBeDisabled();
+		expect(screen.getByLabelText(/Description/)).toBeDisabled();
+		expect(screen.getByLabelText(/Starts/)).toBeDisabled();
+		expect(screen.getByLabelText("Recurrence unit")).toBeDisabled();
+		expect(screen.getByRole("radio", { name: /^In person/ })).toBeDisabled();
+		expect(screen.getByLabelText("Event or registration link")).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: "Submitting…" }),
+		).toBeDisabled();
+
+		await act(async () => {
+			result.resolve(successState);
+			await result.promise;
+		});
+
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Event submitted for review.",
+		);
+		expect(form).toHaveAttribute("aria-busy", "false");
+	});
+
+	it("resets event and recurrence fields only after a successful submission", async () => {
+		const user = userEvent.setup();
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await enableRecurrence(user);
+		await user.selectOptions(screen.getByLabelText("Recurrence unit"), "day");
+		await user.click(screen.getByRole("radio", { name: /^Hybrid/ }));
+		await user.type(
+			screen.getByLabelText("Event or registration link"),
+			"https://example.com/demo-night",
+		);
+
+		await submitAndWaitForSuccess(user);
+
+		await waitFor(() => {
+			expect(screen.getByLabelText(/Event title/)).toHaveValue("");
+			expect(screen.getByLabelText(/Description/)).toHaveValue("");
+			expect(screen.getByLabelText(/Starts/)).toHaveValue("");
+			expect(screen.getByLabelText(/Ends/)).toHaveValue("");
+			expect(screen.getByLabelText("Venue or location name")).toHaveValue("");
+			expect(screen.getByLabelText("Street address")).toHaveValue("");
+			expect(screen.getByLabelText("Event or registration link")).toHaveValue(
+				"",
+			);
+			expect(
+				screen.getByRole("checkbox", { name: /This event repeats/ }),
+			).not.toBeChecked();
+		});
+		expect(screen.queryByLabelText("Recurrence unit")).toBeNull();
+		expect(
+			screen.getByRole("radio", { name: /^In person/ }),
+		).toBeChecked();
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Event submitted for review.",
+		);
+	});
+});
