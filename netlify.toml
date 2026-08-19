@@ -1,9 +1,9 @@
 [build]
-command = "pnpm build"
+command = "pnpm exec playwright install chromium && pnpm verify"
 publish = ".next"
 
 [build.environment]
-NODE_VERSION = "22.13.0"
+NODE_VERSION = "24.19.0"
 
 [dev]
 command = "pnpm dev:next"

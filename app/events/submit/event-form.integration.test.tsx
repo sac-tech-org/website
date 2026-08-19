@@ -1,8 +1,6 @@
-// @vitest-environment jsdom
-
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import type { EventFormState } from "@/lib/events/state";
 import { EventForm } from "./event-form";
 

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Restore Next.js build cache
+        uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**/*', 'components/**/*', 'db/**/*', 'lib/**/*', 'public/**/*', 'next.config.*', 'tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Verify project
+        run: pnpm verify
+        # Next.js imports the database and auth configuration while collecting
+        # build metadata. These non-routable values satisfy configuration checks;
+        # CI does not connect to this placeholder database.
+        env:
+          BETTER_AUTH_SECRET: ci-only-secret-with-at-least-thirty-two-characters
+          BETTER_AUTH_URL: https://ci.sactech.invalid
+          BETTER_AUTH_ALLOWED_HOSTS: ci.sactech.invalid
+          NETLIFY_DB_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          NETLIFY_DB_DRIVER: server

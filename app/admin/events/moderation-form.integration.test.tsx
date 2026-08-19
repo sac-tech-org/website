@@ -1,9 +1,7 @@
-// @vitest-environment jsdom
-
 import { within } from "@testing-library/dom";
 import { act, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import type { ModerationFormState } from "@/lib/events/state";
 import { ModerationForm } from "./moderation-form";
 

@@ -1,8 +1,6 @@
-// @vitest-environment jsdom
-
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import { AuthForm } from "./auth-form";
 
 const authMocks = vi.hoisted(() => ({

@@ -1,9 +1,7 @@
-// @vitest-environment jsdom
-
 import { within } from "@testing-library/dom";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 import { Calendar } from "./components/calendar/calendar";
 import { RecurringEventsCard } from "./components/event-cards/recurring-event-card";
 import EventsPage from "./events-page";

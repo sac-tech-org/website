@@ -25,7 +25,7 @@ Netlify Database is currently available only on Netlify's **Credit-based plans**
 
 ### Prerequisites
 
-- Node.js 22.13 or newer (`.nvmrc` pins the project's version)
+- Node.js 24 (`.nvmrc` pins the project to Node.js 24.19.0)
 - Corepack and pnpm 10.33
 - A supported local platform for Netlify Database
 
@@ -186,7 +186,7 @@ Changes made through the production database editor take effect immediately. Ver
 ## Deploy to Netlify
 
 1. Push the repository, including `netlify.toml` and all generated migrations, to the Git provider Netlify will use.
-2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration runs `pnpm build`, publishes `.next`, and selects Node 22.13.
+2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration installs Chromium for the browser integration tests, runs `pnpm verify`, publishes `.next`, and selects Node 24.19.0. Verification runs linting, type checking, tests, and one production build, so a failed quality gate blocks the deploy.
 3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AUTH_ALLOWED_HOSTS`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication.
 4. Deploy the site.
 
@@ -211,6 +211,7 @@ After the production deploy succeeds:
 | `pnpm typecheck` | Run TypeScript without emitting files. |
 | `pnpm test` | Run the Vitest test suite once. |
 | `pnpm test:watch` | Run Vitest in watch mode while developing. |
+| `pnpm verify` | Run the complete CI/deploy gate: lint, typecheck, tests, and one production build. |
 | `pnpm db:generate` | Generate SQL migrations from the Drizzle schemas. |
 | `pnpm db:migrate` | Apply pending migrations to the running local Netlify database. |
 | `pnpm db:status` | Show local database connection and migration status. |
@@ -220,21 +221,27 @@ After the production deploy succeeds:
 Before opening a pull request, run:
 
 ```sh
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
+pnpm verify
 ```
+
+The `CI` GitHub Actions workflow runs the same command for every pull request and
+push to `main`, using the checked-in Node.js and pnpm versions with a frozen
+lockfile. Configure the `CI / quality` status check as required in the repository's
+`main` branch protection settings. Netlify also installs the test browser and
+runs `pnpm verify`, so direct or manually retried deploys cannot bypass the
+checks; the production build inside that command is the single build Netlify
+publishes.
 
 ## Testing
 
 The test suite is pinned to the Vitest 5 beta requested by the project and is
 split across two environments:
 
-- React integration tests run in jsdom with React Testing Library, DOM Testing
-  Library, `user-event`, and `jest-dom`. They interact through accessible labels,
-  roles, and visible status messages, with only the network or Server Action
-  boundary mocked.
+- React integration tests run in headless Chromium through Vitest Browser Mode's
+  Playwright provider. They use React Testing Library, DOM Testing Library, and
+  `jest-dom`, while `vitest/browser` drives real user interactions through the
+  browser. Tests interact through accessible labels, roles, and visible status
+  messages, with only the network or Server Action boundary mocked.
 - Server and persistence integration tests run in Node and start an isolated
   Netlify Database emulator. They apply every committed migration before testing
   real Drizzle inserts, transactions, authorization decisions, moderation,
@@ -243,6 +250,10 @@ split across two environments:
 Run the complete suite once with `pnpm test`, or use `pnpm test:watch` for fast
 feedback while editing. The database-backed files start and stop their own
 database, so `pnpm dev` does not need to be running.
+
+After installing dependencies for the first time, install the Chromium binary
+used by Browser Mode with `pnpm exec playwright install chromium`. CI installs
+Chromium and its Linux system dependencies before running the same test suite.
 
 The local Netlify Database emulator uses PGlite and does not reproduce
 cross-connection PostgreSQL row-lock blocking. Keep the cancellation concurrency
