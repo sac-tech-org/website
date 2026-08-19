@@ -1,0 +1,36 @@
+.container {
+	min-width: 0;
+}
+
+.toggle {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	color: var(--color-river-deep);
+	cursor: pointer;
+	display: inline-flex;
+	font: inherit;
+	font-size: 0.8rem;
+	font-weight: 800;
+	gap: 0.45rem;
+	margin-top: 0.65rem;
+	padding: 0.2rem 0;
+	text-decoration: underline;
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.2em;
+}
+
+.toggle:hover {
+	color: var(--color-poppy-deep);
+}
+
+.toggle:focus-visible {
+	border-radius: 0.15rem;
+	outline: 0.2rem solid var(--color-focus);
+	outline-offset: 0.2rem;
+}
+
+.toggle span {
+	font-size: 1.05rem;
+	line-height: 1;
+}

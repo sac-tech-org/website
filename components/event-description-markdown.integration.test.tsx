@@ -59,4 +59,20 @@ describe("EventDescriptionMarkdown", () => {
 			screen.getByText("Unsafe destination").closest("a"),
 		).not.toHaveAttribute("href");
 	});
+
+	it("truncates the parsed Markdown tree without breaking formatting", () => {
+		const { container } = render(
+			<EventDescriptionMarkdown
+				markdown={`${"A".repeat(295)} **bold ending remains valid**\n\n[Hidden link](https://example.com)`}
+				maxCharacters={300}
+			/>,
+		);
+
+		expect(screen.getByText("bold…").tagName).toBe("STRONG");
+		expect(screen.queryByText(/ending remains valid/)).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("link", { name: "Hidden link" }),
+		).not.toBeInTheDocument();
+		expect(container.textContent).toContain(`${"A".repeat(295)} bold…`);
+	});
 });

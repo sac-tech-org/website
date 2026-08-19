@@ -70,18 +70,114 @@ const components: Components = {
 interface EventDescriptionMarkdownProps {
 	className?: string;
 	markdown: string;
+	maxCharacters?: number;
+}
+
+interface MarkdownAstNode {
+	children?: MarkdownAstNode[];
+	type?: string;
+	value?: string;
+}
+
+const markdownTextNodeTypes = new Set(["code", "inlineCode", "text"]);
+
+function isMarkdownAstNode(value: unknown): value is MarkdownAstNode {
+	return typeof value === "object" && value !== null;
+}
+
+function createTruncatedMarkdownPlugin(maxCharacters: number) {
+	return function truncatedMarkdownPlugin() {
+		return (tree: unknown) => {
+			if (!isMarkdownAstNode(tree)) {
+				return;
+			}
+
+			let lastTextNode: MarkdownAstNode | null = null;
+			let remainingCharacters = maxCharacters;
+			let truncated = false;
+
+			function addEllipsis() {
+				if (lastTextNode?.value) {
+					lastTextNode.value = `${lastTextNode.value.trimEnd()}…`;
+				}
+			}
+
+			function truncateChildren(parent: MarkdownAstNode) {
+				if (!parent.children) {
+					return;
+				}
+
+				const visibleChildren: MarkdownAstNode[] = [];
+
+				for (const child of parent.children) {
+					if (truncated) {
+						break;
+					}
+
+					if (
+						child.type &&
+						markdownTextNodeTypes.has(child.type) &&
+						typeof child.value === "string"
+					) {
+						const characters = Array.from(child.value);
+
+						if (characters.length <= remainingCharacters) {
+							remainingCharacters -= characters.length;
+							lastTextNode = child;
+							visibleChildren.push(child);
+							continue;
+						}
+
+						if (remainingCharacters > 0) {
+							child.value = `${characters
+								.slice(0, remainingCharacters)
+								.join("")
+								.trimEnd()}…`;
+							lastTextNode = child;
+							visibleChildren.push(child);
+						} else {
+							addEllipsis();
+						}
+
+						remainingCharacters = 0;
+						truncated = true;
+						break;
+					}
+
+					if (child.children) {
+						truncateChildren(child);
+
+						if (!truncated || child.children.length > 0) {
+							visibleChildren.push(child);
+						}
+					} else {
+						visibleChildren.push(child);
+					}
+				}
+
+				parent.children = visibleChildren;
+			}
+
+			truncateChildren(tree);
+		};
+	};
 }
 
 export function EventDescriptionMarkdown({
 	className,
 	markdown,
+	maxCharacters,
 }: EventDescriptionMarkdownProps) {
+	const remarkPlugins = maxCharacters
+		? [remarkGfm, createTruncatedMarkdownPlugin(maxCharacters)]
+		: [remarkGfm];
+
 	return (
 		<div className={[style.prose, className].filter(Boolean).join(" ")}>
 			<ReactMarkdown
 				allowedElements={allowedElements}
 				components={components}
-				remarkPlugins={[remarkGfm]}
+				remarkPlugins={remarkPlugins}
 				skipHtml
 				urlTransform={safeUrlTransform}
 			>

@@ -213,6 +213,52 @@ describe("public events experience", () => {
 		).toBeVisible();
 	});
 
+	it("collapses long descriptions for recurring and special event cards", async () => {
+		const user = userEvent.setup();
+		const recurringTail = "Recurring details after the preview.";
+		const specialTail = "Special event details after the preview.";
+
+		render(
+			<EventsPage
+				events={[
+					recurringEvent({
+						description: `${"R".repeat(300)} ${recurringTail}`,
+					}),
+					{
+						...specialEvent(),
+						description: `${"S".repeat(300)} ${specialTail}`,
+					},
+				]}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		expect(
+			screen.queryByText(recurringTail, { exact: false }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByText(specialTail, { exact: false }),
+		).not.toBeInTheDocument();
+
+		const recurringToggle = screen.getByRole("button", {
+			name: "Show more details for Sacramento TypeScript Weekly",
+		});
+		const specialToggle = screen.getByRole("button", {
+			name: "Show more details for Sacramento Design Summit",
+		});
+		expect(recurringToggle).toHaveAttribute("aria-expanded", "false");
+		expect(specialToggle).toHaveAttribute("aria-expanded", "false");
+
+		await user.click(recurringToggle);
+		expect(screen.getByText(recurringTail, { exact: false })).toBeVisible();
+		expect(
+			screen.queryByText(specialTail, { exact: false }),
+		).not.toBeInTheDocument();
+
+		await user.click(specialToggle);
+		expect(screen.getByText(specialTail, { exact: false })).toBeVisible();
+	});
+
 	it("filters both the calendar and event-card collections by attendance type", async () => {
 		const user = userEvent.setup();
 

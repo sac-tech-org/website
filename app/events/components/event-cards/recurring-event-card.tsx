@@ -1,5 +1,5 @@
 import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
-import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
+import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
 import { formatDateInTimeZone } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { RecurringEventsCardProps } from "./types";
@@ -74,8 +74,9 @@ export function RecurringEventsCard({
 				)}
 			</ul>
 
-			<EventDescriptionMarkdown
+			<CollapsibleEventDescription
 				className={style.description}
+				eventTitle={event.title}
 				markdown={event.description}
 			/>
 

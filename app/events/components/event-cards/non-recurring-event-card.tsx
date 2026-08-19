@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
+import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { NonRecurringEventsCardProps } from "./types";
@@ -70,8 +70,9 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 					</li>
 				)}
 			</ul>
-			<EventDescriptionMarkdown
+			<CollapsibleEventDescription
 				className={style.description}
+				eventTitle={event.title}
 				markdown={event.description}
 			/>
 			{event.location_url && (
