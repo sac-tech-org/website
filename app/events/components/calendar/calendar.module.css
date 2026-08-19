@@ -1,8 +1,8 @@
 .calendar {
-	background: var(--events-surface);
-	border: 1px solid var(--events-border);
-	border-radius: 1.25rem;
-	box-shadow: 0 18px 55px rgb(29 36 51 / 8%);
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.4rem solid var(--color-bridge);
+	box-shadow: var(--shadow-raised);
 	overflow: hidden;
 }
 
@@ -10,13 +10,12 @@
 	appearance: none;
 	margin: 0;
 	text-transform: none;
-	width: auto;
 }
 
 .calendarHeader {
 	align-items: center;
-	background: var(--events-ink);
-	color: #fff;
+	background: var(--color-navy);
+	color: var(--color-paper);
 	display: flex;
 	gap: 1rem;
 	justify-content: space-between;
@@ -28,24 +27,31 @@
 }
 
 .calendarHeading {
-	font-size: 1rem;
+	font-family: var(--font-display);
+	font-size: 1.05rem;
+	font-weight: 800;
 	letter-spacing: -0.015em;
 	line-height: 1.2;
 	margin: 0;
 }
 
 .calendarRange {
-	color: #cdd2df;
+	color: rgb(255 245 229 / 72%);
 	font-size: 0.78rem;
 	margin: 0.2rem 0 0;
 }
 
+.rangeTwo,
+.rangeOne {
+	display: none;
+}
+
 .arrowButton {
 	align-items: center;
-	background: rgb(255 255 255 / 10%);
-	border: 1px solid rgb(255 255 255 / 18%);
-	border-radius: 999px;
-	color: #fff;
+	background: var(--color-river-deep);
+	border: 1px solid rgb(255 245 229 / 48%);
+	border-radius: var(--radius-small);
+	color: var(--color-paper);
 	cursor: pointer;
 	display: inline-flex;
 	font-size: 1.8rem;
@@ -58,7 +64,12 @@
 }
 
 .arrowButton:hover {
-	background: rgb(255 255 255 / 20%);
+	background: var(--color-river);
+	border-color: var(--color-bridge);
+}
+
+.arrowButton:focus-visible {
+	outline-color: var(--color-bridge);
 }
 
 .months {
@@ -75,17 +86,19 @@
 }
 
 .month + .month {
-	border-left: 1px solid var(--events-border);
+	border-left: 1px solid var(--color-line);
 }
 
 .month caption {
+	color: var(--color-navy);
+	font-family: var(--font-display);
 	font-size: 0.95rem;
 	font-weight: 800;
 	padding: 1.25rem 0 0.75rem;
 }
 
 .month th {
-	color: var(--events-muted);
+	color: var(--color-ink-muted);
 	font-size: 0.72rem;
 	font-weight: 700;
 	height: 2rem;
@@ -104,8 +117,8 @@
 	align-items: center;
 	background: transparent;
 	border: 0;
-	border-radius: 999px;
-	color: var(--events-ink);
+	border-radius: var(--radius-small);
+	color: var(--color-navy);
 	display: inline-flex;
 	font-size: 0.82rem;
 	height: 2.75rem;
@@ -116,23 +129,25 @@
 }
 
 .eventDay {
-	background: var(--events-accent-soft);
-	color: var(--events-accent-dark);
+	background: rgb(242 171 24 / 18%);
+	box-shadow: inset 0 0 0 2px var(--color-bridge-deep);
+	color: var(--color-navy);
 	cursor: pointer;
 	font-weight: 800;
 }
 
 .eventDay:hover {
-	background: #ffd0e1;
+	background: rgb(242 171 24 / 36%);
 }
 
 .eventDay[aria-pressed="true"] {
-	background: var(--events-accent);
-	color: #fff;
+	background: var(--color-navy);
+	box-shadow: inset 0 -0.25rem 0 var(--color-bridge);
+	color: var(--color-paper);
 }
 
 .eventDot {
-	background: currentColor;
+	background: var(--color-poppy-deep);
 	border-radius: 999px;
 	bottom: 0.28rem;
 	height: 0.2rem;
@@ -142,8 +157,8 @@
 
 .dayDetails {
 	align-items: flex-start;
-	background: #fff7fa;
-	border-top: 1px solid var(--events-border);
+	background: rgb(5 99 106 / 8%);
+	border-top: 1px solid var(--color-line);
 	display: grid;
 	gap: 1.5rem;
 	grid-template-columns: minmax(10rem, 0.7fr) 2fr;
@@ -151,7 +166,7 @@
 }
 
 .detailsEyebrow {
-	color: var(--events-accent-dark);
+	color: var(--color-bridge-deep);
 	font-size: 0.7rem;
 	font-weight: 800;
 	letter-spacing: 0.08em;
@@ -186,14 +201,29 @@
 }
 
 .dayDetails li span {
-	color: var(--events-muted);
+	color: var(--color-ink-muted);
 	font-size: 0.8rem;
 }
 
 .dayDetails a {
-	color: var(--events-accent-dark);
+	color: var(--color-river-deep);
 	font-size: 0.82rem;
 	font-weight: 700;
+}
+
+.dayDetails a:hover {
+	text-decoration-thickness: 0.15em;
+	text-underline-offset: 0.2em;
+}
+
+.emptyNote {
+	background: rgb(242 171 24 / 12%);
+	border-top: 1px solid var(--color-line);
+	color: var(--color-ink-muted);
+	font-size: 0.9rem;
+	margin: 0;
+	padding: 0.9rem 1.25rem;
+	text-align: center;
 }
 
 .visuallyHidden {
@@ -206,7 +236,15 @@
 	width: 1px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 60rem) {
+	.rangeThree {
+		display: none;
+	}
+
+	.rangeTwo {
+		display: inline;
+	}
+
 	.months {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
@@ -216,7 +254,15 @@
 	}
 }
 
-@media (max-width: 680px) {
+@media (max-width: 42.5rem) {
+	.rangeTwo {
+		display: none;
+	}
+
+	.rangeOne {
+		display: inline;
+	}
+
 	.months {
 		display: block;
 	}

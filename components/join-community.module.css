@@ -1,0 +1,77 @@
+.form {
+	display: grid;
+	gap: 1rem;
+	max-width: 34rem;
+}
+
+.agreement {
+	align-items: flex-start;
+	cursor: pointer;
+	display: flex;
+	gap: 0.75rem;
+	min-height: 2.75rem;
+}
+
+.agreement input {
+	accent-color: var(--color-bridge);
+	flex: 0 0 auto;
+	height: 1.25rem;
+	margin-top: 0.2rem;
+	width: 1.25rem;
+}
+
+.agreement a {
+	font-weight: 800;
+	text-underline-offset: 0.2rem;
+}
+
+.button {
+	align-items: center;
+	background: var(--color-poppy-deep);
+	border: 2px solid var(--color-poppy-deep);
+	color: var(--color-paper);
+	cursor: pointer;
+	display: inline-flex;
+	font-weight: 850;
+	gap: 1rem;
+	justify-content: space-between;
+	min-height: 3.25rem;
+	padding: 0.65rem 1rem;
+	width: min(100%, 20rem);
+}
+
+.button:hover {
+	background: var(--color-navy);
+	border-color: var(--color-bridge);
+}
+
+.message {
+	border-left: 4px solid var(--color-bridge);
+	font-weight: 700;
+	margin: 0;
+	padding-left: 0.75rem;
+}
+
+.unavailable {
+	border-left: 0.45rem solid var(--color-bridge);
+	max-width: 34rem;
+	padding: 0.25rem 0 0.25rem 1rem;
+}
+
+.unavailable strong {
+	display: block;
+	font-family: var(--font-display);
+	font-size: 1.35rem;
+	line-height: 1.2;
+}
+
+.unavailable p {
+	color: #d7e2e5;
+	margin: 0.75rem 0 0;
+}
+
+.unavailable a {
+	color: var(--color-bridge);
+	font-weight: 800;
+	text-underline-offset: 0.2rem;
+}

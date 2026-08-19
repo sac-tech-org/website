@@ -61,13 +61,22 @@ export function RecurringEventsCard({ event }: RecurringEventsCardProps) {
 						<strong>{featuredBlock.location_description}</strong>
 					</div>
 					{featuredBlock.location_url && (
-						<a href={featuredBlock.location_url}>View details</a>
+						<a
+							aria-label={`View details for ${event.title}`}
+							href={featuredBlock.location_url}
+						>
+							View details
+						</a>
 					)}
 				</div>
 			)}
 
 			{event.location_url && event.location_description && (
-				<a className={style.primaryLink} href={event.location_url}>
+				<a
+					aria-label={`${event.location_description}: ${event.title}`}
+					className={style.primaryLink}
+					href={event.location_url}
+				>
 					{event.location_description}
 					<span aria-hidden="true">→</span>
 				</a>

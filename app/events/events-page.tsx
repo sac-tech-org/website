@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { BridgeArt } from "../../components/bridge-art";
 import { Calendar } from "./components/calendar/calendar";
 import { NonRecurringEventsCard } from "./components/event-cards/non-recurring-event-card";
 import { RecurringEventsCard } from "./components/event-cards/recurring-event-card";
-import { LongWave } from "./components/long-wave/long-wave";
 import { events } from "./constants";
 import style from "./events-page.module.css";
 
 type EventType = "all" | "online" | "in-person";
+
+interface EventsPageProps {
+	referenceDate: string;
+}
 
 const eventFilters: Array<{ label: string; value: EventType }> = [
 	{ label: "All events", value: "all" },
@@ -17,7 +21,7 @@ const eventFilters: Array<{ label: string; value: EventType }> = [
 	{ label: "In person", value: "in-person" },
 ];
 
-export default function EventsPage() {
+export default function EventsPage({ referenceDate }: EventsPageProps) {
 	const [eventTypesToShow, setEventTypesToShow] =
 		useState<EventType>("all");
 
@@ -36,26 +40,48 @@ export default function EventsPage() {
 	const recurringEvents = filteredEvents.filter((event) => event.is_recurring);
 	const specialEvents = filteredEvents.filter((event) => !event.is_recurring);
 	const hasEvents = recurringEvents.length > 0 || specialEvents.length > 0;
-	const hasCalendarEntries = filteredEvents.some((event) => event.blocks.length > 0);
+	const activeFilterLabel =
+		eventFilters.find((filter) => filter.value === eventTypesToShow)?.label ??
+		"All events";
 
 	return (
-		<main className={style.container}>
-			<header className={style.hero}>
+		<main className={style.page} id="main-content">
+			<section aria-labelledby="events-title" className={style.hero}>
 				<div className={style.heroInner}>
-					<Link className={style.backLink} href="/">
-						<span aria-hidden="true">←</span> SacTech
-					</Link>
-					<p className={style.eyebrow}>Meet, learn, and build together</p>
-					<h1 className={style.eventsTitle}>Events</h1>
-					<p className={style.intro}>
-						Find welcoming tech events online and around Sacramento. Pick a
-						date or browse the full lineup below.
-					</p>
+					<div className={style.heroCopy}>
+						<p className={style.eyebrow}>Gather by the river</p>
+						<h1 id="events-title">Events that connect Sacramento.</h1>
+						<p className={style.intro}>
+							Meet people across the region who design, build, teach, and
+							grow technology. Browse the calendar as we confirm the next
+							round of SacTech gatherings.
+						</p>
+					</div>
+					<BridgeArt className={style.heroArt} compact />
+				</div>
+			</section>
+
+			<div className={style.content}>
+				<section
+					aria-labelledby="calendar-section-title"
+					className={style.schedule}
+				>
+					<header className={style.sectionHeader}>
+						<div>
+							<p className={style.sectionEyebrow}>Community calendar</p>
+							<h2 id="calendar-section-title">Find a time to join us</h2>
+						</div>
+						<p>
+							Filter by gathering type, then use the month controls to explore
+							the schedule.
+						</p>
+					</header>
 
 					<fieldset className={style.filters}>
 						<legend className={style.filterLegend}>
 							<span aria-hidden="true" className={style.filterIcon}>
-								≡
+								<span />
+								<span />
 							</span>
 							Show
 						</legend>
@@ -75,18 +101,19 @@ export default function EventsPage() {
 							))}
 						</div>
 					</fieldset>
-				</div>
-				<LongWave />
-			</header>
 
-			<div className={style.content}>
-				<p className={style.visuallyHidden} role="status">
-					Showing {filteredEvents.length}{" "}
-					{filteredEvents.length === 1 ? "event" : "events"}.
-				</p>
-				{hasCalendarEntries && (
-					<Calendar events={filteredEvents} key={eventTypesToShow} />
-				)}
+					<p className={style.visuallyHidden} role="status">
+						Showing {filteredEvents.length}{" "}
+						{filteredEvents.length === 1 ? "event" : "events"} for{" "}
+						{activeFilterLabel.toLowerCase()}.
+					</p>
+
+					<Calendar
+						events={filteredEvents}
+						key={eventTypesToShow}
+						referenceDate={referenceDate}
+					/>
+				</section>
 
 				{recurringEvents.length > 0 && (
 					<section className={style.listContainer}>
@@ -111,10 +138,43 @@ export default function EventsPage() {
 				)}
 
 				{!hasEvents && (
-					<p className={style.emptyState}>
-						There are no events in this category yet. Try another filter.
-					</p>
+					<section
+						aria-labelledby="schedule-update-title"
+						className={style.emptyState}
+					>
+						<span aria-hidden="true" className={style.emptyMark}>
+							<span />
+							<span />
+						</span>
+						<div>
+							<p className={style.emptyEyebrow}>Schedule update</p>
+							<h2 id="schedule-update-title">
+								The next SacTech dates are being confirmed.
+							</h2>
+							<p>
+								We are verifying the next round of event details. Check back
+								soon for confirmed dates, locations, and ways to join.
+							</p>
+						</div>
+					</section>
 				)}
+
+				<section
+					aria-labelledby="events-community-title"
+					className={style.communityCallout}
+				>
+					<div>
+						<p className={style.calloutEyebrow}>Between gatherings</p>
+						<h2 id="events-community-title">The conversation keeps moving.</h2>
+						<p>
+							Join the SacTech community to meet neighbors, share what you
+							know, and hear when new events are announced.
+						</p>
+					</div>
+					<Link className={style.communityLink} href="/#join">
+						Join the community <span aria-hidden="true">→</span>
+					</Link>
+				</section>
 			</div>
 		</main>
 	);

@@ -8,6 +8,7 @@ const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface CalendarProps {
 	events: Event[];
+	referenceDate: string;
 }
 
 interface CalendarEntry {
@@ -15,18 +16,37 @@ interface CalendarEntry {
 	event: Event;
 }
 
-function getInitialMonth(events: Event[]) {
-	const latestBlock = events
+function getInitialMonth(events: Event[], referenceDate: string) {
+	const blocks = events
 		.flatMap((event) => event.blocks)
-		.sort((a, b) => b.starts_at.valueOf() - a.starts_at.valueOf())[0];
+		.sort((a, b) => a.starts_at.valueOf() - b.starts_at.valueOf());
+	const nearestUpcomingBlock = blocks.find(
+		(block) =>
+			formatDateKey(block.starts_at, block.timezone) >= referenceDate,
+	);
+	const anchorBlock = nearestUpcomingBlock ?? blocks.at(-1);
 
-	if (!latestBlock) {
-		throw new Error("The events calendar requires at least one dated event block.");
+	if (anchorBlock) {
+		return dayjs(
+			`${formatDateKey(anchorBlock.starts_at, anchorBlock.timezone).slice(0, 7)}-01`,
+		);
 	}
 
-	return dayjs(
-		`${formatDateKey(latestBlock.starts_at, latestBlock.timezone).slice(0, 7)}-01`,
-	);
+	const referenceMonth = dayjs(`${referenceDate.slice(0, 7)}-01`);
+
+	if (!referenceMonth.isValid()) {
+		throw new Error("Invalid calendar reference date.");
+	}
+
+	return referenceMonth;
+}
+
+function formatMonthRange(startMonth: Dayjs, endMonth: Dayjs) {
+	if (startMonth.year() === endMonth.year()) {
+		return `${startMonth.format("MMMM")}–${endMonth.format("MMMM YYYY")}`;
+	}
+
+	return `${startMonth.format("MMMM YYYY")}–${endMonth.format("MMMM YYYY")}`;
 }
 
 function getMonthWeeks(month: Dayjs) {
@@ -49,8 +69,10 @@ function getMonthWeeks(month: Dayjs) {
 	);
 }
 
-export function Calendar({ events }: CalendarProps) {
-	const [startMonth, setStartMonth] = useState(() => getInitialMonth(events));
+export function Calendar({ events, referenceDate }: CalendarProps) {
+	const [startMonth, setStartMonth] = useState(() =>
+		getInitialMonth(events, referenceDate),
+	);
 	const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
 	const entriesByDate = useMemo(() => {
@@ -75,7 +97,11 @@ export function Calendar({ events }: CalendarProps) {
 		: [];
 
 	return (
-		<section aria-labelledby="events-calendar-title" className={style.calendar}>
+		<section
+			aria-describedby={events.length === 0 ? "events-calendar-empty" : undefined}
+			aria-labelledby="events-calendar-title"
+			className={style.calendar}
+		>
 			<header className={style.calendarHeader}>
 				<button
 					aria-label="Show previous month"
@@ -90,7 +116,15 @@ export function Calendar({ events }: CalendarProps) {
 						Events calendar
 					</h2>
 					<p aria-live="polite" className={style.calendarRange}>
-						Starting {startMonth.format("MMMM YYYY")}
+						<span className={style.rangeThree}>
+							{formatMonthRange(months[0], months[2])}
+						</span>
+						<span className={style.rangeTwo}>
+							{formatMonthRange(months[0], months[1])}
+						</span>
+						<span className={style.rangeOne}>
+							{months[0].format("MMMM YYYY")}
+						</span>
 					</p>
 				</div>
 				<button
@@ -159,6 +193,13 @@ export function Calendar({ events }: CalendarProps) {
 				))}
 			</div>
 
+			{events.length === 0 && (
+				<p className={style.emptyNote} id="events-calendar-empty">
+					No verified events are listed yet. You can still explore upcoming
+					months while the schedule is updated.
+				</p>
+			)}
+
 			{selectedDate && selectedEntries.length > 0 && (
 				<div aria-live="polite" className={style.dayDetails}>
 					<div>
@@ -178,7 +219,12 @@ export function Calendar({ events }: CalendarProps) {
 									</span>
 								</div>
 								{block.location_url && (
-									<a href={block.location_url}>Event details</a>
+									<a
+										aria-label={`View details for ${event.title}`}
+										href={block.location_url}
+									>
+										Event details
+									</a>
 								)}
 							</li>
 						))}

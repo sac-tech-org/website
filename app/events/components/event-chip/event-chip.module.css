@@ -1,7 +1,7 @@
 .container {
 	align-items: center;
 	border: 1px solid currentColor;
-	border-radius: 999px;
+	border-radius: var(--radius-small);
 	display: inline-flex;
 	font-size: 0.75rem;
 	font-weight: 700;
@@ -19,18 +19,18 @@
 }
 
 .online {
-	background: #fff0f6;
-	color: #8e123f;
+	background: rgb(5 99 106 / 10%);
+	color: var(--color-river-deep);
 }
 
 .in-person {
-	background: #e8f8ef;
-	color: #17663a;
+	background: rgb(242 171 24 / 18%);
+	color: var(--color-navy);
 }
 
 .recurring {
-	background: #eef5ff;
-	color: #1e5ba9;
+	background: rgb(6 42 83 / 10%);
+	color: var(--color-navy);
 }
 
 .dot {

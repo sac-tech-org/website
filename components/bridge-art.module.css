@@ -1,0 +1,165 @@
+.art {
+	aspect-ratio: 16 / 9;
+	background: var(--color-navy);
+	isolation: isolate;
+	min-height: 19rem;
+	min-width: 0;
+	overflow: hidden;
+	position: relative;
+	width: 100%;
+}
+
+.sun {
+	background: var(--color-river);
+	border-radius: 50%;
+	height: 90%;
+	top: -52%;
+	position: absolute;
+	right: -8%;
+	width: 65%;
+}
+
+.bridge {
+	height: 63%;
+	left: 2%;
+	position: absolute;
+	right: 2%;
+	top: 11%;
+}
+
+.span {
+	background:
+		repeating-linear-gradient(43deg, transparent 0 1.4rem, var(--color-bridge) 1.45rem 1.7rem, transparent 1.75rem 3.1rem),
+		repeating-linear-gradient(-43deg, transparent 0 1.4rem, var(--color-bridge) 1.45rem 1.7rem, transparent 1.75rem 3.1rem);
+	border-bottom: 0.45rem solid var(--color-bridge);
+	border-top: 0.45rem solid var(--color-bridge);
+	bottom: 9%;
+	height: 27%;
+	left: 0;
+	position: absolute;
+	right: 0;
+}
+
+.tower {
+	background: var(--color-bridge);
+	bottom: 0;
+	box-shadow: inset 0 0 0 2px rgb(154 92 0 / 45%);
+	height: 100%;
+	position: absolute;
+	width: clamp(3.5rem, 10%, 5.5rem);
+}
+
+.towerLeft {
+	left: 24%;
+}
+
+.towerRight {
+	right: 24%;
+}
+
+.tower::before,
+.tower::after {
+	background: var(--color-bridge);
+	content: "";
+	height: 12%;
+	position: absolute;
+	top: -5%;
+	width: 23%;
+}
+
+.tower::before {
+	left: -4%;
+}
+
+.tower::after {
+	right: -4%;
+}
+
+.windows {
+	background: repeating-linear-gradient(90deg, var(--color-navy) 0 0.38rem, transparent 0.38rem 0.72rem);
+	height: 8%;
+	left: 20%;
+	position: absolute;
+	top: 13%;
+	width: 60%;
+}
+
+.brace {
+	background:
+		linear-gradient(45deg, transparent 43%, var(--color-navy) 44% 51%, transparent 52%),
+		linear-gradient(-45deg, transparent 43%, var(--color-navy) 44% 51%, transparent 52%);
+	bottom: 9%;
+	left: 16%;
+	position: absolute;
+	top: 29%;
+	width: 68%;
+}
+
+.water {
+	background: var(--color-river-deep);
+	bottom: 0;
+	height: 27%;
+	left: 0;
+	position: absolute;
+	right: 0;
+}
+
+.water span {
+	border-radius: 50%;
+	border-top: 0.18rem solid var(--color-river);
+	height: 1.25rem;
+	left: -5%;
+	position: absolute;
+	width: 110%;
+}
+
+.water span:nth-child(1) {
+	border-color: var(--color-bridge);
+	top: 25%;
+	transform: rotate(1deg);
+}
+
+.water span:nth-child(2) {
+	border-color: #43a4a7;
+	top: 50%;
+	transform: rotate(-1.5deg);
+}
+
+.water span:nth-child(3) {
+	border-color: var(--color-poppy);
+	top: 73%;
+	transform: rotate(0.7deg);
+}
+
+.compact {
+	aspect-ratio: 2.4 / 1;
+	min-height: 12rem;
+}
+
+.compact .bridge {
+	height: 72%;
+	top: 5%;
+}
+
+@media (max-width: 650px) {
+	.art {
+		min-height: 0;
+	}
+
+	.bridge {
+		left: -12%;
+		right: -12%;
+	}
+
+	.towerLeft {
+		left: 22%;
+	}
+
+	.towerRight {
+		right: 22%;
+	}
+
+	.compact {
+		min-height: 0;
+	}
+}

@@ -1,0 +1,349 @@
+.page {
+	background: var(--color-cream);
+}
+
+.hero {
+	background: var(--color-river-deep);
+	border-bottom: 4px solid var(--color-bridge);
+	color: var(--color-cream);
+}
+
+.heroInner {
+	display: grid;
+	grid-template-columns: minmax(0, 0.95fr) minmax(23rem, 0.75fr);
+	margin: 0 auto;
+	max-width: 100rem;
+}
+
+.heroCopy {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: clamp(3.5rem, 7vw, 6.5rem) var(--site-gutter);
+}
+
+.eyebrow,
+.policyEyebrow,
+.summaryLabel {
+	font-size: 0.78rem;
+	font-weight: 900;
+	letter-spacing: 0.12em;
+	margin: 0 0 0.9rem;
+	text-transform: uppercase;
+}
+
+.eyebrow {
+	color: var(--color-bridge);
+}
+
+.hero h1,
+.summary h2,
+.policy h2,
+.policy h3,
+.reportingCard h4 {
+	font-family: var(--font-display);
+	font-weight: 900;
+	letter-spacing: -0.04em;
+}
+
+.hero h1 {
+	font-size: clamp(3rem, 6vw, 5.75rem);
+	line-height: 0.98;
+	margin: 0;
+	max-width: 10ch;
+}
+
+.heroCopy > p:last-child {
+	font-size: clamp(1.05rem, 2vw, 1.24rem);
+	margin: 1.5rem 0 0;
+	max-width: 39rem;
+}
+
+.heroArt {
+	align-self: stretch;
+	border-left: 4px solid var(--color-bridge);
+	height: 100%;
+}
+
+.summarySection {
+	padding: clamp(3rem, 6vw, 5rem) var(--site-gutter);
+}
+
+.summary {
+	background: var(--color-paper);
+	border: 2px solid var(--color-bridge);
+	box-shadow: var(--shadow-raised);
+	display: grid;
+	gap: clamp(2rem, 5vw, 4rem);
+	grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+	margin: 0 auto;
+	max-width: var(--site-width);
+	padding: clamp(1.75rem, 4vw, 3.5rem);
+	position: relative;
+}
+
+.summary::before {
+	background:
+		linear-gradient(55deg, transparent 42%, var(--color-navy) 43% 49%, transparent 50%),
+		linear-gradient(-55deg, transparent 42%, var(--color-navy) 43% 49%, transparent 50%),
+		var(--color-bridge);
+	content: "";
+	height: 3.5rem;
+	position: absolute;
+	right: clamp(1rem, 3vw, 2rem);
+	top: -0.75rem;
+	width: 1.7rem;
+}
+
+.summaryLabel,
+.policyEyebrow {
+	color: var(--color-bridge-deep);
+}
+
+.summary h2 {
+	font-size: clamp(2.25rem, 5vw, 4.2rem);
+	line-height: 1;
+	margin: 0;
+	max-width: 9ch;
+}
+
+.summaryDetails {
+	max-width: 42rem;
+}
+
+.summaryNote {
+	border-left: 4px solid var(--color-bridge);
+	color: var(--color-ink-muted);
+	margin: 0;
+	padding-left: 1rem;
+}
+
+.summaryNote strong {
+	color: var(--color-navy);
+}
+
+.summary ul {
+	display: grid;
+	gap: 0.65rem;
+	margin: 1.5rem 0 0;
+	padding-left: 1.35rem;
+}
+
+.summary li::marker {
+	color: var(--color-poppy-deep);
+	font-weight: 900;
+}
+
+.readPolicyLink {
+	align-items: center;
+	color: var(--color-poppy-deep);
+	display: inline-flex;
+	font-weight: 900;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+	min-height: 2.75rem;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.25rem;
+}
+
+.readPolicyLink:hover {
+	color: var(--color-navy);
+}
+
+.policyArea {
+	background: var(--color-paper);
+	border-top: 1px solid var(--color-line);
+	padding: var(--section-space) var(--site-gutter);
+}
+
+.policyLayout {
+	display: grid;
+	gap: clamp(2.5rem, 6vw, 5rem);
+	grid-template-columns: minmax(11rem, 14rem) minmax(0, 44rem);
+	justify-content: center;
+	margin: 0 auto;
+	max-width: var(--site-width);
+}
+
+.index {
+	align-self: start;
+	border-top: 4px solid var(--color-bridge);
+	position: sticky;
+	top: 2rem;
+}
+
+.index > p {
+	font-family: var(--font-display);
+	font-size: 1.05rem;
+	font-weight: 900;
+	margin: 0;
+	padding: 1rem 0 0.5rem;
+}
+
+.index ol {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.index li + li {
+	border-top: 1px solid var(--color-line);
+}
+
+.index a {
+	align-items: center;
+	color: var(--color-ink-muted);
+	display: flex;
+	font-size: 0.94rem;
+	font-weight: 750;
+	min-height: 2.75rem;
+	padding: 0.55rem 0.25rem;
+	text-decoration-color: transparent;
+	text-underline-offset: 0.2rem;
+}
+
+.index a:hover {
+	color: var(--color-navy);
+	text-decoration-color: var(--color-bridge-deep);
+}
+
+.policy {
+	min-width: 0;
+}
+
+.policyIntro {
+	padding-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.policy h2 {
+	font-size: clamp(2.35rem, 5vw, 4.25rem);
+	line-height: 1;
+	margin: 0;
+}
+
+.policyIntro > p:last-child {
+	color: var(--color-ink-muted);
+	font-size: 1.13rem;
+	margin: 1.5rem 0 0;
+}
+
+.policy > section {
+	border-top: 1px solid var(--color-line);
+	padding: clamp(2rem, 5vw, 3.5rem) 0;
+	scroll-margin-top: 2rem;
+}
+
+.policy h3 {
+	font-size: clamp(1.65rem, 3vw, 2.35rem);
+	line-height: 1.1;
+	margin: 0 0 1.15rem;
+}
+
+.policy section > p {
+	font-size: 1.06rem;
+	margin: 0;
+}
+
+.policy section > p + p {
+	margin-top: 1rem;
+}
+
+.reportingCard {
+	background: var(--color-navy);
+	border-left: 0.5rem solid var(--color-bridge);
+	color: var(--color-cream);
+	margin: 1.5rem 0;
+	padding: clamp(1.35rem, 4vw, 2.25rem);
+}
+
+.reportingCard h4 {
+	color: var(--color-bridge);
+	font-size: clamp(1.4rem, 3vw, 1.9rem);
+	line-height: 1.15;
+	margin: 0;
+}
+
+.reportingCard p {
+	margin: 0.8rem 0 0;
+}
+
+.publicPathNote {
+	border-top: 1px solid var(--color-river);
+	color: var(--color-cream);
+	padding-top: 1rem;
+}
+
+.page :where(a):focus-visible {
+	outline-color: var(--color-river);
+}
+
+.hero :where(a):focus-visible,
+.reportingCard :where(a):focus-visible {
+	outline-color: var(--color-bridge);
+}
+
+@media (max-width: 850px) {
+	.heroInner {
+		grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.8fr);
+	}
+
+	.summary {
+		gap: 1.75rem;
+	}
+}
+
+@media (max-width: 680px) {
+	.heroInner,
+	.summary,
+	.policyLayout {
+		grid-template-columns: 1fr;
+	}
+
+	.heroCopy {
+		padding-bottom: 3.25rem;
+		padding-top: 3.75rem;
+	}
+
+	.heroArt {
+		border-left: 0;
+		border-top: 4px solid var(--color-bridge);
+		height: auto;
+	}
+
+	.summary h2 {
+		max-width: 12ch;
+	}
+
+	.index {
+		position: static;
+	}
+
+	.index ol {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.index li:nth-child(2) {
+		border-top: 0;
+	}
+
+	.index li:nth-child(even) {
+		border-left: 1px solid var(--color-line);
+		padding-left: 0.75rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.index ol {
+		grid-template-columns: 1fr;
+	}
+
+	.index li:nth-child(2) {
+		border-top: 1px solid var(--color-line);
+	}
+
+	.index li:nth-child(even) {
+		border-left: 0;
+		padding-left: 0;
+	}
+}

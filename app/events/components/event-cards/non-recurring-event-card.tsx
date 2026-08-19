@@ -68,6 +68,16 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 				)}
 			</ul>
 			<p className={style.description}>{event.description}</p>
+			{event.location_url && (
+				<a
+					aria-label={`View details for ${event.title}`}
+					className={style.primaryLink}
+					href={event.location_url}
+				>
+					{event.location_description || "View event details"}
+					<span aria-hidden="true">→</span>
+				</a>
+			)}
 		</li>
 	);
 }
