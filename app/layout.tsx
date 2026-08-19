@@ -3,7 +3,14 @@ import type { Metadata } from "next";
 import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 
+const siteOrigin =
+	process.env.DEPLOY_PRIME_URL ??
+	process.env.DEPLOY_URL ??
+	process.env.URL ??
+	"http://localhost:3000";
+
 export const metadata: Metadata = {
+	metadataBase: new URL(siteOrigin),
 	title: {
 		default: "SacTech — Sacramento tech, built together",
 		template: "%s | SacTech",
