@@ -338,29 +338,6 @@
 	position: relative;
 }
 
-.communityCallout::before {
-	background:
-		linear-gradient(
-			45deg,
-			transparent 42%,
-			var(--color-bridge) 43% 48%,
-			transparent 49%
-		),
-		linear-gradient(
-			-45deg,
-			transparent 42%,
-			var(--color-bridge) 43% 48%,
-			transparent 49%
-		);
-	content: "";
-	height: 100%;
-	top: 0;
-	opacity: 0.1;
-	position: absolute;
-	right: 2rem;
-	width: 10rem;
-}
-
 .communityCallout > * {
 	position: relative;
 }
