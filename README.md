@@ -18,7 +18,7 @@ Authorization and status checks are enforced on the server. Hiding an admin link
 - [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/), a managed Postgres database
 - [Drizzle ORM's native Netlify Database driver](https://orm.drizzle.team/docs/connect-netlify-db)
 - [Better Auth](https://better-auth.com/docs/integrations/next) with its Drizzle adapter, email/password authentication, and Admin plugin
-- [Resend](https://resend.com/docs/send-with-better-auth) with [React Email](https://react.email/) templates for verification and password recovery
+- [Resend](https://resend.com/docs/send-with-better-auth) with [React Email](https://react.email/) templates for account messages and admin approval reminders
 
 Netlify Database is currently available only on Netlify's **Credit-based plans**. Database compute and bandwidth consume credits; review the current [billing and limits documentation](https://docs.netlify.com/build/data-and-storage/netlify-database/billing-and-usage/) before enabling it for the project.
 
@@ -86,7 +86,7 @@ The local database does not apply migrations automatically. Run `pnpm db:migrate
 | `BETTER_AUTH_URL`           | Local; Netlify override | Optional explicit canonical fallback. Normal Netlify deploys derive this from Netlify's read-only `URL` variable.                                           |
 | `BETTER_AUTH_ALLOWED_HOSTS` | Local; Netlify override | Optional comma-separated host allowlist. Setting it replaces the automatic Netlify host list; values do not include URL paths.                              |
 | `NETLIFY_DB_URL`            | Supplied by Netlify     | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution. |
-| `RESEND_API_KEY`            | Local and Netlify       | Private Resend key used only by the server to send authentication emails. A key restricted to sending from the configured domain is preferred.              |
+| `RESEND_API_KEY`            | Local and Netlify       | Private Resend key used only by the server to send account and admin-digest emails. A key restricted to sending from the configured domain is preferred.    |
 | `RESEND_FROM_EMAIL`         | Local and Netlify       | Sender in `Name <address@example.com>` or plain-address form. Its domain must be verified in Resend.                                                        |
 | `NEXT_PUBLIC_INVITE_LINK`   | Optional                | Public community invitation displayed by the site. It is intentionally browser-visible.                                                                     |
 
@@ -104,6 +104,37 @@ Preview the React Email templates without sending mail at <http://localhost:3001
 
 ```sh
 pnpm email:dev
+```
+
+### Daily approval reminders
+
+The `send-admin-approval-reminders` Netlify Scheduled Function checks the
+moderation queue once a day. It sends a private digest to each verified,
+non-banned admin only when at least one non-canceled event still has `pending`
+status. A pending event remains in subsequent digests until it is approved,
+rejected, or canceled.
+
+The checked-in cron expression is `0 15 * * *`. Netlify evaluates schedules in
+UTC, so the function runs at 7:00 AM Pacific Standard Time and 8:00 AM Pacific
+Daylight Time. The one-hour seasonal shift is intentional. Automatic scheduled
+runs happen only for published production deploys; deploy previews and branch
+deploys do not run the cron automatically.
+
+The function uses Netlify's supplied production `URL` to build the authenticated
+`/admin/events` review link and Netlify Database's supplied `NETLIFY_DB_URL` to
+read the queue. Give `RESEND_API_KEY` and `RESEND_FROM_EMAIL` access to the
+**Functions** scope in Netlify. It sends at most the ten oldest pending-event
+summaries in each email, includes the full pending count, and uses a Pacific-date
+Resend idempotency key so a same-day retry does not deliver the same digest
+twice.
+
+After deploying, use **Run now** on the function's Netlify page to exercise it
+without waiting for the next cron tick. A manual production run can send real
+email; same-day retries reuse the idempotency key. For a local invocation while
+`pnpm dev` is running, use:
+
+```sh
+pnpm exec netlify functions:invoke send-admin-approval-reminders
 ```
 
 ### Production and deploy-preview hosts
@@ -206,7 +237,7 @@ Changes made through the production database editor take effect immediately. Ver
 
 1. Push the repository, including `netlify.toml` and all generated migrations, to the Git provider Netlify will use.
 2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration installs Chromium for the browser integration tests, runs `pnpm verify`, publishes `.next`, and selects Node 24.19.0. Verification runs formatting, linting, type checking, tests, and one production build, so a failed quality gate blocks the deploy.
-3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication. Netlify supplies the auth URLs and database connection automatically.
+3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication, and make the Resend values available to Functions so the scheduled digest can use them. Netlify supplies the auth URLs and database connection automatically.
 4. Deploy the site.
 
 Because `@netlify/database` is a project dependency, Netlify uses [package-based provisioning](https://docs.netlify.com/build/data-and-storage/netlify-database/getting-started/): on the first deploy it creates the database if needed, injects the branch-specific `NETLIFY_DB_URL`, and applies committed migrations as part of the deploy lifecycle. A database does not need to be created manually first. It can still be provisioned from the Netlify Database page if the team prefers to do that before the first deploy.
@@ -216,7 +247,8 @@ After the production deploy succeeds:
 1. Confirm the production database branch and migrations in Netlify's **Database** view.
 2. Create or promote the first admin.
 3. Test account creation, email verification, forgot-password recovery, event submission, moderation, and the public calendar.
-4. Verify a deploy preview separately; it uses an isolated database branch and its own preview hostname.
+4. Open the `send-admin-approval-reminders` function in Netlify and use **Run now** after seeding a pending event and a verified admin.
+5. Verify a deploy preview separately; it uses an isolated database branch and its own preview hostname, but its scheduled function does not run automatically.
 
 ## Scripts
 
@@ -224,7 +256,7 @@ After the production deploy succeeds:
 | ------------------------ | ---------------------------------------------------------------------------------------------- |
 | `pnpm dev`               | Start Netlify Dev, the local database, and the Next.js app on port 8888.                       |
 | `pnpm dev:next`          | Start only Next.js on port 3000; useful for UI-only work, but no Netlify database is injected. |
-| `pnpm email:dev`         | Preview the React Email authentication templates locally on port 3001.                         |
+| `pnpm email:dev`         | Preview the React Email account and admin-digest templates locally on port 3001.               |
 | `pnpm build`             | Create a production Next.js build.                                                             |
 | `pnpm start`             | Serve an already-built Next.js app.                                                            |
 | `pnpm format`            | Format supported project files with the pinned Prettier version.                               |
@@ -308,7 +340,10 @@ path.
 - [Resend with Better Auth](https://resend.com/docs/send-with-better-auth)
 - [Resend with Next.js](https://resend.com/docs/send-with-nextjs)
 - [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)
+- [Resend batch sending](https://resend.com/docs/api-reference/emails/send-batch-emails)
+- [Resend idempotency keys](https://resend.com/docs/dashboard/emails/idempotency-keys)
 - [React Email with Resend](https://react.email/docs/integrations/resend)
+- [Netlify Scheduled Functions](https://docs.netlify.com/build/functions/scheduled-functions/)
 - [Vitest guide](https://main.vitest.dev/guide/)
 - [React Testing Library introduction](https://testing-library.com/docs/react-testing-library/intro/)
 - [DOM Testing Library installation](https://testing-library.com/docs/dom-testing-library/install/)
