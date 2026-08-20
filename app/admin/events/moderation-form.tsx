@@ -1,18 +1,25 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { moderateEvent } from "@/lib/events/actions";
+import { moderateEvent, moderateEventEdit } from "@/lib/events/actions";
 import { initialModerationFormState } from "@/lib/events/state";
 import style from "./admin-events.module.css";
 
 interface ModerationFormProps {
 	eventId: string;
 	eventTitle: string;
+	reviewType?: "event" | "edit";
 }
 
-export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
+export function ModerationForm({
+	eventId,
+	eventTitle,
+	reviewType = "event",
+}: ModerationFormProps) {
 	const [note, setNote] = useState("");
-	const moderateBoundEvent = moderateEvent.bind(null, eventId);
+	const moderationAction =
+		reviewType === "edit" ? moderateEventEdit : moderateEvent;
+	const moderateBoundEvent = moderationAction.bind(null, eventId);
 	const [state, formAction, pending] = useActionState(
 		moderateBoundEvent,
 		initialModerationFormState,
@@ -37,7 +44,11 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 		>
 			<div className={style.moderationHeading}>
 				<h4>Approve or reject</h4>
-				<p>Approving publishes this event to the calendar.</p>
+				<p>
+					{reviewType === "edit"
+						? "Approving replaces the live details with this proposed change."
+						: "Approving publishes this event to the calendar."}
+				</p>
 			</div>
 
 			<div className={style.noteField}>
@@ -80,7 +91,11 @@ export function ModerationForm({ eventId, eventTitle }: ModerationFormProps) {
 					type="submit"
 					value="approved"
 				>
-					{pending ? "Saving…" : "Approve and publish"}
+					{pending
+						? "Saving…"
+						: reviewType === "edit"
+							? "Approve changes"
+							: "Approve and publish"}
 				</button>
 				<button
 					className={style.rejectButton}

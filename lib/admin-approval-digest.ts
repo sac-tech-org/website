@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
-import { event } from "@/db/schema";
+import { event, eventChangeRequest } from "@/db/schema";
 import { sendApprovalReminderEmails } from "@/lib/admin-approval-email";
 import { APPROVAL_REMINDER_ROLES } from "@/lib/auth-permissions";
 import { isEmailDeliveryEnabled } from "@/lib/email-delivery";
@@ -67,19 +67,48 @@ export type PendingEventApprovalDigestResult =
  * bounded.
  */
 export async function getPendingApprovalDigestData(): Promise<PendingApprovalDigestData> {
-	const rows = await db
-		.select({
-			id: event.id,
-			title: event.title,
-			createdAt: event.createdAt,
-			startsAt: event.startsAt,
-			timezone: event.timezone,
-			pendingCount: sql<number>`cast(count(*) over () as integer)`,
-		})
-		.from(event)
-		.where(and(eq(event.status, "pending"), isNull(event.canceledAt)))
-		.orderBy(asc(event.createdAt), asc(event.id))
-		.limit(EVENT_PREVIEW_LIMIT);
+	const [submissions, changes] = await Promise.all([
+		db
+			.select({
+				id: event.id,
+				title: event.title,
+				createdAt: event.createdAt,
+				startsAt: event.startsAt,
+				timezone: event.timezone,
+				pendingCount: sql<number>`cast(count(*) over () as integer)`,
+			})
+			.from(event)
+			.where(and(eq(event.status, "pending"), isNull(event.canceledAt)))
+			.orderBy(asc(event.createdAt), asc(event.id))
+			.limit(EVENT_PREVIEW_LIMIT),
+		db
+			.select({
+				id: eventChangeRequest.id,
+				title: eventChangeRequest.title,
+				createdAt: eventChangeRequest.createdAt,
+				startsAt: eventChangeRequest.startsAt,
+				timezone: eventChangeRequest.timezone,
+				pendingCount: sql<number>`cast(count(*) over () as integer)`,
+			})
+			.from(eventChangeRequest)
+			.innerJoin(event, eq(eventChangeRequest.eventId, event.id))
+			.where(
+				and(
+					eq(eventChangeRequest.status, "pending"),
+					eq(event.status, "approved"),
+					isNull(event.canceledAt),
+				),
+			)
+			.orderBy(asc(eventChangeRequest.createdAt), asc(eventChangeRequest.id))
+			.limit(EVENT_PREVIEW_LIMIT),
+	]);
+	const rows = [...submissions, ...changes]
+		.sort(
+			(left, right) =>
+				left.createdAt.getTime() - right.createdAt.getTime() ||
+				left.id.localeCompare(right.id),
+		)
+		.slice(0, EVENT_PREVIEW_LIMIT);
 
 	return {
 		events: rows.map(({ id, title, createdAt, startsAt, timezone }) => ({
@@ -89,7 +118,8 @@ export async function getPendingApprovalDigestData(): Promise<PendingApprovalDig
 			startsAt,
 			timezone,
 		})),
-		pendingCount: rows[0]?.pendingCount ?? 0,
+		pendingCount:
+			(submissions[0]?.pendingCount ?? 0) + (changes[0]?.pendingCount ?? 0),
 	};
 }
 

@@ -13,6 +13,7 @@ const baseEvent: ApprovedEventRecord = {
 	locationAddress: "100 Capitol Mall",
 	locationName: "Community Hall",
 	mode: "in_person",
+	occurrenceOverrides: [],
 	startsAt: new Date("2026-09-02T01:00:00.000Z"),
 	timezone: "America/Los_Angeles",
 	title: "Sacramento Meetup",
@@ -88,5 +89,80 @@ describe("mapApprovedEventsToCalendar", () => {
 			"2026-09-16",
 			"2026-09-30",
 		]);
+	});
+
+	it("maps an occurrence override and suppresses its original series slot", () => {
+		const startsAt = new Date("2026-09-18T01:30:00.000Z");
+		const endsAt = new Date("2026-09-18T03:00:00.000Z");
+		const [event] = mapApprovedEventsToCalendar([
+			{
+				...baseEvent,
+				occurrenceOverrides: [
+					{
+						description: "A special hands-on edition of the meetup.",
+						endsAt,
+						eventUrl: "https://example.com/event/special-edition",
+						locationAddress: "123 J Street",
+						locationName: "The Urban Hive",
+						mode: "hybrid",
+						occurrenceDate: "2026-09-16",
+						startsAt,
+						timezone: "America/Los_Angeles",
+						title: "Sacramento Meetup: Hands-on Night",
+					},
+				],
+				recurrenceEndType: "never",
+				recurrenceFrequency: "week",
+				recurrenceInterval: 1,
+				recurrenceWeekdays: [3],
+			},
+		]);
+
+		expect(event.recurrence_rule?.excludedDates).toEqual(["2026-09-16"]);
+		expect(event.blocks).toHaveLength(2);
+		expect(event.blocks[1]).toMatchObject({
+			description: "A special hands-on edition of the meetup.",
+			ends_at: endsAt,
+			in_person: true,
+			is_online: true,
+			location_address: "123 J Street",
+			location_description: "The Urban Hive",
+			location_url: "https://example.com/event/special-edition",
+			recurrence_date: "2026-09-16",
+			starts_at: startsAt,
+			title: "Sacramento Meetup: Hands-on Night",
+		});
+	});
+
+	it("does not publish an override for a canceled occurrence", () => {
+		const [event] = mapApprovedEventsToCalendar([
+			{
+				...baseEvent,
+				canceledOccurrenceDates: ["2026-09-16"],
+				eventUrl: null,
+				occurrenceOverrides: [
+					{
+						description: "This canceled edit must not be public.",
+						endsAt: new Date("2026-09-16T20:00:00.000Z"),
+						eventUrl: "https://example.com/canceled-override",
+						locationAddress: null,
+						locationName: null,
+						mode: "online",
+						occurrenceDate: "2026-09-16",
+						startsAt: new Date("2026-09-16T19:00:00.000Z"),
+						timezone: "America/Los_Angeles",
+						title: "Canceled override",
+					},
+				],
+				recurrenceEndType: "never",
+				recurrenceFrequency: "week",
+				recurrenceInterval: 1,
+				recurrenceWeekdays: [3],
+			},
+		]);
+
+		expect(event.blocks).toHaveLength(1);
+		expect(event.recurrence_rule?.excludedDates).toEqual(["2026-09-16"]);
+		expect(event.has_event_page).toBe(false);
 	});
 });

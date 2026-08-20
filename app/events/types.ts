@@ -21,6 +21,9 @@ export interface EventBlock {
 	location_description: string;
 	location_address?: string;
 	location_url?: string;
+	recurrence_date?: string;
+	in_person?: boolean;
+	is_online?: boolean;
 	presenters: EventPresenter[];
 }
 

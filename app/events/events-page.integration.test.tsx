@@ -39,16 +39,25 @@ function weeklyRule(overrides: Partial<RecurrenceRule> = {}): RecurrenceRule {
 }
 
 function recurringEvent(overrides: Partial<Event> = {}): Event {
+	const description =
+		overrides.description ?? "Practice TypeScript with Sacramento developers.";
+	const title = overrides.title ?? "Sacramento TypeScript Weekly";
+
 	return {
 		blocks: [
 			createBlock({
+				description,
 				ends_at: new Date("2026-09-02T18:00:00.000Z"),
+				in_person: false,
+				is_online: true,
+				location_address: undefined,
+				location_description: "Online",
 				slug: "typescript-weekly-seed",
 				starts_at: new Date("2026-09-02T17:00:00.000Z"),
-				title: "Sacramento TypeScript Weekly",
+				title,
 			}),
 		],
-		description: "Practice TypeScript with Sacramento developers.",
+		description,
 		has_event_page: true,
 		in_person: false,
 		is_online: true,
@@ -59,8 +68,35 @@ function recurringEvent(overrides: Partial<Event> = {}): Event {
 		organizers: [],
 		recurrence_rule: weeklyRule(),
 		slug: "sacramento-typescript-weekly",
-		title: "Sacramento TypeScript Weekly",
+		title,
 		...overrides,
+	};
+}
+
+function recurringEventWithOverride(): Event {
+	const event = recurringEvent();
+
+	return {
+		...event,
+		blocks: [
+			...event.blocks,
+			createBlock({
+				description: "Bring a laptop for a special hands-on TypeScript night.",
+				ends_at: new Date("2026-09-16T03:00:00.000Z"),
+				in_person: true,
+				is_online: false,
+				location_address: "123 J Street, Sacramento, CA",
+				location_description: "The Urban Hive",
+				location_url: "https://events.example.com/hands-on-night",
+				recurrence_date: "2026-09-16",
+				slug: "typescript-weekly-2026-09-16-override",
+				starts_at: new Date("2026-09-16T01:30:00.000Z"),
+				title: "TypeScript Hands-on Night",
+			}),
+		],
+		recurrence_rule: weeklyRule({
+			excludedDates: ["2026-09-09", "2026-09-16"],
+		}),
 	};
 }
 
@@ -136,6 +172,37 @@ describe("public events experience", () => {
 		).toHaveAttribute("href", "https://events.example.com/details");
 	});
 
+	it("places an override on its edited date with occurrence-specific details", async () => {
+		const user = userEvent.setup();
+
+		render(
+			<Calendar
+				events={[recurringEventWithOverride()]}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("button", { name: "September 16, 2026, 1 event" }),
+		).not.toBeInTheDocument();
+		const editedDate = screen.getByRole("button", {
+			name: "September 15, 2026, 1 event",
+		});
+
+		await user.click(editedDate);
+
+		const selectedDay = within(
+			screen.getByRole("region", { name: "September 15, 2026" }),
+		);
+		expect(selectedDay.getByText("TypeScript Hands-on Night")).toBeVisible();
+		expect(selectedDay.getByText("6:30 PM")).toBeVisible();
+		expect(
+			selectedDay.getByRole("link", {
+				name: "View details for TypeScript Hands-on Night",
+			}),
+		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+	});
+
 	it("navigates the three-month calendar window", async () => {
 		const user = userEvent.setup();
 
@@ -171,6 +238,40 @@ describe("public events experience", () => {
 		expect(
 			screen.queryByText(/September 9/, { selector: "time" }),
 		).not.toBeInTheDocument();
+	});
+
+	it("features the earliest upcoming override with all of its edited details", () => {
+		render(
+			<ul>
+				<RecurringEventsCard
+					event={recurringEventWithOverride()}
+					referenceDate="2026-09-09"
+				/>
+			</ul>,
+		);
+
+		expect(
+			screen.getByRole("heading", { name: "TypeScript Hands-on Night" }),
+		).toBeVisible();
+		expect(
+			screen.getByText(/September 15/, { selector: "time" }),
+		).toHaveTextContent("September 15 · 6:30 PM");
+		expect(
+			screen.getByText(
+				"Bring a laptop for a special hands-on TypeScript night.",
+			),
+		).toBeVisible();
+		const eventTypes = within(screen.getByRole("list", { name: "Event type" }));
+		expect(eventTypes.getByText("In person")).toBeVisible();
+		expect(eventTypes.queryByText("Online")).not.toBeInTheDocument();
+		expect(
+			screen.getByText("The Urban Hive", { selector: "strong" }),
+		).toBeVisible();
+		expect(
+			screen.getByRole("link", {
+				name: "The Urban Hive: TypeScript Hands-on Night",
+			}),
+		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
 	});
 
 	it("renders one call to action when recurring-event links share a destination", () => {

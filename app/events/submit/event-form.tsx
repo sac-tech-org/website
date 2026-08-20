@@ -16,9 +16,40 @@ interface FieldErrorsProps {
 	field: EventFormField;
 }
 
-type RecurrenceFrequency = "day" | "week" | "month" | "year";
-type RecurrenceMonthlyPattern = "day_of_month" | "nth_weekday";
-type RecurrenceEndType = "never" | "on_date" | "after_occurrences";
+export type RecurrenceFrequency = "day" | "week" | "month" | "year";
+export type RecurrenceMonthlyPattern = "day_of_month" | "nth_weekday";
+export type RecurrenceEndType = "never" | "on_date" | "after_occurrences";
+
+export interface EventFormValues {
+	description: string;
+	endsAt: string;
+	eventUrl: string;
+	locationAddress: string;
+	locationName: string;
+	mode: "hybrid" | "in_person" | "online";
+	recurrenceCount: string;
+	recurrenceEndDate: string;
+	recurrenceEndType: RecurrenceEndType;
+	recurrenceFrequency: RecurrenceFrequency;
+	recurrenceInterval: string;
+	recurrenceMonthlyPattern: RecurrenceMonthlyPattern;
+	recurrenceWeekdays: number[];
+	recurring: boolean;
+	startsAt: string;
+	title: string;
+}
+
+export type EventFormAction = (
+	previousState: EventFormState,
+	formData: FormData,
+) => EventFormState | Promise<EventFormState>;
+
+export interface EventFormProps {
+	action?: EventFormAction;
+	allowRecurrence?: boolean;
+	initialValues?: EventFormValues;
+	variant?: "edit" | "submit";
+}
 
 interface RecurrenceDraft {
 	recurring: boolean;
@@ -88,6 +119,37 @@ const INITIAL_EVENT_DRAFT: EventDraft = {
 	startsAt: "",
 	title: "",
 };
+
+const EMPTY_EVENT_FORM_VALUES: EventFormValues = {
+	...INITIAL_EVENT_DRAFT,
+	recurrenceCount: INITIAL_RECURRENCE.count,
+	recurrenceEndDate: INITIAL_RECURRENCE.endDate,
+	recurrenceEndType: INITIAL_RECURRENCE.endType,
+	recurrenceFrequency: INITIAL_RECURRENCE.frequency,
+	recurrenceInterval: INITIAL_RECURRENCE.interval,
+	recurrenceMonthlyPattern: INITIAL_RECURRENCE.monthlyPattern,
+	recurrenceWeekdays: INITIAL_RECURRENCE.weekdays,
+	recurring: INITIAL_RECURRENCE.recurring,
+};
+
+const FORM_COPY = {
+	edit: {
+		heading: "Update the event details",
+		pendingButton: "Submitting changes…",
+		review:
+			"These changes won't go live right away. A SacTech reviewer must approve them first.",
+		stepLabel: "Event edit",
+		submitButton: "Submit changes for review",
+	},
+	submit: {
+		heading: "Tell us about the event",
+		pendingButton: "Submitting…",
+		review:
+			"This won't publish the event. It will go to the SacTech review queue.",
+		stepLabel: "Event submission",
+		submitButton: "Submit event for review",
+	},
+} as const;
 
 const EVENT_FORM_FIELD_ORDER: EventFormField[] = [
 	"title",
@@ -170,17 +232,60 @@ function FieldErrors({ errors, field }: FieldErrorsProps) {
 	);
 }
 
-export function EventForm() {
+function createEventDraft(values: EventFormValues): EventDraft {
+	return {
+		description: values.description,
+		endsAt: values.endsAt,
+		eventUrl: values.eventUrl,
+		locationAddress: values.locationAddress,
+		locationName: values.locationName,
+		mode: values.mode,
+		startsAt: values.startsAt,
+		title: values.title,
+	};
+}
+
+function createRecurrenceDraft(values: EventFormValues): RecurrenceDraft {
+	return {
+		count: values.recurrenceCount,
+		endDate: values.recurrenceEndDate,
+		endType: values.recurrenceEndType,
+		frequency: values.recurrenceFrequency,
+		interval: values.recurrenceInterval,
+		monthlyPattern: values.recurrenceMonthlyPattern,
+		recurring: values.recurring,
+		weekdays: [...values.recurrenceWeekdays],
+	};
+}
+
+export function EventForm({
+	action = submitEvent,
+	allowRecurrence = true,
+	initialValues = EMPTY_EVENT_FORM_VALUES,
+	variant = "submit",
+}: EventFormProps = {}) {
 	const [state, formAction, pending] = useActionState(
-		submitEvent,
+		action,
 		initialEventFormState,
 	);
 	const formRef = useRef<HTMLFormElement>(null);
-	const weekdaysCustomized = useRef(false);
-	const [draft, setDraft] = useState(INITIAL_EVENT_DRAFT);
-	const [recurrence, setRecurrence] = useState(INITIAL_RECURRENCE);
+	const initialStartDate = getStartDateParts(initialValues.startsAt);
+	const weekdaysCustomized = useRef(
+		initialValues.recurring &&
+			initialValues.recurrenceFrequency === "week" &&
+			initialValues.recurrenceWeekdays.some(
+				(weekday) => weekday !== initialStartDate?.weekday,
+			),
+	);
+	const [draft, setDraft] = useState<EventDraft>(() =>
+		createEventDraft(initialValues),
+	);
+	const [recurrence, setRecurrence] = useState<RecurrenceDraft>(() =>
+		createRecurrenceDraft(initialValues),
+	);
 	const [dismissedFeedbackState, setDismissedFeedbackState] =
 		useState<EventFormState | null>(null);
+	const copy = FORM_COPY[variant];
 	const feedbackIsCurrent = dismissedFeedbackState !== state;
 	const errors = feedbackIsCurrent ? state.errors : undefined;
 	const startsAt = draft.startsAt;
@@ -260,7 +365,7 @@ export function EventForm() {
 			return;
 		}
 
-		if (state.status === "success") {
+		if (state.status === "success" && variant === "submit") {
 			weekdaysCustomized.current = false;
 			// These controlled drafts intentionally clear only after the Server Action
 			// confirms success, never after a returned error.
@@ -271,8 +376,8 @@ export function EventForm() {
 		}
 
 		// React resets the native form after the action-state render. Reapply the
-		// controlled drafts on the next frame so real browsers cannot leave radios
-		// or checkboxes at their initial defaults, then focus the first invalid field.
+		// controlled drafts on the next frame so errors and successful edits cannot
+		// leave radios or checkboxes at their native defaults.
 		const animationFrame = requestAnimationFrame(() => {
 			setDraft((current) => ({ ...current }));
 			setRecurrence((current) => ({
@@ -280,8 +385,15 @@ export function EventForm() {
 				weekdays: [...current.weekdays],
 			}));
 
+			if (state.status !== "error") {
+				return;
+			}
+
 			const firstInvalidField = EVENT_FORM_FIELD_ORDER.find(
-				(field) => state.errors?.[field]?.length,
+				(field) =>
+					(allowRecurrence ||
+						(field !== "recurring" && !field.startsWith("recurrence"))) &&
+					state.errors?.[field]?.length,
 			);
 			const firstInvalidControl = firstInvalidField
 				? (formRef.current?.querySelector<HTMLElement>(
@@ -298,7 +410,7 @@ export function EventForm() {
 		});
 
 		return () => cancelAnimationFrame(animationFrame);
-	}, [state]);
+	}, [allowRecurrence, state, variant]);
 
 	return (
 		<form
@@ -310,8 +422,8 @@ export function EventForm() {
 			ref={formRef}
 		>
 			<div className={style.formHeading}>
-				<p className={style.stepLabel}>Event submission</p>
-				<h2>Tell us about the event</h2>
+				<p className={style.stepLabel}>{copy.stepLabel}</p>
+				<h2>{copy.heading}</h2>
 				<p>
 					Fields marked <span aria-hidden="true">*</span> are required.
 				</p>
@@ -422,7 +534,8 @@ export function EventForm() {
 
 			<fieldset
 				className={`${style.fieldGroup} ${style.recurrenceGroup}`}
-				disabled={pending}
+				disabled={pending || !allowRecurrence}
+				hidden={!allowRecurrence}
 			>
 				<legend>Does it repeat?</legend>
 				<label className={style.recurringToggle}>
@@ -931,13 +1044,10 @@ export function EventForm() {
 
 			<div className={style.submitArea}>
 				<button disabled={pending} type="submit">
-					{pending ? "Submitting…" : "Submit event for review"}
+					{pending ? copy.pendingButton : copy.submitButton}
 					<span aria-hidden="true">→</span>
 				</button>
-				<p>
-					This won&apos;t publish the event. It will go to the SacTech review
-					queue.
-				</p>
+				<p>{copy.review}</p>
 			</div>
 		</form>
 	);
