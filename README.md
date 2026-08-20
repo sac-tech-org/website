@@ -19,12 +19,10 @@ Better Auth uses three application roles:
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `submitter` | Default for new accounts. Can submit events and cancel only events owned by that account. Cannot review events or manage users.                         |
 | `approver`  | Includes submitter capabilities, can approve or reject pending events, and receives the daily approval reminder while verified and not actively banned. |
-| `admin`     | Includes submitter capabilities, can approve or reject events, and can list users, assign configured roles, and ban or unban other users.               |
+| `admin`     | Includes every approver capability, including reminders, and can also list users, assign configured roles, and ban or unban other users.                |
 
-The roles are deliberately least-privilege. Admins do not receive reminder email
-merely because they can review events. Better Auth supports comma-separated role
-combinations, so an admin who should join the reminder rotation can also carry
-the `approver` role.
+The roles are deliberately least-privilege, with Admin defined as a strict
+superset of Approver.
 
 ## Stack
 
@@ -33,7 +31,7 @@ the `approver` role.
 - [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/), a managed Postgres database
 - [Drizzle ORM's native Netlify Database driver](https://orm.drizzle.team/docs/connect-netlify-db)
 - [Better Auth](https://better-auth.com/docs/integrations/next) with its Drizzle adapter, email/password authentication, and Admin plugin
-- [Resend](https://resend.com/docs/send-with-better-auth) with [React Email](https://react.email/) templates for account messages and approver reminders
+- [Resend](https://resend.com/docs/send-with-better-auth) with [React Email](https://react.email/) templates for account messages and reviewer reminders
 
 Netlify Database is currently available only on Netlify's **Credit-based plans**. Database compute and bandwidth consume credits; review the current [billing and limits documentation](https://docs.netlify.com/build/data-and-storage/netlify-database/billing-and-usage/) before enabling it for the project.
 
@@ -125,10 +123,9 @@ pnpm email:dev
 
 The `send-admin-approval-reminders` Netlify Scheduled Function checks the
 moderation queue once a day. It sends a private digest to each verified,
-effectively non-banned account carrying the `approver` role only when at least
-one non-canceled event still has `pending` status. An admin-only account does not
-receive it. A pending event remains in subsequent digests until it is approved,
-rejected, or canceled.
+effectively non-banned account carrying the `approver` or `admin` role only when
+at least one non-canceled event still has `pending` status. A pending event
+remains in subsequent digests until it is approved, rejected, or canceled.
 
 The checked-in cron expression is `0 15 * * *`. Netlify evaluates schedules in
 UTC, so the function runs at 7:00 AM Pacific Standard Time and 8:00 AM Pacific
@@ -270,7 +267,7 @@ After the production deploy succeeds:
 1. Confirm the production database branch and migrations in Netlify's **Database** view.
 2. Create or promote the first admin.
 3. Test account creation, email verification, forgot-password recovery, event submission, moderation, and the public calendar.
-4. Open the `send-admin-approval-reminders` function in Netlify and use **Run now** after seeding a pending event and a verified approver.
+4. Open the `send-admin-approval-reminders` function in Netlify and use **Run now** after seeding a pending event and a verified approver or admin.
 5. Verify a deploy preview separately; it uses an isolated database branch and its own preview hostname, but its scheduled function does not run automatically.
 
 ## Scripts

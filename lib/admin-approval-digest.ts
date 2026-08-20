@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { user } from "@/db/auth-schema";
 import { event } from "@/db/schema";
 import { sendApprovalReminderEmails } from "@/lib/admin-approval-email";
-import { APPROVAL_REMINDER_ROLE } from "@/lib/auth-permissions";
+import { APPROVAL_REMINDER_ROLES } from "@/lib/auth-permissions";
 
 const EVENT_PREVIEW_LIMIT = 10;
 const PACIFIC_TIME_ZONE = "America/Los_Angeles";
@@ -52,7 +52,7 @@ interface SendPendingEventApprovalDigestOptions {
 
 export type PendingEventApprovalDigestResult =
 	| { status: "no-pending"; pendingCount: 0 }
-	| { status: "no-approvers"; pendingCount: number }
+	| { status: "no-reviewers"; pendingCount: number }
 	| {
 			status: "sent";
 			pendingCount: number;
@@ -98,10 +98,11 @@ export async function getPendingApprovalDigestData(): Promise<PendingApprovalDig
 export async function getApprovalReminderRecipients(
 	now: Date = new Date(),
 ): Promise<string[]> {
+	const reminderRolePattern = `^[[:space:]]*(${APPROVAL_REMINDER_ROLES.join("|")})[[:space:]]*$`;
 	const hasReminderRole = sql<boolean>`exists (
 		select 1
 		from unnest(string_to_array(coalesce(${user.role}, ''), ',')) as role_entry(value)
-		where role_entry.value ~ ${`^[[:space:]]*${APPROVAL_REMINDER_ROLE}[[:space:]]*$`}
+		where role_entry.value ~ ${reminderRolePattern}
 	)`;
 	const rows = await db
 		.select({ email: user.email })
@@ -185,7 +186,7 @@ export async function sendPendingEventApprovalDigest({
 	const recipients = await getRecipients(now);
 
 	if (recipients.length === 0) {
-		return { status: "no-approvers", pendingCount: pending.pendingCount };
+		return { status: "no-reviewers", pendingCount: pending.pendingCount };
 	}
 
 	const sendEmails = dependencies?.sendEmails ?? sendApprovalReminderEmails;

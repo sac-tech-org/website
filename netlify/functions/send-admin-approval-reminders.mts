@@ -8,14 +8,14 @@ async function sendApprovalReminders() {
 		case "no-pending":
 			console.info("Approval reminder skipped: no pending events.");
 			break;
-		case "no-approvers":
+		case "no-reviewers":
 			console.info(
-				`Approval reminder skipped: no eligible approvers for ${result.pendingCount} pending events.`,
+				`Approval reminder skipped: no eligible reviewers for ${result.pendingCount} pending events.`,
 			);
 			break;
 		case "sent":
 			console.info(
-				`Approval reminder sent to ${result.recipientCount} approvers for ${result.pendingCount} pending events.`,
+				`Approval reminder sent to ${result.recipientCount} reviewers for ${result.pendingCount} pending events.`,
 			);
 			break;
 	}

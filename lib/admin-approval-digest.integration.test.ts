@@ -151,7 +151,7 @@ describe("approval reminder database queries", () => {
 		});
 	});
 
-	it("selects only effective verified approvers and returns stable unique emails", async () => {
+	it("selects only effective verified reviewers and returns stable unique emails", async () => {
 		await db.insert(authSchema.user).values([
 			{
 				id: "approver-uppercase-email",
@@ -257,6 +257,7 @@ describe("approval reminder database queries", () => {
 
 		await expect(digest.getApprovalReminderRecipients(NOW)).resolves.toEqual([
 			"admin-approver@example.com",
+			"admin-only@example.com",
 			"admin@example.com",
 			"expired@example.com",
 			"team@example.com",

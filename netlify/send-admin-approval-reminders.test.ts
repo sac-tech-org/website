@@ -31,7 +31,7 @@ describe("send-admin-approval-reminders scheduled function", () => {
 
 		expect(sendPendingEventApprovalDigestMock).toHaveBeenCalledOnce();
 		expect(info).toHaveBeenCalledWith(
-			"Approval reminder sent to 2 approvers for 4 pending events.",
+			"Approval reminder sent to 2 reviewers for 4 pending events.",
 		);
 	});
 
@@ -39,7 +39,7 @@ describe("send-admin-approval-reminders scheduled function", () => {
 		const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
 		sendPendingEventApprovalDigestMock
 			.mockResolvedValueOnce({ status: "no-pending", pendingCount: 0 })
-			.mockResolvedValueOnce({ status: "no-approvers", pendingCount: 3 });
+			.mockResolvedValueOnce({ status: "no-reviewers", pendingCount: 3 });
 
 		await handler();
 		await handler();
@@ -50,7 +50,7 @@ describe("send-admin-approval-reminders scheduled function", () => {
 		);
 		expect(info).toHaveBeenNthCalledWith(
 			2,
-			"Approval reminder skipped: no eligible approvers for 3 pending events.",
+			"Approval reminder skipped: no eligible reviewers for 3 pending events.",
 		);
 	});
 

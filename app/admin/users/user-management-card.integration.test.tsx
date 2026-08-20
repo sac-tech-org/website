@@ -54,6 +54,11 @@ describe("UserManagementCard", () => {
 		expect(
 			screen.getByText("Review events and receive approval reminders."),
 		).toBeVisible();
+		expect(
+			screen.getByText(
+				"Review events, receive reminders, and manage other users.",
+			),
+		).toBeVisible();
 
 		await browserUser.click(screen.getByRole("checkbox", { name: /Approver/ }));
 		await browserUser.click(screen.getByRole("button", { name: "Save roles" }));

@@ -186,7 +186,10 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 			auth.api.userHasPermission({
 				body: {
 					role: "admin",
-					permissions: { user: ["set-role", "ban"] },
+					permissions: {
+						event: ["approve", "reject", "receive-approval-reminders"],
+						user: ["set-role", "ban"],
+					},
 				},
 			}),
 		).resolves.toEqual({ error: null, success: true });

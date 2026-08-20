@@ -63,7 +63,7 @@ describe("approval reminder digest helpers", () => {
 });
 
 describe("sendPendingEventApprovalDigest", () => {
-	it("stops before querying approvers when no events need approval", async () => {
+	it("stops before querying reviewers when no events need approval", async () => {
 		const getRecipients = vi.fn();
 		const sendEmails = vi.fn();
 
@@ -83,7 +83,7 @@ describe("sendPendingEventApprovalDigest", () => {
 		expect(sendEmails).not.toHaveBeenCalled();
 	});
 
-	it("does not require email or URL configuration when there are no approvers", async () => {
+	it("does not require email or URL configuration when there are no reviewers", async () => {
 		const getRecipients = vi.fn().mockResolvedValue([]);
 		const sendEmails = vi.fn();
 
@@ -97,7 +97,7 @@ describe("sendPendingEventApprovalDigest", () => {
 					sendEmails,
 				},
 			}),
-		).resolves.toEqual({ status: "no-approvers", pendingCount: 3 });
+		).resolves.toEqual({ status: "no-reviewers", pendingCount: 3 });
 		expect(getRecipients).toHaveBeenCalledExactlyOnceWith(NOW);
 		expect(sendEmails).not.toHaveBeenCalled();
 	});

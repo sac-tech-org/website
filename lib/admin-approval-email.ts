@@ -129,7 +129,7 @@ export function createPendingApprovalEmail({
 		}),
 		subject,
 		text: [
-			"Hi approver,",
+			"Hi reviewer,",
 			"",
 			safePendingCount === 1
 				? "There is 1 event waiting for approval."
@@ -140,7 +140,7 @@ export function createPendingApprovalEmail({
 			"Review pending events:",
 			safeReviewUrl,
 			"",
-			"You are receiving this reminder because your SacTech account has the approver role.",
+			"You are receiving this reminder because your SacTech account can review events.",
 		].join("\n"),
 	};
 }
@@ -178,7 +178,7 @@ export async function sendApprovalReminderEmails({
 		}));
 		const { error } = await resend.batch.send(payload, {
 			batchValidation: "strict",
-			idempotencyKey: `sactech-approver-reminder-${safeDigestDate}-${chunkIndex}`,
+			idempotencyKey: `sactech-reviewer-reminder-${safeDigestDate}-${chunkIndex}`,
 		});
 
 		if (error) {

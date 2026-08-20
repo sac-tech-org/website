@@ -5,7 +5,6 @@ export const AUTH_ROLE_NAMES = ["admin", "approver", "submitter"] as const;
 export type AuthRole = (typeof AUTH_ROLE_NAMES)[number];
 
 export const DEFAULT_AUTH_ROLE = "submitter" satisfies AuthRole;
-export const APPROVAL_REMINDER_ROLE = "approver" satisfies AuthRole;
 export const ADMIN_AUTH_ROLES = ["admin"] satisfies AuthRole[];
 
 export const authAccessControl = createAccessControl({
@@ -25,21 +24,32 @@ const reviewerEventPermissions = [
 	"approve",
 	"reject",
 ] as const;
+const approverEventPermissions = [
+	...reviewerEventPermissions,
+	"receive-approval-reminders",
+] as const;
+const approverPermissions = {
+	event: approverEventPermissions,
+	user: [],
+} as const;
 
 export const authRoles = {
 	admin: authAccessControl.newRole({
-		event: reviewerEventPermissions,
-		user: ["list", "set-role", "ban"],
+		...approverPermissions,
+		user: [...approverPermissions.user, "list", "set-role", "ban"],
 	}),
-	approver: authAccessControl.newRole({
-		event: [...reviewerEventPermissions, "receive-approval-reminders"],
-		user: [],
-	}),
+	approver: authAccessControl.newRole(approverPermissions),
 	submitter: authAccessControl.newRole({
 		event: submitterEventPermissions,
 		user: [],
 	}),
 } as const;
+
+export const APPROVAL_REMINDER_ROLES = AUTH_ROLE_NAMES.filter(
+	(role) =>
+		authRoles[role].authorize({ event: ["receive-approval-reminders"] })
+			.success,
+);
 
 export type EventPermission =
 	(typeof authAccessControl.statements.event)[number];

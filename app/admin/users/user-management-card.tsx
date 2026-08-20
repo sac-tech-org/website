@@ -20,7 +20,7 @@ interface UserManagementCardProps {
 
 const roleOptions = [
 	{
-		description: "Review events and manage other users.",
+		description: "Review events, receive reminders, and manage other users.",
 		label: "Admin",
 		value: "admin",
 	},

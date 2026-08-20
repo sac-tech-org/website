@@ -52,7 +52,7 @@ describe("sendApprovalReminderEmails", () => {
 		) as Array<Array<Record<string, unknown>>>;
 
 		expect(payloads.map((payload) => payload.length)).toEqual([100, 1]);
-		// The data query sorts approvers before calling this helper. The sender keeps
+		// The data query sorts reviewers before calling this helper. The sender keeps
 		// that exact order so the same date/chunk key always represents the same set.
 		expect(payloads.flat().map((email) => email.to)).toEqual(recipients);
 		expect(payloads.flat().every((email) => typeof email.to === "string")).toBe(
@@ -71,13 +71,13 @@ describe("sendApprovalReminderEmails", () => {
 		expect(payloads.flat().every((email) => !("bcc" in email))).toBe(true);
 
 		expect(new Headers(requests[0]?.headers).get("idempotency-key")).toBe(
-			"sactech-approver-reminder-2026-08-20-0",
+			"sactech-reviewer-reminder-2026-08-20-0",
 		);
 		expect(new Headers(requests[0]?.headers).get("x-batch-validation")).toBe(
 			"strict",
 		);
 		expect(new Headers(requests[1]?.headers).get("idempotency-key")).toBe(
-			"sactech-approver-reminder-2026-08-20-1",
+			"sactech-reviewer-reminder-2026-08-20-1",
 		);
 	});
 

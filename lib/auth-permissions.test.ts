@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	ADMIN_AUTH_ROLES,
-	APPROVAL_REMINDER_ROLE,
+	APPROVAL_REMINDER_ROLES,
 	authAccessControl,
 	authRoles,
 	DEFAULT_AUTH_ROLE,
@@ -45,24 +45,24 @@ describe("Better Auth role permissions", () => {
 		}
 	});
 
-	it("lets approvers and admins review events but only approvers get reminders", () => {
-		expect(APPROVAL_REMINDER_ROLE).toBe("approver");
+	it("makes admin inherit every approver event permission", () => {
+		expect(APPROVAL_REMINDER_ROLES).toEqual(["admin", "approver"]);
+		expect(authRoles.admin.statements.event).toEqual(
+			authRoles.approver.statements.event,
+		);
 
 		for (const role of ["approver", "admin"]) {
 			expect(roleHasEventPermission(role, "approve")).toBe(true);
 			expect(roleHasEventPermission(role, "reject")).toBe(true);
+			expect(roleHasEventPermission(role, "receive-approval-reminders")).toBe(
+				true,
+			);
 		}
 
 		expect(roleHasEventPermission("submitter", "approve")).toBe(false);
 		expect(
-			roleHasEventPermission("approver", "receive-approval-reminders"),
-		).toBe(true);
-		expect(roleHasEventPermission("admin", "receive-approval-reminders")).toBe(
-			false,
-		);
-		expect(
-			roleHasEventPermission("admin, approver", "receive-approval-reminders"),
-		).toBe(true);
+			roleHasEventPermission("submitter", "receive-approval-reminders"),
+		).toBe(false);
 	});
 
 	it("reserves role changes and bans for admins", () => {
