@@ -1,5 +1,5 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { betterAuth } from "better-auth/minimal";
+import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
 import { admin } from "better-auth/plugins";
 import { after } from "next/server";
 import { db } from "@/db";
@@ -15,6 +15,7 @@ import {
 	authRoles,
 	DEFAULT_AUTH_ROLE,
 } from "@/lib/auth-permissions";
+import { isEmailDeliveryEnabled } from "@/lib/email-delivery";
 
 const AUTH_LINK_EXPIRY_SECONDS = 60 * 60;
 
@@ -35,6 +36,45 @@ async function deliverAuthEmail(
 	}
 }
 
+const emailDeliveryEnabled = isEmailDeliveryEnabled();
+const emailAndPassword = {
+	enabled: true,
+	minPasswordLength: 10,
+	requireEmailVerification: emailDeliveryEnabled,
+	resetPasswordTokenExpiresIn: AUTH_LINK_EXPIRY_SECONDS,
+	revokeSessionsOnPasswordReset: true,
+	...(emailDeliveryEnabled
+		? {
+				sendResetPassword: async ({ url, user }) => {
+					await deliverAuthEmail("password reset", async () => {
+						await sendPasswordResetEmail({
+							to: user.email,
+							url,
+							userName: user.name,
+						});
+					});
+				},
+			}
+		: {}),
+} satisfies NonNullable<BetterAuthOptions["emailAndPassword"]>;
+const emailVerification = emailDeliveryEnabled
+	? ({
+			autoSignInAfterVerification: true,
+			expiresIn: AUTH_LINK_EXPIRY_SECONDS,
+			sendOnSignIn: true,
+			sendOnSignUp: true,
+			sendVerificationEmail: async ({ url, user }) => {
+				await deliverAuthEmail("verification", async () => {
+					await sendVerificationEmail({
+						to: user.email,
+						url,
+						userName: user.name,
+					});
+				});
+			},
+		} satisfies NonNullable<BetterAuthOptions["emailVerification"]>)
+	: undefined;
+
 export const auth = betterAuth({
 	appName: "SacTech",
 	baseURL: getAuthBaseUrlConfig(),
@@ -54,37 +94,8 @@ export const auth = betterAuth({
 			joins: true,
 		},
 	},
-	emailAndPassword: {
-		enabled: true,
-		minPasswordLength: 10,
-		requireEmailVerification: true,
-		resetPasswordTokenExpiresIn: AUTH_LINK_EXPIRY_SECONDS,
-		revokeSessionsOnPasswordReset: true,
-		sendResetPassword: async ({ url, user }) => {
-			await deliverAuthEmail("password reset", async () => {
-				await sendPasswordResetEmail({
-					to: user.email,
-					url,
-					userName: user.name,
-				});
-			});
-		},
-	},
-	emailVerification: {
-		autoSignInAfterVerification: true,
-		expiresIn: AUTH_LINK_EXPIRY_SECONDS,
-		sendOnSignIn: true,
-		sendOnSignUp: true,
-		sendVerificationEmail: async ({ url, user }) => {
-			await deliverAuthEmail("verification", async () => {
-				await sendVerificationEmail({
-					to: user.email,
-					url,
-					userName: user.name,
-				});
-			});
-		},
-	},
+	emailAndPassword,
+	...(emailVerification ? { emailVerification } : {}),
 	plugins: [
 		admin({
 			ac: authAccessControl,

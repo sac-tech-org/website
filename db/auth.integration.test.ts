@@ -52,6 +52,7 @@ const environmentKeys = [
 	"BETTER_AUTH_URL",
 	"DEPLOY_PRIME_URL",
 	"DEPLOY_URL",
+	"EMAIL_DELIVERY_MODE",
 	"NETLIFY",
 	"NETLIFY_DB_DRIVER",
 	"NETLIFY_DB_URL",
@@ -101,8 +102,9 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		delete process.env.DEPLOY_PRIME_URL;
 		delete process.env.DEPLOY_URL;
 		delete process.env.NETLIFY;
-		delete process.env.RESEND_API_KEY;
-		delete process.env.RESEND_FROM_EMAIL;
+		process.env.EMAIL_DELIVERY_MODE = "live";
+		process.env.RESEND_API_KEY = "re_auth_integration_test";
+		process.env.RESEND_FROM_EMAIL = "SacTech <accounts@sactech.test>";
 
 		await database.applyMigrations(migrationsDirectory);
 		vi.resetModules();

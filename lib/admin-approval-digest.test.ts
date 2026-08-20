@@ -63,6 +63,22 @@ describe("approval reminder digest helpers", () => {
 });
 
 describe("sendPendingEventApprovalDigest", () => {
+	it("stops before querying the queue when local email is disabled", async () => {
+		const getPendingEvents = vi.fn();
+		const getRecipients = vi.fn();
+		const sendEmails = vi.fn();
+
+		await expect(
+			sendPendingEventApprovalDigest({
+				environment: { CONTEXT: "dev" },
+				dependencies: { getPendingEvents, getRecipients, sendEmails },
+			}),
+		).resolves.toEqual({ status: "email-disabled" });
+		expect(getPendingEvents).not.toHaveBeenCalled();
+		expect(getRecipients).not.toHaveBeenCalled();
+		expect(sendEmails).not.toHaveBeenCalled();
+	});
+
 	it("stops before querying reviewers when no events need approval", async () => {
 		const getRecipients = vi.fn();
 		const sendEmails = vi.fn();

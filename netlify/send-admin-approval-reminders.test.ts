@@ -38,18 +38,24 @@ describe("send-admin-approval-reminders scheduled function", () => {
 	it("reports skip reasons without exposing recipient or event details", async () => {
 		const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
 		sendPendingEventApprovalDigestMock
+			.mockResolvedValueOnce({ status: "email-disabled" })
 			.mockResolvedValueOnce({ status: "no-pending", pendingCount: 0 })
 			.mockResolvedValueOnce({ status: "no-reviewers", pendingCount: 3 });
 
 		await handler();
 		await handler();
+		await handler();
 
 		expect(info).toHaveBeenNthCalledWith(
 			1,
-			"Approval reminder skipped: no pending events.",
+			"Approval reminder skipped: local email is disabled.",
 		);
 		expect(info).toHaveBeenNthCalledWith(
 			2,
+			"Approval reminder skipped: no pending events.",
+		);
+		expect(info).toHaveBeenNthCalledWith(
+			3,
 			"Approval reminder skipped: no eligible reviewers for 3 pending events.",
 		);
 	});

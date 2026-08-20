@@ -5,6 +5,9 @@ async function sendApprovalReminders() {
 	const result = await sendPendingEventApprovalDigest();
 
 	switch (result.status) {
+		case "email-disabled":
+			console.info("Approval reminder skipped: local email is disabled.");
+			break;
 		case "no-pending":
 			console.info("Approval reminder skipped: no pending events.");
 			break;

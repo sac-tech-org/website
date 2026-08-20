@@ -30,6 +30,10 @@ interface AuthSuccess {
 	message: string;
 }
 
+interface AuthFormProps {
+	emailDeliveryEnabled?: boolean;
+}
+
 function getAuthIssue(error: AuthError, mode: AuthMode): AuthIssue {
 	switch (error.code) {
 		case "INVALID_EMAIL_OR_PASSWORD":
@@ -77,7 +81,7 @@ function getAuthIssue(error: AuthError, mode: AuthMode): AuthIssue {
 	}
 }
 
-export function AuthForm() {
+export function AuthForm({ emailDeliveryEnabled = true }: AuthFormProps) {
 	const router = useRouter();
 	const [mode, setMode] = useState<AuthMode>("sign-in");
 	const [issue, setIssue] = useState<AuthIssue | null>(null);
@@ -202,7 +206,7 @@ export function AuthForm() {
 				return;
 			}
 
-			if (mode === "sign-up") {
+			if (mode === "sign-up" && !result.data?.token) {
 				shouldFocusHeadingRef.current = true;
 				setSuccess({
 					heading: "Check your email",
@@ -374,7 +378,7 @@ export function AuthForm() {
 						<p className={style.hint} id="auth-password-hint">
 							At least {MINIMUM_PASSWORD_LENGTH} characters.
 						</p>
-						{mode === "sign-in" && (
+						{mode === "sign-in" && emailDeliveryEnabled && (
 							<button
 								className={style.textButton}
 								disabled={isPending}

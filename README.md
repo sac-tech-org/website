@@ -64,9 +64,10 @@ BETTER_AUTH_SECRET=<generated-secret>
 BETTER_AUTH_URL=http://localhost:8888
 BETTER_AUTH_ALLOWED_HOSTS=localhost:3000,localhost:8888,127.0.0.1:3000,127.0.0.1:8888
 
-# Both values stay on the server. Use a sender on your verified Resend domain.
-RESEND_API_KEY=re_...
-RESEND_FROM_EMAIL=SacTech <accounts@mail.example.com>
+# Email delivery and verification are disabled locally by default.
+EMAIL_DELIVERY_MODE=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
 
 # Optional Slack/community invitation used by the existing site UI.
 NEXT_PUBLIC_INVITE_LINK=
@@ -99,19 +100,44 @@ The local database does not apply migrations automatically. Run `pnpm db:migrate
 | `BETTER_AUTH_URL`           | Local; Netlify override | Optional explicit canonical fallback. Normal Netlify deploys derive this from Netlify's read-only `URL` variable.                                             |
 | `BETTER_AUTH_ALLOWED_HOSTS` | Local; Netlify override | Optional comma-separated host allowlist. Setting it replaces the automatic Netlify host list; values do not include URL paths.                                |
 | `NETLIFY_DB_URL`            | Supplied by Netlify     | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution.   |
-| `RESEND_API_KEY`            | Local and Netlify       | Private Resend key used only by the server to send account and approval-reminder emails. A key restricted to sending from the configured domain is preferred. |
-| `RESEND_FROM_EMAIL`         | Local and Netlify       | Sender in `Name <address@example.com>` or plain-address form. Its domain must be verified in Resend.                                                          |
+| `EMAIL_DELIVERY_MODE`       | Optional local override | Leave unset to disable email locally. Set to `live` only when intentionally testing real delivery with both Resend values below.                              |
+| `RESEND_API_KEY`            | Optional local; Netlify | Private Resend key used only by the server to send account and approval-reminder emails. A key restricted to sending from the configured domain is preferred. |
+| `RESEND_FROM_EMAIL`         | Optional local; Netlify | Sender in `Name <address@example.com>` or plain-address form. Its domain must be verified in Resend.                                                          |
 | `NEXT_PUBLIC_INVITE_LINK`   | Optional                | Public community invitation displayed by the site. It is intentionally browser-visible.                                                                       |
 
 ### Authentication email delivery
 
-Better Auth sends signup verification and password-reset messages through Resend. Before exercising either flow:
+Email delivery is disabled by default under Netlify Dev (`CONTEXT=dev`) and
+direct Next.js development (`NODE_ENV=development` without a Netlify context).
+In that local-only mode, Better Auth does not require email verification,
+signup creates a session immediately, forgot-password recovery is hidden, and
+the approval-reminder function stops before querying the database. Preview
+Servers, deploy previews, branch deploys, and production deploys always keep
+verification and delivery enabled.
+
+Resend credentials alone do not activate local delivery. This prevents values
+inherited by Netlify Dev from accidentally sending real messages. To test the
+full local email flow intentionally, add all three values to `.env.local`:
+
+```dotenv
+EMAIL_DELIVERY_MODE=live
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=SacTech <accounts@mail.example.com>
+```
+
+Setting `EMAIL_DELIVERY_MODE=live` without both Resend values fails local
+startup instead of leaving verification half-configured.
+
+Before exercising either flow:
 
 1. Add and verify a sending domain in Resend. A dedicated sending subdomain keeps transactional-email DNS separate from other mail; keep open and click tracking off for security messages.
 2. Create a Resend API key with sending access scoped to that domain.
-3. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env.local` and in every Netlify deploy context where accounts should work.
+3. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in every Netlify deploy context where accounts should work. Do not set `EMAIL_DELIVERY_MODE` in Netlify; deployed contexts are live by default.
 
 The sender is read at delivery time, so builds, schema generation, and other commands do not need live Resend credentials. Missing or invalid delivery configuration is logged by the server without revealing whether an account exists. Better Auth generates and validates the one-hour links; the application sends those URLs unchanged so local, preview, and production origins continue to follow the auth host policy above. React Email templates live in `emails/` and include both styled markup and plain-text alternatives.
+
+Running `netlify dev --context production` intentionally uses the deployed
+behavior, including required verification and live email delivery.
 
 Preview the React Email templates without sending mail at <http://localhost:3001>:
 
@@ -149,6 +175,9 @@ email; same-day retries reuse the idempotency key. For a local invocation while
 ```sh
 pnpm exec netlify functions:invoke send-admin-approval-reminders
 ```
+
+The local invocation logs that email is disabled and exits without querying or
+sending unless `EMAIL_DELIVERY_MODE=live` and both Resend values are present.
 
 ### Production and deploy-preview hosts
 
@@ -257,7 +286,7 @@ Changes made through the production database editor take effect immediately. Ver
 
 1. Push the repository, including `netlify.toml` and all generated migrations, to the Git provider Netlify will use.
 2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration installs Chromium for the browser integration tests, runs `pnpm verify`, publishes `.next`, and selects Node 24.19.0. Verification runs formatting, linting, type checking, tests, and one production build, so a failed quality gate blocks the deploy.
-3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication, and make the Resend values available to Functions so the scheduled digest can use them. Netlify supplies the auth URLs and database connection automatically.
+3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication, and make the Resend values available to Functions so the scheduled digest can use them. Leave `EMAIL_DELIVERY_MODE` unset in Netlify; deployed contexts are live by default. Netlify supplies the auth URLs and database connection automatically.
 4. Deploy the site.
 
 Because `@netlify/database` is a project dependency, Netlify uses [package-based provisioning](https://docs.netlify.com/build/data-and-storage/netlify-database/getting-started/): on the first deploy it creates the database if needed, injects the branch-specific `NETLIFY_DB_URL`, and applies committed migrations as part of the deploy lifecycle. A database does not need to be created manually first. It can still be provisioned from the Netlify Database page if the team prefers to do that before the first deploy.
@@ -342,7 +371,7 @@ path.
 - Protect deploy previews appropriately. Preview database branches are isolated, but can contain copied production-shaped data and run server code with preview-scoped environment variables.
 - Grant the `admin` role sparingly. It can change other accounts' roles and ban status. Approval and rejection are available to both admins and approvers and are enforced again inside each Server Action.
 - Review every migration before committing it and test it on a local database and deploy preview before production.
-- Email/password accounts cannot sign in until Better Auth verifies their address. Password resets revoke the account's existing sessions.
+- Deployed and explicitly email-enabled local accounts cannot sign in until Better Auth verifies their address. Baseline local development bypasses verification and has no password-recovery email; password resets in enabled environments revoke the account's existing sessions.
 - Account creation and event submission are intentionally open. Add project-appropriate rate limiting or abuse controls before a high-traffic public launch.
 - Event links are restricted to `http://` and `https://`, submitted dates are interpreted in `America/Los_Angeles`, and only approved rows are queried for the public calendar. Preserve those checks when extending the workflow.
 
@@ -351,6 +380,9 @@ path.
 - [Netlify Next.js starter `netlify.toml`](https://github.com/netlify-templates/next-platform-starter/blob/main/netlify.toml)
 - [Netlify Database local development](https://docs.netlify.com/build/data-and-storage/netlify-database/local-development/)
 - [Netlify Database migrations](https://docs.netlify.com/build/data-and-storage/netlify-database/migrations/)
+- [Netlify deploy contexts](https://docs.netlify.com/deploy/deploy-overview/)
+- [Netlify environment variables](https://docs.netlify.com/build/environment-variables/overview/)
+- [Netlify Preview Servers](https://docs.netlify.com/manage/preview-servers/overview/)
 - [Drizzle with Netlify Database](https://orm.drizzle.team/docs/connect-netlify-db)
 - [Better Auth Next.js integration](https://better-auth.com/docs/integrations/next)
 - [Better Auth Drizzle adapter](https://better-auth.com/docs/adapters/drizzle)

@@ -4,6 +4,7 @@ import { user } from "@/db/auth-schema";
 import { event } from "@/db/schema";
 import { sendApprovalReminderEmails } from "@/lib/admin-approval-email";
 import { APPROVAL_REMINDER_ROLES } from "@/lib/auth-permissions";
+import { isEmailDeliveryEnabled } from "@/lib/email-delivery";
 
 const EVENT_PREVIEW_LIMIT = 10;
 const PACIFIC_TIME_ZONE = "America/Los_Angeles";
@@ -51,6 +52,7 @@ interface SendPendingEventApprovalDigestOptions {
 }
 
 export type PendingEventApprovalDigestResult =
+	| { status: "email-disabled" }
 	| { status: "no-pending"; pendingCount: 0 }
 	| { status: "no-reviewers"; pendingCount: number }
 	| {
@@ -173,6 +175,10 @@ export async function sendPendingEventApprovalDigest({
 	environment = process.env,
 	now = new Date(),
 }: SendPendingEventApprovalDigestOptions = {}): Promise<PendingEventApprovalDigestResult> {
+	if (!isEmailDeliveryEnabled(environment)) {
+		return { status: "email-disabled" };
+	}
+
 	const getPendingEvents =
 		dependencies?.getPendingEvents ?? getPendingApprovalDigestData;
 	const pending = await getPendingEvents();

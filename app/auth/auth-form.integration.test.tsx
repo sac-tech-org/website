@@ -165,6 +165,34 @@ describe("AuthForm", () => {
 		expect(authMocks.refresh).not.toHaveBeenCalled();
 	});
 
+	it("signs a local account in immediately when email delivery is disabled", async () => {
+		const user = userEvent.setup();
+		authMocks.signUpEmail.mockResolvedValue({
+			data: { token: "local-session-token" },
+			error: null,
+		});
+
+		render(<AuthForm emailDeliveryEnabled={false} />);
+		expect(
+			screen.queryByRole("button", { name: "Forgot your password?" }),
+		).not.toBeInTheDocument();
+
+		await user.click(screen.getByRole("button", { name: "Create account" }));
+		await user.type(screen.getByRole("textbox", { name: "Name" }), "Pat Lee");
+		await fillCredentials(user, "a secure password");
+		await user.click(
+			screen.getAllByRole("button", { name: "Create account" }).at(-1)!,
+		);
+
+		await waitFor(() =>
+			expect(authMocks.replace).toHaveBeenCalledWith("/account"),
+		);
+		expect(authMocks.refresh).toHaveBeenCalledOnce();
+		expect(
+			screen.queryByRole("heading", { name: "Check your email" }),
+		).not.toBeInTheDocument();
+	});
+
 	it("explains that an unverified account needs the emailed link", async () => {
 		const user = userEvent.setup();
 		authMocks.signInEmail.mockResolvedValue({
@@ -269,13 +297,13 @@ describe("AuthForm", () => {
 		);
 	});
 
-	it("maps duplicate-account errors and clears them when switching modes", async () => {
+	it("maps local duplicate-account errors and clears them when switching modes", async () => {
 		const user = userEvent.setup();
 		authMocks.signUpEmail.mockResolvedValue({
 			error: { code: "USER_ALREADY_EXISTS" },
 		});
 
-		render(<AuthForm />);
+		render(<AuthForm emailDeliveryEnabled={false} />);
 		await user.click(screen.getByRole("button", { name: "Create account" }));
 		await user.type(screen.getByRole("textbox", { name: "Name" }), "Pat Lee");
 		await fillCredentials(user);
