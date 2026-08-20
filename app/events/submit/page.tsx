@@ -20,8 +20,8 @@ export default async function SubmitEventPage() {
 					<h1 id="page-title">Tell Sacramento about your event.</h1>
 					<p>
 						Tell us what&apos;s happening, when it starts, and how people can
-						join. A SacTech admin will review it before it appears on the public
-						calendar.
+						join. A SacTech reviewer will check it before it appears on the
+						public calendar.
 					</p>
 				</div>
 			</section>
@@ -44,7 +44,7 @@ export default async function SubmitEventPage() {
 						</ul>
 						<p className={style.reviewNote}>
 							<strong>We mark every new event as pending.</strong> A SacTech
-							admin must approve it before it&apos;s published.
+							reviewer must approve it before it&apos;s published.
 						</p>
 					</aside>
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
 import { getPendingEvents } from "@/lib/events/queries";
-import { requireAdminSession } from "@/lib/session";
+import { requireEventReviewerSession } from "@/lib/session";
 import style from "./admin-events.module.css";
 import { ModerationForm } from "./moderation-form";
 
@@ -40,14 +40,14 @@ function formatCancellationDate(dateKey: string) {
 }
 
 export default async function AdminEventsPage() {
-	await requireAdminSession();
+	await requireEventReviewerSession();
 	const pendingEvents = await getPendingEvents();
 
 	return (
 		<main className={style.page} id="main-content">
 			<section aria-labelledby="page-title" className={style.hero}>
 				<div className={style.heroInner}>
-					<p className={style.eyebrow}>SacTech admin</p>
+					<p className={style.eyebrow}>SacTech review team</p>
 					<h1 id="page-title">Review submitted events.</h1>
 					<p>
 						Review each submission and decide whether it&apos;s ready for the

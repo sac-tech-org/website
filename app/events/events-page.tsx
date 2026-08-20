@@ -178,7 +178,7 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 						<p className={style.calloutEyebrow}>Share an event</p>
 						<h2>Planning a local tech event?</h2>
 						<p>
-							Create an account and send us the details. A SacTech admin will
+							Create an account and send us the details. A SacTech reviewer will
 							review the event before it appears on the calendar.
 						</p>
 					</div>

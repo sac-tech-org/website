@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { isEmailDeliveryEnabled } from "@/lib/email-delivery";
 import { getCurrentSession } from "@/lib/session";
 import { AuthForm } from "./auth-form";
 import style from "./auth-form.module.css";
@@ -34,7 +35,7 @@ export default async function AuthPage() {
 							Send us an event for the community calendar.
 						</li>
 						<li>
-							<span aria-hidden="true">02</span>A SacTech admin checks the
+							<span aria-hidden="true">02</span>A SacTech reviewer checks the
 							details.
 						</li>
 						<li>
@@ -45,7 +46,7 @@ export default async function AuthPage() {
 				</div>
 
 				<div className={style.formPanel}>
-					<AuthForm />
+					<AuthForm emailDeliveryEnabled={isEmailDeliveryEnabled()} />
 				</div>
 			</section>
 		</main>

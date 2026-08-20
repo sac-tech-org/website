@@ -179,6 +179,57 @@
 	margin: 0;
 }
 
+.textButton {
+	background: transparent;
+	border: 0;
+	color: var(--color-river-deep);
+	cursor: pointer;
+	font-weight: 850;
+	justify-self: start;
+	min-height: 2.75rem;
+	padding: 0.35rem 0;
+	text-decoration: underline;
+	text-decoration-thickness: 0.12em;
+	text-underline-offset: 0.2em;
+}
+
+.textButton:hover {
+	color: var(--color-poppy-deep);
+}
+
+.textButton:disabled {
+	cursor: wait;
+	opacity: 0.65;
+}
+
+.successMessage {
+	border-top: 4px solid var(--color-bridge);
+	padding-top: 1.5rem;
+}
+
+.successMessage h2 {
+	font-family: var(--font-display);
+	font-size: clamp(2rem, 4vw, 3rem);
+	font-weight: 900;
+	letter-spacing: -0.045em;
+	line-height: 1;
+	margin: 0;
+}
+
+.successMessage > p:last-child {
+	color: var(--color-ink-muted);
+	margin: 1rem 0 1.25rem;
+}
+
+.successEyebrow {
+	color: var(--color-bridge-deep);
+	font-size: 0.78rem;
+	font-weight: 900;
+	letter-spacing: 0.12em;
+	margin: 0 0 0.75rem;
+	text-transform: uppercase;
+}
+
 .submitButton,
 .signOutButton {
 	align-items: center;
@@ -193,6 +244,7 @@
 	justify-content: space-between;
 	min-height: 3.25rem;
 	padding: 0.65rem 1rem;
+	text-decoration: none;
 }
 
 .submitButton {

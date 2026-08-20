@@ -8,7 +8,11 @@ import {
 } from "@/lib/events/format-recurrence-summary";
 import { getSubmissionsForUser } from "@/lib/events/queries";
 import { getNextFutureOccurrence } from "@/lib/events/recurrence";
-import { requireSession, sessionIsAdmin } from "@/lib/session";
+import {
+	requireSession,
+	sessionCanReviewEvents,
+	sessionIsAdmin,
+} from "@/lib/session";
 import { CancelEventForm } from "./cancel-event-form";
 import { SignOutButton } from "./sign-out-button";
 import style from "./account.module.css";
@@ -89,6 +93,7 @@ function getRecurrenceRule(
 export default async function AccountPage() {
 	const session = await requireSession();
 	const submissions = await getSubmissionsForUser(session.user.id);
+	const canReviewEvents = sessionCanReviewEvents(session);
 	const isAdmin = sessionIsAdmin(session);
 	const now = new Date();
 	const today = formatPacificDateKey(now);
@@ -105,9 +110,14 @@ export default async function AccountPage() {
 					<Link className={style.primaryAction} href="/events/submit">
 						Submit an event
 					</Link>
-					{isAdmin && (
+					{canReviewEvents && (
 						<Link className={style.secondaryAction} href="/admin/events">
 							Review events
+						</Link>
+					)}
+					{isAdmin && (
+						<Link className={style.secondaryAction} href="/admin/users">
+							Manage users
 						</Link>
 					)}
 					<SignOutButton className={style.secondaryAction} />
