@@ -1,5 +1,3 @@
-import { fileURLToPath } from "node:url";
-import { NetlifyDB } from "@netlify/database-dev";
 import {
 	afterAll,
 	beforeAll,
@@ -9,6 +7,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { testDatabase as database } from "@/test-support/database-client";
 
 const { getCurrentSessionMock, revalidatePathMock } = vi.hoisted(() => ({
 	getCurrentSessionMock: vi.fn(),
@@ -33,9 +32,6 @@ vi.mock("next/cache", () => ({
 // server build while keeping every application dependency real.
 vi.mock("server-only", () => ({}));
 
-const migrationsDirectory = fileURLToPath(
-	new URL("../../netlify/database/migrations", import.meta.url),
-);
 const FIXED_NOW = new Date("2026-08-19T19:00:00.000Z");
 const OWNER_ID = "event-owner";
 const OTHER_USER_ID = "other-event-owner";
@@ -48,8 +44,6 @@ const environmentKeys = [
 	"BETTER_AUTH_SCHEMA_GENERATION",
 	"BETTER_AUTH_SECRET",
 	"BETTER_AUTH_URL",
-	"NETLIFY_DB_DRIVER",
-	"NETLIFY_DB_URL",
 ] as const;
 const originalEnvironment = Object.fromEntries(
 	environmentKeys.map((key) => [key, process.env[key]]),
@@ -123,11 +117,9 @@ function cancellationForm(
 }
 
 describe("event Server Actions and queries", () => {
-	const database = new NetlifyDB({ logger: () => undefined });
 	let actions: typeof import("@/lib/events/actions");
 	let queries: typeof import("@/lib/events/queries");
 	let closeDrizzleClient: (() => Promise<void>) | undefined;
-	let databaseStarted = false;
 
 	async function findEventId(title: string) {
 		const stored = await database.query<{ id: string }>(
@@ -206,23 +198,12 @@ describe("event Server Actions and queries", () => {
 	}
 
 	beforeAll(async () => {
-		const databaseUrl = new URL(await database.start());
-		databaseStarted = true;
-
-		// Netlify's build image does not set USER, so do not make pg infer it.
-		if (!databaseUrl.username) {
-			databaseUrl.username = "postgres";
-		}
-
-		process.env.NETLIFY_DB_URL = databaseUrl.href;
-		process.env.NETLIFY_DB_DRIVER = "server";
 		process.env.BETTER_AUTH_SECRET =
 			"sactech-event-action-integration-test-secret";
 		process.env.BETTER_AUTH_URL = "http://localhost:3000";
 		process.env.BETTER_AUTH_ALLOWED_HOSTS = "localhost:3000";
 		delete process.env.BETTER_AUTH_SCHEMA_GENERATION;
 
-		await database.applyMigrations(migrationsDirectory);
 		await database.exec(`
 			INSERT INTO "user" (id, name, email, role)
 			VALUES
@@ -262,25 +243,19 @@ describe("event Server Actions and queries", () => {
 		try {
 			await closeDrizzleClient?.();
 		} finally {
-			try {
-				if (databaseStarted) {
-					await database.stop();
+			vi.useRealTimers();
+
+			for (const key of environmentKeys) {
+				const originalValue = originalEnvironment[key];
+
+				if (originalValue === undefined) {
+					delete process.env[key];
+				} else {
+					process.env[key] = originalValue;
 				}
-			} finally {
-				vi.useRealTimers();
-
-				for (const key of environmentKeys) {
-					const originalValue = originalEnvironment[key];
-
-					if (originalValue === undefined) {
-						delete process.env[key];
-					} else {
-						process.env[key] = originalValue;
-					}
-				}
-
-				vi.resetModules();
 			}
+
+			vi.resetModules();
 		}
 	});
 
@@ -722,9 +697,12 @@ describe("event Server Actions and queries", () => {
 		const stored = await database.query<{
 			canceled_by: string;
 			event_id: string;
-			occurrence_date: Date;
+			occurrence_date: string;
 		}>(`
-			SELECT event_id, occurrence_date, canceled_by
+			SELECT
+				event_id,
+				occurrence_date::text AS occurrence_date,
+				canceled_by
 			FROM "event_occurrence_cancellation"
 			WHERE event_id = '${recurringEventId}'
 		`);
@@ -739,9 +717,7 @@ describe("event Server Actions and queries", () => {
 			canceled_by: OWNER_ID,
 			event_id: recurringEventId,
 		});
-		expect(stored.rows[0].occurrence_date.toISOString()).toBe(
-			"2026-09-09T00:00:00.000Z",
-		);
+		expect(stored.rows[0].occurrence_date).toBe("2026-09-09");
 		expect(publicEvent.recurrence_rule?.excludedDates).toEqual(["2026-09-09"]);
 		expect(accountEvent?.canceledOccurrences).toEqual(["2026-09-09"]);
 		expect(revalidatePathMock.mock.calls).toEqual([

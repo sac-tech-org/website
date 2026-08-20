@@ -1,38 +1,16 @@
-import { fileURLToPath } from "node:url";
-import { NetlifyDB } from "@netlify/database-dev";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { testDatabase as database } from "@/test-support/database-client";
 
-const migrationsDirectory = fileURLToPath(
-	new URL("../netlify/database/migrations", import.meta.url),
-);
 const NOW = new Date("2026-08-20T15:00:00.000Z");
-const environmentKeys = ["NETLIFY_DB_DRIVER", "NETLIFY_DB_URL"] as const;
-const originalEnvironment = Object.fromEntries(
-	environmentKeys.map((key) => [key, process.env[key]]),
-) as Record<(typeof environmentKeys)[number], string | undefined>;
 
 describe("approval reminder database queries", () => {
-	const database = new NetlifyDB({ logger: () => undefined });
 	let db: (typeof import("@/db"))["db"];
 	let schema: typeof import("@/db/schema");
 	let authSchema: typeof import("@/db/auth-schema");
 	let digest: typeof import("@/lib/admin-approval-digest");
 	let closeDrizzleClient: (() => Promise<void>) | undefined;
-	let databaseStarted = false;
 
 	beforeAll(async () => {
-		const databaseUrl = new URL(await database.start());
-		databaseStarted = true;
-
-		if (!databaseUrl.username) {
-			databaseUrl.username = "postgres";
-		}
-
-		process.env.NETLIFY_DB_URL = databaseUrl.href;
-		process.env.NETLIFY_DB_DRIVER = "server";
-
-		await database.applyMigrations(migrationsDirectory);
-
 		({ db } = await import("@/db"));
 		schema = await import("@/db/schema");
 		authSchema = await import("@/db/auth-schema");
@@ -51,30 +29,11 @@ describe("approval reminder database queries", () => {
 	});
 
 	beforeEach(async () => {
-		await db.delete(schema.event);
-		await db.delete(authSchema.user);
+		await database.resetPublicTables();
 	});
 
 	afterAll(async () => {
-		try {
-			await closeDrizzleClient?.();
-		} finally {
-			try {
-				if (databaseStarted) {
-					await database.stop();
-				}
-			} finally {
-				for (const key of environmentKeys) {
-					const originalValue = originalEnvironment[key];
-
-					if (originalValue === undefined) {
-						delete process.env[key];
-					} else {
-						process.env[key] = originalValue;
-					}
-				}
-			}
-		}
+		await closeDrizzleClient?.();
 	});
 
 	it("returns a bounded, deterministic preview and the full pending count", async () => {

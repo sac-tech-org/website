@@ -1,5 +1,3 @@
-import { fileURLToPath } from "node:url";
-import { NetlifyDB } from "@netlify/database-dev";
 import {
 	afterAll,
 	afterEach,
@@ -10,6 +8,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { testDatabase as database } from "@/test-support/database-client";
 
 interface AuthEmailOptions {
 	to: string;
@@ -41,10 +40,6 @@ vi.mock("@/lib/auth-email", () => ({
 	sendVerificationEmail: authMocks.sendVerificationEmail,
 }));
 
-const migrationsDirectory = fileURLToPath(
-	new URL("../netlify/database/migrations", import.meta.url),
-);
-
 const environmentKeys = [
 	"BETTER_AUTH_ALLOWED_HOSTS",
 	"BETTER_AUTH_SCHEMA_GENERATION",
@@ -54,8 +49,6 @@ const environmentKeys = [
 	"DEPLOY_URL",
 	"EMAIL_DELIVERY_MODE",
 	"NETLIFY",
-	"NETLIFY_DB_DRIVER",
-	"NETLIFY_DB_URL",
 	"RESEND_API_KEY",
 	"RESEND_FROM_EMAIL",
 	"SITE_ID",
@@ -75,22 +68,10 @@ async function flushBackgroundTasks() {
 }
 
 describe("Better Auth with the Netlify Drizzle adapter", () => {
-	const database = new NetlifyDB({ logger: () => undefined });
 	let auth: (typeof import("@/lib/auth-config"))["auth"];
 	let closeDrizzleClient: (() => Promise<void>) | undefined;
-	let databaseStarted = false;
 
 	beforeAll(async () => {
-		const databaseUrl = new URL(await database.start());
-		databaseStarted = true;
-
-		// Netlify's build image does not set USER, so do not make pg infer it.
-		if (!databaseUrl.username) {
-			databaseUrl.username = "postgres";
-		}
-
-		process.env.NETLIFY_DB_URL = databaseUrl.href;
-		process.env.NETLIFY_DB_DRIVER = "server";
 		process.env.BETTER_AUTH_SECRET =
 			"sactech-better-auth-integration-test-secret";
 		process.env.SITE_ID = "sactech-auth-integration-site-id";
@@ -106,7 +87,6 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		process.env.RESEND_API_KEY = "re_auth_integration_test";
 		process.env.RESEND_FROM_EMAIL = "SacTech <accounts@sactech.test>";
 
-		await database.applyMigrations(migrationsDirectory);
 		vi.resetModules();
 
 		const { db } = await import("@/db");
@@ -138,23 +118,17 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		try {
 			await closeDrizzleClient?.();
 		} finally {
-			try {
-				if (databaseStarted) {
-					await database.stop();
-				}
-			} finally {
-				for (const key of environmentKeys) {
-					const originalValue = originalEnvironment[key];
+			for (const key of environmentKeys) {
+				const originalValue = originalEnvironment[key];
 
-					if (originalValue === undefined) {
-						delete process.env[key];
-					} else {
-						process.env[key] = originalValue;
-					}
+				if (originalValue === undefined) {
+					delete process.env[key];
+				} else {
+					process.env[key] = originalValue;
 				}
-
-				vi.resetModules();
 			}
+
+			vi.resetModules();
 		}
 	});
 

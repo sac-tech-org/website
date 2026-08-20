@@ -338,21 +338,25 @@ publishes.
 ## Testing
 
 The test suite is pinned to the Vitest 5 beta requested by the project and is
-split across two environments:
+split across three projects in two environments:
 
+- Node unit tests run in parallel without starting infrastructure.
 - React integration tests run in headless Chromium through Vitest Browser Mode's
   Playwright provider. They use React Testing Library, DOM Testing Library, and
   `jest-dom`, while `vitest/browser` drives real user interactions through the
   browser. Tests interact through accessible labels, roles, and visible status
   messages, with only the network or Server Action boundary mocked.
-- Server and persistence integration tests run in Node and start an isolated
-  Netlify Database emulator. They apply every committed migration before testing
-  real Drizzle inserts, transactions, authorization decisions, moderation,
-  cancellation, and public-query visibility.
+- Database integration tests use the `*.integration.test.ts` suffix and run one
+  file at a time after the parallel projects finish. The project starts one
+  isolated Netlify Database emulator, applies every committed migration once,
+  and truncates application tables before each isolated file. The suites then
+  test real Drizzle inserts, database constraints, transactions, authorization
+  decisions, moderation, cancellation, and public-query visibility. This avoids
+  repeated PGlite/WASM cold starts without serializing unrelated tests.
 
 Run the complete suite once with `pnpm test`, or use `pnpm test:watch` for fast
-feedback while editing. The database-backed files start and stop their own
-database, so `pnpm dev` does not need to be running.
+feedback while editing. The database project owns its emulator lifecycle, so
+`pnpm dev` does not need to be running.
 
 After installing dependencies for the first time, install the Chromium binary
 used by Browser Mode with `pnpm exec playwright install chromium`. CI installs

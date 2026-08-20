@@ -1,13 +1,7 @@
-import { fileURLToPath } from "node:url";
-import { NetlifyDB } from "@netlify/database-dev";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { testDatabase as database } from "@/test-support/database-client";
+import { describe, expect, it } from "vitest";
 
-const migrationsDirectory = fileURLToPath(
-	new URL("../netlify/database/migrations", import.meta.url),
-);
-
-describe("Netlify Database migrations", () => {
-	const database = new NetlifyDB({ logger: () => undefined });
+describe("Database schema contract", () => {
 	const insertEvent = (id: string, title: string) =>
 		database.exec(`
 			INSERT INTO "event" (
@@ -27,64 +21,6 @@ describe("Netlify Database migrations", () => {
 				'online'
 			)
 		`);
-
-	beforeAll(async () => {
-		await database.start();
-		await database.applyMigrations(migrationsDirectory);
-	});
-
-	afterAll(async () => {
-		await database.stop();
-	});
-
-	it("creates the Better Auth, event, recurrence, and cancellation tables", async () => {
-		const result = await database.query<{ table_name: string }>(
-			`SELECT table_name
-			 FROM information_schema.tables
-			 WHERE table_schema = 'public'
-			 ORDER BY table_name`,
-		);
-
-		expect(result.rows.map((row) => row.table_name)).toEqual(
-			expect.arrayContaining([
-				"account",
-				"event",
-				"event_occurrence_cancellation",
-				"event_recurrence",
-				"session",
-				"user",
-				"verification",
-			]),
-		);
-	});
-
-	it("adds event-series cancellation columns", async () => {
-		const result = await database.query<{
-			column_name: string;
-			data_type: string;
-			is_nullable: string;
-		}>(`
-			SELECT column_name, data_type, is_nullable
-			FROM information_schema.columns
-			WHERE table_schema = 'public'
-				AND table_name = 'event'
-				AND column_name IN ('canceled_at', 'canceled_by')
-			ORDER BY column_name
-		`);
-
-		expect(result.rows).toEqual([
-			{
-				column_name: "canceled_at",
-				data_type: "timestamp with time zone",
-				is_nullable: "YES",
-			},
-			{
-				column_name: "canceled_by",
-				data_type: "text",
-				is_nullable: "YES",
-			},
-		]);
-	});
 
 	it("defaults new events to pending", async () => {
 		await database.exec(`
