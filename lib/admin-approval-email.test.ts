@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { sendAdminApprovalEmails } from "@/lib/admin-approval-email";
+import { sendApprovalReminderEmails } from "@/lib/admin-approval-email";
 
 afterEach(() => {
 	vi.unstubAllEnvs();
@@ -20,8 +20,8 @@ const pendingEvent = {
 	timezone: "America/Los_Angeles",
 };
 
-describe("sendAdminApprovalEmails", () => {
-	it("sends private per-admin batch entries in chunks of at most 100", async () => {
+describe("sendApprovalReminderEmails", () => {
+	it("sends private per-approver batch entries in chunks of at most 100", async () => {
 		vi.stubEnv("RESEND_API_KEY", "re_test_key");
 		vi.stubEnv("RESEND_FROM_EMAIL", "SacTech <accounts@example.com>");
 		const fetchMock = vi.fn<typeof fetch>().mockImplementation(async () =>
@@ -35,7 +35,7 @@ describe("sendAdminApprovalEmails", () => {
 			(_, index) => `admin-${index}@example.com`,
 		);
 
-		const result = await sendAdminApprovalEmails({
+		const result = await sendApprovalReminderEmails({
 			digestDate: "2026-08-20",
 			events: [pendingEvent],
 			pendingCount: 1,
@@ -52,7 +52,7 @@ describe("sendAdminApprovalEmails", () => {
 		) as Array<Array<Record<string, unknown>>>;
 
 		expect(payloads.map((payload) => payload.length)).toEqual([100, 1]);
-		// The data query sorts admins before calling this helper. The sender keeps
+		// The data query sorts approvers before calling this helper. The sender keeps
 		// that exact order so the same date/chunk key always represents the same set.
 		expect(payloads.flat().map((email) => email.to)).toEqual(recipients);
 		expect(payloads.flat().every((email) => typeof email.to === "string")).toBe(
@@ -71,13 +71,13 @@ describe("sendAdminApprovalEmails", () => {
 		expect(payloads.flat().every((email) => !("bcc" in email))).toBe(true);
 
 		expect(new Headers(requests[0]?.headers).get("idempotency-key")).toBe(
-			"sactech-admin-approval-digest-2026-08-20-0",
+			"sactech-approver-reminder-2026-08-20-0",
 		);
 		expect(new Headers(requests[0]?.headers).get("x-batch-validation")).toBe(
 			"strict",
 		);
 		expect(new Headers(requests[1]?.headers).get("idempotency-key")).toBe(
-			"sactech-admin-approval-digest-2026-08-20-1",
+			"sactech-approver-reminder-2026-08-20-1",
 		);
 	});
 
@@ -89,7 +89,7 @@ describe("sendAdminApprovalEmails", () => {
 			.mockResolvedValue(getJsonResponse({ data: [{ id: "email-id" }] }));
 		vi.stubGlobal("fetch", fetchMock);
 
-		const result = await sendAdminApprovalEmails({
+		const result = await sendApprovalReminderEmails({
 			digestDate: "2026-08-20",
 			events: [pendingEvent],
 			pendingCount: 1,
@@ -113,7 +113,7 @@ describe("sendAdminApprovalEmails", () => {
 		vi.stubGlobal("fetch", fetchMock);
 
 		await expect(
-			sendAdminApprovalEmails({
+			sendApprovalReminderEmails({
 				digestDate: "2026-08-20",
 				events: [pendingEvent],
 				pendingCount: 1,
@@ -141,13 +141,13 @@ describe("sendAdminApprovalEmails", () => {
 		);
 
 		await expect(
-			sendAdminApprovalEmails({
+			sendApprovalReminderEmails({
 				digestDate: "2026-08-20",
 				events: [pendingEvent],
 				pendingCount: 1,
 				reviewUrl: "https://example.com/admin/events",
 				to: ["admin@example.com"],
 			}),
-		).rejects.toThrow("Resend failed to send admin approval digest");
+		).rejects.toThrow("Resend failed to send approval reminders");
 	});
 });

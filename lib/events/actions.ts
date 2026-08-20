@@ -11,7 +11,12 @@ import {
 } from "@/db/schema";
 import type { RecurrenceRule } from "@/app/events/types";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
-import { getCurrentSession, sessionIsAdmin } from "@/lib/session";
+import {
+	getCurrentSession,
+	sessionCanCancelOwnEvents,
+	sessionCanReviewEvents,
+	sessionCanSubmitEvents,
+} from "@/lib/session";
 import type {
 	CancellationFormState,
 	EventFormState,
@@ -43,10 +48,12 @@ export async function submitEvent(
 ): Promise<EventFormState> {
 	const session = await getCurrentSession();
 
-	if (!session) {
+	if (!session || !sessionCanSubmitEvents(session)) {
 		return {
 			status: "error",
-			message: "Your session expired. Sign in again before submitting.",
+			message: session
+				? "You do not have permission to submit events."
+				: "Your session expired. Sign in again before submitting.",
 		};
 	}
 
@@ -99,7 +106,7 @@ export async function submitEvent(
 	return {
 		status: "success",
 		message:
-			"Event submitted. A SacTech admin will review it before it appears.",
+			"Event submitted. A SacTech reviewer will check it before it appears.",
 	};
 }
 
@@ -110,7 +117,7 @@ export async function moderateEvent(
 ): Promise<ModerationFormState> {
 	const session = await getCurrentSession();
 
-	if (!session || !sessionIsAdmin(session)) {
+	if (!session || !sessionCanReviewEvents(session)) {
 		return {
 			status: "error",
 			message: "You do not have permission to review events.",
@@ -183,10 +190,12 @@ export async function cancelEvent(
 ): Promise<CancellationFormState> {
 	const session = await getCurrentSession();
 
-	if (!session) {
+	if (!session || !sessionCanCancelOwnEvents(session)) {
 		return {
 			status: "error",
-			message: "Your session expired. Sign in again before canceling.",
+			message: session
+				? "You do not have permission to cancel events."
+				: "Your session expired. Sign in again before canceling.",
 		};
 	}
 

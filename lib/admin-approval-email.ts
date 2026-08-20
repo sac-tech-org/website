@@ -24,12 +24,12 @@ interface PendingApprovalEmailContent {
 	text: string;
 }
 
-export interface SendAdminApprovalEmailsOptions extends PendingApprovalEmailProps {
+export interface SendApprovalReminderEmailsOptions extends PendingApprovalEmailProps {
 	digestDate: string;
 	to: readonly string[];
 }
 
-export interface SendAdminApprovalEmailsResult {
+export interface SendApprovalReminderEmailsResult {
 	batchCount: number;
 	recipientCount: number;
 }
@@ -129,7 +129,7 @@ export function createPendingApprovalEmail({
 		}),
 		subject,
 		text: [
-			"Hi admin,",
+			"Hi approver,",
 			"",
 			safePendingCount === 1
 				? "There is 1 event waiting for approval."
@@ -140,18 +140,18 @@ export function createPendingApprovalEmail({
 			"Review pending events:",
 			safeReviewUrl,
 			"",
-			"You are receiving this reminder because your SacTech account has admin access.",
+			"You are receiving this reminder because your SacTech account has the approver role.",
 		].join("\n"),
 	};
 }
 
-export async function sendAdminApprovalEmails({
+export async function sendApprovalReminderEmails({
 	digestDate,
 	events,
 	pendingCount,
 	reviewUrl,
 	to,
-}: SendAdminApprovalEmailsOptions): Promise<SendAdminApprovalEmailsResult> {
+}: SendApprovalReminderEmailsOptions): Promise<SendApprovalReminderEmailsResult> {
 	const recipients = getRecipients(to);
 
 	if (recipients.length === 0) {
@@ -178,11 +178,11 @@ export async function sendAdminApprovalEmails({
 		}));
 		const { error } = await resend.batch.send(payload, {
 			batchValidation: "strict",
-			idempotencyKey: `sactech-admin-approval-digest-${safeDigestDate}-${chunkIndex}`,
+			idempotencyKey: `sactech-approver-reminder-${safeDigestDate}-${chunkIndex}`,
 		});
 
 		if (error) {
-			throw new Error("Resend failed to send admin approval digest", {
+			throw new Error("Resend failed to send approval reminders", {
 				cause: error,
 			});
 		}

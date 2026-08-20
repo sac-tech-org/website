@@ -40,6 +40,7 @@ const FIXED_NOW = new Date("2026-08-19T19:00:00.000Z");
 const OWNER_ID = "event-owner";
 const OTHER_USER_ID = "other-event-owner";
 const ADMIN_ID = "event-admin";
+const APPROVER_ID = "event-approver";
 const PAST_RECURRING_EVENT_ID = "40000000-0000-4000-8000-000000000001";
 
 const environmentKeys = [
@@ -227,7 +228,8 @@ describe("event Server Actions and queries", () => {
 			VALUES
 				('${OWNER_ID}', 'Event Owner', 'owner-events@sactech.test', NULL),
 				('${OTHER_USER_ID}', 'Other Owner', 'other-events@sactech.test', NULL),
-				('${ADMIN_ID}', 'Event Admin', 'admin-events@sactech.test', 'admin')
+				('${ADMIN_ID}', 'Event Admin', 'admin-events@sactech.test', 'admin'),
+				('${APPROVER_ID}', 'Event Approver', 'approver-events@sactech.test', 'approver')
 		`);
 
 		vi.useFakeTimers({ toFake: ["Date"] });
@@ -410,7 +412,7 @@ describe("event Server Actions and queries", () => {
 		expect(approved).toEqual([]);
 	});
 
-	it("requires an admin and approves a recurring series only once", async () => {
+	it("requires a reviewer and lets an approver approve a series only once", async () => {
 		const oneTimeEventId = await submitOneTimeEvent();
 		const recurringEventId = await submitRecurringEvent();
 		revalidatePathMock.mockClear();
@@ -424,7 +426,7 @@ describe("event Server Actions and queries", () => {
 		expect(unauthorized).toMatchObject({ status: "error" });
 		expect(revalidatePathMock).not.toHaveBeenCalled();
 
-		getCurrentSessionMock.mockResolvedValue(session(ADMIN_ID, "admin"));
+		getCurrentSessionMock.mockResolvedValue(session(APPROVER_ID, "approver"));
 		const approvedResult = await actions.moderateEvent(
 			recurringEventId,
 			idleState,
@@ -465,7 +467,11 @@ describe("event Server Actions and queries", () => {
 		expect(repeatedApproval).toMatchObject({ status: "error" });
 		expect(revalidatePathMock).not.toHaveBeenCalled();
 		expect(stored.rows).toEqual([
-			{ recurrence_count: 1, reviewed_by: ADMIN_ID, status: "approved" },
+			{
+				recurrence_count: 1,
+				reviewed_by: APPROVER_ID,
+				status: "approved",
+			},
 		]);
 		expect(publicEvents).toHaveLength(1);
 		expect(publicEvents[0]).toMatchObject({

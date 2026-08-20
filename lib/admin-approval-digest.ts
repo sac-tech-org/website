@@ -2,7 +2,8 @@ import { and, asc, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
 import { event } from "@/db/schema";
-import { sendAdminApprovalEmails } from "@/lib/admin-approval-email";
+import { sendApprovalReminderEmails } from "@/lib/admin-approval-email";
+import { APPROVAL_REMINDER_ROLE } from "@/lib/auth-permissions";
 
 const EVENT_PREVIEW_LIMIT = 10;
 const PACIFIC_TIME_ZONE = "America/Los_Angeles";
@@ -25,7 +26,7 @@ interface ApprovalDigestEnvironment {
 	URL?: string;
 }
 
-interface AdminApprovalEmailOptions {
+interface ApprovalReminderEmailOptions {
 	to: string[];
 	events: PendingApprovalDigestEvent[];
 	pendingCount: number;
@@ -33,25 +34,25 @@ interface AdminApprovalEmailOptions {
 	digestDate: string;
 }
 
-type SendAdminApprovalEmails = (
-	options: AdminApprovalEmailOptions,
+type SendApprovalReminderEmails = (
+	options: ApprovalReminderEmailOptions,
 ) => Promise<unknown>;
 
-interface AdminApprovalDigestDependencies {
+interface ApprovalReminderDigestDependencies {
 	getPendingEvents: () => Promise<PendingApprovalDigestData>;
 	getRecipients: (now: Date) => Promise<string[]>;
-	sendEmails: SendAdminApprovalEmails;
+	sendEmails: SendApprovalReminderEmails;
 }
 
 interface SendPendingEventApprovalDigestOptions {
-	dependencies?: Partial<AdminApprovalDigestDependencies>;
+	dependencies?: Partial<ApprovalReminderDigestDependencies>;
 	environment?: ApprovalDigestEnvironment;
 	now?: Date;
 }
 
 export type PendingEventApprovalDigestResult =
 	| { status: "no-pending"; pendingCount: 0 }
-	| { status: "no-admins"; pendingCount: number }
+	| { status: "no-approvers"; pendingCount: number }
 	| {
 			status: "sent";
 			pendingCount: number;
@@ -94,13 +95,13 @@ export async function getPendingApprovalDigestData(): Promise<PendingApprovalDig
  * Match Better Auth's comma-separated role semantics. A permanent ban remains
  * active, while a temporary ban stops excluding the account at its expiry.
  */
-export async function getAdminApprovalRecipients(
+export async function getApprovalReminderRecipients(
 	now: Date = new Date(),
 ): Promise<string[]> {
-	const hasAdminRole = sql<boolean>`exists (
+	const hasReminderRole = sql<boolean>`exists (
 		select 1
 		from unnest(string_to_array(coalesce(${user.role}, ''), ',')) as role_entry(value)
-		where role_entry.value ~ '^[[:space:]]*admin[[:space:]]*$'
+		where role_entry.value ~ ${`^[[:space:]]*${APPROVAL_REMINDER_ROLE}[[:space:]]*$`}
 	)`;
 	const rows = await db
 		.select({ email: user.email })
@@ -108,7 +109,7 @@ export async function getAdminApprovalRecipients(
 		.where(
 			and(
 				eq(user.emailVerified, true),
-				hasAdminRole,
+				hasReminderRole,
 				or(
 					isNull(user.banned),
 					eq(user.banned, false),
@@ -123,7 +124,7 @@ export async function getAdminApprovalRecipients(
 		.sort();
 }
 
-export function getAdminApprovalReviewUrl(
+export function getApprovalReviewUrl(
 	environment: ApprovalDigestEnvironment = process.env,
 ): string {
 	const value = environment.URL?.trim();
@@ -180,20 +181,20 @@ export async function sendPendingEventApprovalDigest({
 	}
 
 	const getRecipients =
-		dependencies?.getRecipients ?? getAdminApprovalRecipients;
+		dependencies?.getRecipients ?? getApprovalReminderRecipients;
 	const recipients = await getRecipients(now);
 
 	if (recipients.length === 0) {
-		return { status: "no-admins", pendingCount: pending.pendingCount };
+		return { status: "no-approvers", pendingCount: pending.pendingCount };
 	}
 
-	const sendEmails = dependencies?.sendEmails ?? sendAdminApprovalEmails;
+	const sendEmails = dependencies?.sendEmails ?? sendApprovalReminderEmails;
 
 	await sendEmails({
 		to: recipients,
 		events: pending.events,
 		pendingCount: pending.pendingCount,
-		reviewUrl: getAdminApprovalReviewUrl(environment),
+		reviewUrl: getApprovalReviewUrl(environment),
 		digestDate: getPacificDigestDate(now),
 	});
 

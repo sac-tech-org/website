@@ -11,7 +11,7 @@ const originalEnvironment = Object.fromEntries(
 	environmentKeys.map((key) => [key, process.env[key]]),
 ) as Record<(typeof environmentKeys)[number], string | undefined>;
 
-describe("admin approval digest database queries", () => {
+describe("approval reminder database queries", () => {
 	const database = new NetlifyDB({ logger: () => undefined });
 	let db: (typeof import("@/db"))["db"];
 	let schema: typeof import("@/db/schema");
@@ -151,30 +151,30 @@ describe("admin approval digest database queries", () => {
 		});
 	});
 
-	it("selects only effective verified admins and returns stable unique emails", async () => {
+	it("selects only effective verified approvers and returns stable unique emails", async () => {
 		await db.insert(authSchema.user).values([
 			{
-				id: "admin-uppercase-email",
-				name: "Admin Uppercase Email",
+				id: "approver-uppercase-email",
+				name: "Approver Uppercase Email",
 				email: "Admin@Example.com",
 				emailVerified: true,
-				role: "admin",
+				role: "approver",
 				banned: false,
 			},
 			{
-				id: "admin-duplicate-email",
-				name: "Admin Duplicate Email",
+				id: "approver-duplicate-email",
+				name: "Approver Duplicate Email",
 				email: "admin@example.com",
 				emailVerified: true,
-				role: "member, admin ",
+				role: "member, approver ",
 				banned: null,
 			},
 			{
-				id: "admin-with-whitespace",
-				name: "Admin With Whitespace",
+				id: "approver-with-whitespace",
+				name: "Approver With Whitespace",
 				email: "team@example.com",
 				emailVerified: true,
-				role: "owner,\tadmin\n,member",
+				role: "owner,\tapprover\n,member",
 				banned: false,
 			},
 			{
@@ -182,7 +182,7 @@ describe("admin approval digest database queries", () => {
 				name: "Expired Ban",
 				email: "expired@example.com",
 				emailVerified: true,
-				role: "admin",
+				role: "approver",
 				banned: true,
 				banExpires: new Date("2026-08-20T14:59:59.999Z"),
 			},
@@ -191,7 +191,7 @@ describe("admin approval digest database queries", () => {
 				name: "Unbanned With Date",
 				email: "unbanned@example.com",
 				emailVerified: true,
-				role: "admin",
+				role: "approver",
 				banned: false,
 				banExpires: new Date("2027-01-01T00:00:00.000Z"),
 			},
@@ -200,7 +200,7 @@ describe("admin approval digest database queries", () => {
 				name: "Permanent Ban",
 				email: "permanent-ban@example.com",
 				emailVerified: true,
-				role: "admin",
+				role: "approver",
 				banned: true,
 				banExpires: null,
 			},
@@ -209,16 +209,16 @@ describe("admin approval digest database queries", () => {
 				name: "Active Ban",
 				email: "active-ban@example.com",
 				emailVerified: true,
-				role: "admin",
+				role: "approver",
 				banned: true,
 				banExpires: new Date("2026-08-21T15:00:00.000Z"),
 			},
 			{
-				id: "unverified-admin",
-				name: "Unverified Admin",
+				id: "unverified-approver",
+				name: "Unverified Approver",
 				email: "unverified@example.com",
 				emailVerified: false,
-				role: "admin",
+				role: "approver",
 				banned: false,
 			},
 			{
@@ -226,7 +226,7 @@ describe("admin approval digest database queries", () => {
 				name: "Similar Role",
 				email: "similar@example.com",
 				emailVerified: true,
-				role: "superadmin,administrator",
+				role: "preapprover,approval-admin",
 				banned: false,
 			},
 			{
@@ -234,12 +234,29 @@ describe("admin approval digest database queries", () => {
 				name: "Wrong Case Role",
 				email: "wrong-case@example.com",
 				emailVerified: true,
-				role: "Admin",
+				role: "Approver",
+				banned: false,
+			},
+			{
+				id: "admin-only",
+				name: "Admin Only",
+				email: "admin-only@example.com",
+				emailVerified: true,
+				role: "admin",
+				banned: false,
+			},
+			{
+				id: "admin-approver",
+				name: "Admin Approver",
+				email: "admin-approver@example.com",
+				emailVerified: true,
+				role: "admin,approver",
 				banned: false,
 			},
 		]);
 
-		await expect(digest.getAdminApprovalRecipients(NOW)).resolves.toEqual([
+		await expect(digest.getApprovalReminderRecipients(NOW)).resolves.toEqual([
+			"admin-approver@example.com",
 			"admin@example.com",
 			"expired@example.com",
 			"team@example.com",

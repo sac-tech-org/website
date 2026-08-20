@@ -3,11 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/db", () => ({ db: {} }));
 
 vi.mock("@/lib/admin-approval-email", () => ({
-	sendAdminApprovalEmails: vi.fn(),
+	sendApprovalReminderEmails: vi.fn(),
 }));
 
 import {
-	getAdminApprovalReviewUrl,
+	getApprovalReviewUrl,
 	getPacificDigestDate,
 	sendPendingEventApprovalDigest,
 	type PendingApprovalDigestData,
@@ -27,10 +27,10 @@ const pending: PendingApprovalDigestData = {
 	pendingCount: 3,
 };
 
-describe("admin approval digest helpers", () => {
+describe("approval reminder digest helpers", () => {
 	it("builds the review link from the configured site origin", () => {
 		expect(
-			getAdminApprovalReviewUrl({
+			getApprovalReviewUrl({
 				URL: " https://events.sactech.test/a/path?ignored=yes#ignored ",
 			}),
 		).toBe("https://events.sactech.test/admin/events");
@@ -44,7 +44,7 @@ describe("admin approval digest helpers", () => {
 		"https://admin:secret@events.sactech.test",
 		"https://events.sactech.test\n.example.test",
 	])("rejects an unsafe or missing site URL: %s", (value) => {
-		expect(() => getAdminApprovalReviewUrl({ URL: value })).toThrow(
+		expect(() => getApprovalReviewUrl({ URL: value })).toThrow(
 			"URL must be set to the site's absolute HTTP(S) URL",
 		);
 	});
@@ -63,7 +63,7 @@ describe("admin approval digest helpers", () => {
 });
 
 describe("sendPendingEventApprovalDigest", () => {
-	it("stops before querying admins when no events need approval", async () => {
+	it("stops before querying approvers when no events need approval", async () => {
 		const getRecipients = vi.fn();
 		const sendEmails = vi.fn();
 
@@ -83,7 +83,7 @@ describe("sendPendingEventApprovalDigest", () => {
 		expect(sendEmails).not.toHaveBeenCalled();
 	});
 
-	it("does not require email or URL configuration when there are no admins", async () => {
+	it("does not require email or URL configuration when there are no approvers", async () => {
 		const getRecipients = vi.fn().mockResolvedValue([]);
 		const sendEmails = vi.fn();
 
@@ -97,7 +97,7 @@ describe("sendPendingEventApprovalDigest", () => {
 					sendEmails,
 				},
 			}),
-		).resolves.toEqual({ status: "no-admins", pendingCount: 3 });
+		).resolves.toEqual({ status: "no-approvers", pendingCount: 3 });
 		expect(getRecipients).toHaveBeenCalledExactlyOnceWith(NOW);
 		expect(sendEmails).not.toHaveBeenCalled();
 	});

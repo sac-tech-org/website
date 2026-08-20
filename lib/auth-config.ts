@@ -9,6 +9,12 @@ import {
 	sendVerificationEmail,
 } from "@/lib/auth-email";
 import { getAuthBaseUrlConfig } from "@/lib/auth-environment";
+import {
+	ADMIN_AUTH_ROLES,
+	authAccessControl,
+	authRoles,
+	DEFAULT_AUTH_ROLE,
+} from "@/lib/auth-permissions";
 
 const AUTH_LINK_EXPIRY_SECONDS = 60 * 60;
 
@@ -79,7 +85,14 @@ export const auth = betterAuth({
 			});
 		},
 	},
-	plugins: [admin()],
+	plugins: [
+		admin({
+			ac: authAccessControl,
+			adminRoles: ADMIN_AUTH_ROLES,
+			defaultRole: DEFAULT_AUTH_ROLE,
+			roles: authRoles,
+		}),
+	],
 });
 
 export type AuthSession = typeof auth.$Infer.Session;

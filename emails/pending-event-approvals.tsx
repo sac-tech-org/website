@@ -129,7 +129,7 @@ export function PendingEventApprovalsEmail({
 				<Container style={containerStyle}>
 					<Text style={brandStyle}>{AUTH_EMAIL_APP_NAME}</Text>
 					<Heading style={headingStyle}>Events are waiting for review</Heading>
-					<Text style={greetingStyle}>Hi admin,</Text>
+					<Text style={greetingStyle}>Hi approver,</Text>
 					<Text style={descriptionStyle}>
 						{pendingCount === 1
 							? "There is 1 event waiting for approval."
@@ -169,7 +169,7 @@ export function PendingEventApprovalsEmail({
 					<Hr style={dividerStyle} />
 					<Text style={footerStyle}>
 						You are receiving this reminder because your {AUTH_EMAIL_APP_NAME}
-						account has admin access.
+						account has the approver role.
 					</Text>
 				</Container>
 			</Body>

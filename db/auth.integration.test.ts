@@ -181,6 +181,41 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		expect(await response.json()).toBeNull();
 	});
 
+	it("exposes the configured role permissions through Better Auth", async () => {
+		await expect(
+			auth.api.userHasPermission({
+				body: {
+					role: "admin",
+					permissions: { user: ["set-role", "ban"] },
+				},
+			}),
+		).resolves.toEqual({ error: null, success: true });
+		await expect(
+			auth.api.userHasPermission({
+				body: {
+					role: "approver",
+					permissions: { event: ["approve", "reject"] },
+				},
+			}),
+		).resolves.toEqual({ error: null, success: true });
+		await expect(
+			auth.api.userHasPermission({
+				body: {
+					role: "approver",
+					permissions: { user: ["set-role"] },
+				},
+			}),
+		).resolves.toEqual({ error: null, success: false });
+		await expect(
+			auth.api.userHasPermission({
+				body: {
+					role: "submitter",
+					permissions: { event: ["approve"] },
+				},
+			}),
+		).resolves.toEqual({ error: null, success: false });
+	});
+
 	it("persists an email and password account in the migrated schema", async () => {
 		const email = "account-integration@sactech.test";
 		const name = "SacTech Test Member";
@@ -196,8 +231,9 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 			email_verified: boolean;
 			id: string;
 			name: string;
+			role: string;
 		}>(
-			`SELECT id, name, email, email_verified
+			`SELECT id, name, email, email_verified, role
 			 FROM "user"
 			 WHERE email = $1`,
 			[email],
@@ -209,6 +245,7 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 				email_verified: false,
 				id: result.user.id,
 				name,
+				role: "submitter",
 			},
 		]);
 

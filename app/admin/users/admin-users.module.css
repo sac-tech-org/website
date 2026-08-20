@@ -1,0 +1,331 @@
+.page {
+	background: var(--color-cream);
+	min-height: 100vh;
+}
+
+.hero {
+	background: var(--color-navy-deep);
+	border-bottom: 0.45rem solid var(--color-bridge);
+	color: var(--color-cream);
+}
+
+.heroInner {
+	margin: 0 auto;
+	max-width: var(--site-width);
+	padding: clamp(3.5rem, 7vw, 5.5rem) var(--site-gutter);
+}
+
+.eyebrow {
+	color: var(--color-bridge);
+	font-size: 0.76rem;
+	font-weight: 900;
+	letter-spacing: 0.13em;
+	margin: 0 0 0.75rem;
+	text-transform: uppercase;
+}
+
+.hero h1,
+.usersHeader h2,
+.cardHeader h2,
+.emptyState h3 {
+	font-family: var(--font-display);
+	font-weight: 900;
+	letter-spacing: -0.04em;
+}
+
+.hero h1 {
+	font-size: clamp(3rem, 7vw, 5.5rem);
+	line-height: 0.97;
+	margin: 0;
+	max-width: 12ch;
+}
+
+.heroInner > p:last-child {
+	color: rgb(255 245 229 / 84%);
+	font-size: clamp(1.05rem, 2vw, 1.2rem);
+	margin: 1.4rem 0 0;
+	max-width: 44rem;
+}
+
+.users {
+	margin: 0 auto;
+	max-width: var(--site-width);
+	padding: clamp(3.5rem, 7vw, 6rem) var(--site-gutter) var(--section-space);
+}
+
+.usersHeader {
+	align-items: end;
+	border-bottom: 1px solid var(--color-line);
+	display: flex;
+	gap: 2rem;
+	justify-content: space-between;
+	padding-bottom: 1.5rem;
+}
+
+.usersHeader .eyebrow {
+	color: var(--color-bridge-deep);
+}
+
+.usersHeader h2 {
+	font-size: clamp(2.25rem, 5vw, 4rem);
+	line-height: 1;
+	margin: 0;
+}
+
+.userCount {
+	align-items: center;
+	background: var(--color-navy);
+	color: var(--color-paper);
+	display: inline-flex;
+	font-weight: 750;
+	gap: 0.45rem;
+	margin: 0;
+	padding: 0.65rem 0.85rem;
+	white-space: nowrap;
+}
+
+.userCount strong {
+	color: var(--color-bridge);
+	font-family: var(--font-display);
+	font-size: 1.3rem;
+}
+
+.userList {
+	display: grid;
+	gap: 1.5rem;
+	list-style: none;
+	margin: 2rem 0 0;
+	padding: 0;
+}
+
+.userCard,
+.emptyState {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.4rem solid var(--color-bridge);
+	box-shadow: var(--shadow-raised);
+	padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.cardHeader {
+	align-items: start;
+	display: flex;
+	gap: 1.5rem;
+	justify-content: space-between;
+}
+
+.cardHeader h2 {
+	font-size: clamp(1.6rem, 3vw, 2.35rem);
+	line-height: 1.05;
+	margin: 0;
+}
+
+.cardHeader a {
+	color: var(--color-poppy-deep);
+	display: inline-block;
+	font-weight: 800;
+	margin-top: 0.35rem;
+	overflow-wrap: anywhere;
+	text-underline-offset: 0.2rem;
+}
+
+.statusBadge {
+	background: var(--color-river-deep);
+	color: var(--color-paper);
+	font-size: 0.76rem;
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	padding: 0.45rem 0.65rem;
+	text-transform: uppercase;
+}
+
+.statusBadge[data-banned="true"] {
+	background: var(--color-poppy-deep);
+}
+
+.managementGrid {
+	border-top: 1px solid var(--color-line);
+	display: grid;
+	gap: 1.5rem;
+	grid-template-columns: minmax(0, 1.5fr) minmax(15rem, 0.7fr);
+	margin-top: 1.5rem;
+	padding-top: 1.5rem;
+}
+
+.roleForm,
+.accountControl,
+.accountControl form {
+	display: grid;
+	gap: 1rem;
+}
+
+.roleForm fieldset {
+	border: 0;
+	margin: 0;
+	min-width: 0;
+	padding: 0;
+}
+
+.roleForm legend,
+.accountControl h3 {
+	font-family: var(--font-display);
+	font-size: 1.18rem;
+	font-weight: 900;
+	letter-spacing: -0.02em;
+	margin: 0 0 0.65rem;
+}
+
+.roleOptions {
+	display: grid;
+	gap: 0.55rem;
+}
+
+.roleOptions label {
+	align-items: start;
+	background: var(--color-cream);
+	border: 1px solid var(--color-line);
+	cursor: pointer;
+	display: grid;
+	gap: 0.75rem;
+	grid-template-columns: auto minmax(0, 1fr);
+	padding: 0.75rem;
+}
+
+.roleOptions label:has(input:checked) {
+	border-color: var(--color-river);
+	box-shadow: inset 0.25rem 0 var(--color-river);
+}
+
+.roleOptions input {
+	accent-color: var(--color-river-deep);
+	height: 1.15rem;
+	margin: 0.25rem 0 0;
+	width: 1.15rem;
+}
+
+.roleOptions span {
+	display: grid;
+	gap: 0.1rem;
+}
+
+.roleOptions strong {
+	font-weight: 900;
+}
+
+.roleOptions small,
+.accountControl p {
+	color: var(--color-ink-muted);
+	font-size: 0.88rem;
+	line-height: 1.45;
+}
+
+.accountControl {
+	align-content: space-between;
+	background: rgb(6 42 83 / 5%);
+	border-left: 0.3rem solid var(--color-navy);
+	padding: 1rem;
+}
+
+.accountControl p {
+	margin: 0;
+}
+
+.saveButton,
+.banButton,
+.unbanButton {
+	border: 2px solid;
+	cursor: pointer;
+	font-weight: 850;
+	min-height: 3rem;
+	padding: 0.6rem 0.9rem;
+}
+
+.saveButton,
+.unbanButton {
+	background: var(--color-river-deep);
+	border-color: var(--color-river-deep);
+	color: var(--color-paper);
+}
+
+.saveButton {
+	justify-self: start;
+}
+
+.saveButton:hover:not(:disabled),
+.unbanButton:hover:not(:disabled) {
+	background: var(--color-navy);
+	border-color: var(--color-navy);
+}
+
+.banButton {
+	background: transparent;
+	border-color: var(--color-poppy-deep);
+	color: var(--color-poppy-deep);
+}
+
+.banButton:hover:not(:disabled) {
+	background: var(--color-poppy-deep);
+	color: var(--color-paper);
+}
+
+.saveButton:disabled,
+.banButton:disabled,
+.unbanButton:disabled,
+.roleForm fieldset:disabled {
+	cursor: wait;
+	opacity: 0.64;
+}
+
+.errorMessage,
+.successMessage {
+	font-weight: 750;
+	margin: 0;
+	padding: 0.65rem 0.75rem;
+}
+
+.errorMessage {
+	background: rgb(232 86 47 / 10%);
+	border-left: 0.3rem solid var(--color-poppy-deep);
+	color: var(--color-poppy-deep);
+}
+
+.successMessage {
+	background: rgb(5 99 106 / 10%);
+	border-left: 0.3rem solid var(--color-river);
+	color: var(--color-river-deep);
+}
+
+.emptyState {
+	margin-top: 2rem;
+}
+
+.emptyState h3 {
+	font-size: clamp(1.65rem, 3vw, 2.35rem);
+	line-height: 1.1;
+	margin: 0;
+}
+
+.emptyState p {
+	color: var(--color-ink-muted);
+	margin: 0.4rem 0 0;
+}
+
+@media (max-width: 760px) {
+	.usersHeader,
+	.cardHeader {
+		align-items: start;
+		flex-direction: column;
+	}
+
+	.managementGrid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 500px) {
+	.saveButton,
+	.banButton,
+	.unbanButton {
+		width: 100%;
+	}
+}

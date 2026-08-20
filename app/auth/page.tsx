@@ -34,7 +34,7 @@ export default async function AuthPage() {
 							Send us an event for the community calendar.
 						</li>
 						<li>
-							<span aria-hidden="true">02</span>A SacTech admin checks the
+							<span aria-hidden="true">02</span>A SacTech reviewer checks the
 							details.
 						</li>
 						<li>

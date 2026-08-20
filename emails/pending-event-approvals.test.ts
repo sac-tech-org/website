@@ -46,6 +46,8 @@ describe("pending event approval email", () => {
 			"https://example.com/admin/events?status=pending&amp;from=email",
 		);
 		expect(html).toContain("Review pending events");
+		expect(html).toContain("Hi approver,");
+		expect(html).toContain("account has the approver role");
 	});
 
 	it("pluralizes the subject and supplies an explicit plain-text fallback", () => {
@@ -62,6 +64,8 @@ describe("pending event approval email", () => {
 
 		expect(singular.subject).toBe("1 SacTech event needs approval");
 		expect(singular.text).toContain("There is 1 event waiting for approval.");
+		expect(singular.text).toContain("Hi approver,");
+		expect(singular.text).toContain("account has the approver role.");
 		expect(plural.subject).toBe("2 SacTech events need approval");
 		expect(plural.text).toContain("- First meetup\n  Submitted Aug 19, 2026");
 		expect(plural.text).toContain("- Second meetup\n  Submitted Aug 20, 2026");
