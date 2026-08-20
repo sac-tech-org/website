@@ -183,6 +183,12 @@ interface SubmissionValidationResult {
 	errors?: Partial<Record<EventFormField, string[]>>;
 }
 
+interface EventSubmissionValidationOptions {
+	allowRecurrence?: boolean;
+	/** Allow an established series to retain this exact historical seed time. */
+	permittedPastStart?: Date;
+}
+
 function addFieldError(
 	errors: Partial<Record<EventFormField, string[]>>,
 	field: EventFormField,
@@ -203,6 +209,7 @@ function parseSacramentoDateTime(value: string) {
 
 export function validateEventSubmission(
 	formData: FormData,
+	options: EventSubmissionValidationOptions = {},
 ): SubmissionValidationResult {
 	const parsedSubmission = submissionSchema.safeParse({
 		title: formData.get("title"),
@@ -214,7 +221,9 @@ export function validateEventSubmission(
 		locationAddress: formData.get("locationAddress"),
 		eventUrl: formData.get("eventUrl"),
 	});
-	const isRecurring = formData.get("recurring") === "on";
+	const allowRecurrence = options.allowRecurrence ?? true;
+	const recurrenceWasSubmitted = formData.get("recurring") === "on";
+	const isRecurring = allowRecurrence && recurrenceWasSubmitted;
 	const parsedRecurrence = isRecurring
 		? recurrenceSchema.safeParse({
 				frequency: formData.get("recurrenceFrequency"),
@@ -227,6 +236,14 @@ export function validateEventSubmission(
 			})
 		: null;
 	const errors: Partial<Record<EventFormField, string[]>> = {};
+
+	if (!allowRecurrence && recurrenceWasSubmitted) {
+		addFieldError(
+			errors,
+			"recurring",
+			"Recurrence can only be changed for the whole series.",
+		);
+	}
 
 	if (!parsedSubmission.success) {
 		for (const issue of parsedSubmission.error.issues) {
@@ -278,7 +295,17 @@ export function validateEventSubmission(
 		addFieldError(errors, "endsAt", "Choose a valid Pacific time.");
 	}
 
-	if (startsAt && startsAt.getTime() < Date.now() - 15 * 60 * 1_000) {
+	const retainsPermittedPastStart =
+		startsAt &&
+		options.permittedPastStart &&
+		Math.floor(startsAt.getTime() / 60_000) ===
+			Math.floor(options.permittedPastStart.getTime() / 60_000);
+
+	if (
+		startsAt &&
+		!retainsPermittedPastStart &&
+		startsAt.getTime() < Date.now() - 15 * 60 * 1_000
+	) {
 		addFieldError(errors, "startsAt", "The event must start in the future.");
 	}
 

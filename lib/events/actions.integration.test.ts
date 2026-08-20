@@ -35,6 +35,7 @@ vi.mock("server-only", () => ({}));
 const FIXED_NOW = new Date("2026-08-19T19:00:00.000Z");
 const OWNER_ID = "event-owner";
 const OTHER_USER_ID = "other-event-owner";
+const OUTSIDER_ID = "event-outsider";
 const ADMIN_ID = "event-admin";
 const APPROVER_ID = "event-approver";
 const PAST_RECURRING_EVENT_ID = "40000000-0000-4000-8000-000000000001";
@@ -56,6 +57,7 @@ function session(userId: string, role: string | null = null) {
 }
 
 interface SubmissionOptions {
+	description?: string;
 	startsAt?: string;
 	endsAt?: string;
 	recurring?: boolean;
@@ -64,6 +66,7 @@ interface SubmissionOptions {
 }
 
 function submissionForm({
+	description = "A detailed Sacramento technology community event for integration testing.",
 	startsAt = "2026-09-01T18:00",
 	endsAt = "2026-09-01T20:00",
 	recurring = false,
@@ -72,10 +75,7 @@ function submissionForm({
 }: SubmissionOptions) {
 	const formData = new FormData();
 	formData.set("title", title);
-	formData.set(
-		"description",
-		"A detailed Sacramento technology community event for integration testing.",
-	);
+	formData.set("description", description);
 	formData.set("startsAt", startsAt);
 	formData.set("endsAt", endsAt);
 	formData.set("mode", "online");
@@ -92,6 +92,12 @@ function submissionForm({
 		formData.set("recurrenceCount", "5");
 	}
 
+	return formData;
+}
+
+function collaboratorForm(email: string) {
+	const formData = new FormData();
+	formData.set("email", email);
 	return formData;
 }
 
@@ -208,7 +214,8 @@ describe("event Server Actions and queries", () => {
 			INSERT INTO "user" (id, name, email, role)
 			VALUES
 				('${OWNER_ID}', 'Event Owner', 'owner-events@sactech.test', NULL),
-				('${OTHER_USER_ID}', 'Other Owner', 'other-events@sactech.test', NULL),
+				('${OTHER_USER_ID}', 'Other Owner', 'other-events@sactech.test', 'submitter'),
+				('${OUTSIDER_ID}', 'Event Outsider', 'outsider-events@sactech.test', 'submitter'),
 				('${ADMIN_ID}', 'Event Admin', 'admin-events@sactech.test', 'admin'),
 				('${APPROVER_ID}', 'Event Approver', 'approver-events@sactech.test', 'approver')
 		`);
@@ -525,6 +532,414 @@ describe("event Server Actions and queries", () => {
 			["/account"],
 			["/admin/events"],
 		]);
+	});
+
+	it("lets only the original submitter invite an existing submit-capable collaborator", async () => {
+		const eventId = await submitOneTimeEvent("Shared Integration Event");
+		revalidatePathMock.mockClear();
+		getCurrentSessionMock.mockResolvedValue(session(OUTSIDER_ID));
+
+		const denied = await actions.inviteEventCollaborator(
+			eventId,
+			idleState,
+			collaboratorForm("admin-events@sactech.test"),
+		);
+		const beforeInvite = await database.query<{ count: number }>(`
+			SELECT COUNT(*)::integer AS count
+			FROM "event_collaborator"
+			WHERE event_id = '${eventId}'
+		`);
+
+		expect(denied).toMatchObject({
+			message: "Only the original submitter can invite event editors.",
+			status: "error",
+		});
+		expect(beforeInvite.rows).toEqual([{ count: 0 }]);
+		expect(revalidatePathMock).not.toHaveBeenCalled();
+
+		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
+		const invited = await actions.inviteEventCollaborator(
+			eventId,
+			idleState,
+			collaboratorForm("OTHER-EVENTS@SACTECH.TEST"),
+		);
+		const stored = await database.query<{
+			event_id: string;
+			invited_by: string;
+			user_id: string;
+		}>(`
+			SELECT event_id, user_id, invited_by
+			FROM "event_collaborator"
+			WHERE event_id = '${eventId}'
+		`);
+		const collaboratorEvent = (
+			await queries.getSubmissionsForUser(OTHER_USER_ID)
+		).find((candidate) => candidate.id === eventId);
+		const ownerEvent = (await queries.getSubmissionsForUser(OWNER_ID)).find(
+			(candidate) => candidate.id === eventId,
+		);
+
+		expect(invited).toMatchObject({ status: "success" });
+		expect(stored.rows).toEqual([
+			{
+				event_id: eventId,
+				invited_by: OWNER_ID,
+				user_id: OTHER_USER_ID,
+			},
+		]);
+		expect(collaboratorEvent).toMatchObject({
+			id: eventId,
+			isOwner: false,
+			title: "Shared Integration Event",
+		});
+		expect(ownerEvent).toMatchObject({
+			collaborators: [
+				{
+					email: "other-events@sactech.test",
+					userId: OTHER_USER_ID,
+				},
+			],
+			isOwner: true,
+		});
+		expect(revalidatePathMock.mock.calls).toEqual([
+			["/account"],
+			[`/events/${eventId}/edit`],
+		]);
+	});
+
+	it("lets an invited collaborator cancel the event", async () => {
+		const eventId = await seedApprovedRecurringEvent();
+		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
+		const invitation = await actions.inviteEventCollaborator(
+			eventId,
+			idleState,
+			collaboratorForm("other-events@sactech.test"),
+		);
+
+		if (invitation.status !== "success") {
+			throw new Error(`Could not seed collaborator: ${invitation.message}`);
+		}
+
+		revalidatePathMock.mockClear();
+		getCurrentSessionMock.mockResolvedValue(session(OTHER_USER_ID));
+		const cancellation = await actions.cancelEvent(
+			eventId,
+			idleState,
+			cancellationForm("event"),
+		);
+		const stored = await database.query<{
+			canceled_at: Date;
+			canceled_by: string;
+		}>(`
+			SELECT canceled_at, canceled_by
+			FROM "event"
+			WHERE id = '${eventId}'
+		`);
+
+		expect(cancellation).toMatchObject({ status: "success" });
+		expect(stored.rows).toEqual([
+			{ canceled_at: FIXED_NOW, canceled_by: OTHER_USER_ID },
+		]);
+		expect(await queries.getApprovedEvents()).toEqual([]);
+		expect(revalidatePathMock.mock.calls).toEqual([
+			["/events"],
+			["/account"],
+			["/admin/events"],
+		]);
+	});
+
+	it("keeps an approved series edit pending until an approver publishes it", async () => {
+		const eventId = await seedApprovedRecurringEvent();
+		const updatedDescription =
+			"An approved replacement description for the complete recurring series.";
+		revalidatePathMock.mockClear();
+		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
+
+		const requested = await actions.requestEventEdit(
+			eventId,
+			"series",
+			null,
+			idleState,
+			submissionForm({
+				description: updatedDescription,
+				endsAt: "2026-09-02T20:00",
+				recurring: true,
+				startsAt: "2026-09-02T18:00",
+				title: "Updated Recurring Integration Series",
+				weekday: 3,
+			}),
+		);
+		const liveBeforeReview = await database.query<{
+			content_version: number;
+			description: string;
+			title: string;
+		}>(`
+			SELECT content_version, description, title
+			FROM "event"
+			WHERE id = '${eventId}'
+		`);
+		const pendingChanges = await database.query<{
+			id: string;
+			proposed_by: string;
+			scope: string;
+			status: string;
+			title: string;
+		}>(`
+			SELECT id, proposed_by, scope, status, title
+			FROM "event_change_request"
+			WHERE event_id = '${eventId}'
+		`);
+		const publicBeforeReview = (await queries.getApprovedEvents())[0];
+
+		expect(requested).toMatchObject({ status: "success" });
+		expect(liveBeforeReview.rows).toEqual([
+			{
+				content_version: 1,
+				description:
+					"A detailed Sacramento technology community event for integration testing.",
+				title: "Recurring Integration Series",
+			},
+		]);
+		expect(pendingChanges.rows).toHaveLength(1);
+		expect(pendingChanges.rows[0]).toMatchObject({
+			proposed_by: OWNER_ID,
+			scope: "series",
+			status: "pending",
+			title: "Updated Recurring Integration Series",
+		});
+		expect(publicBeforeReview).toMatchObject({
+			description:
+				"A detailed Sacramento technology community event for integration testing.",
+			title: "Recurring Integration Series",
+		});
+
+		const duplicate = await actions.requestEventEdit(
+			eventId,
+			"series",
+			null,
+			idleState,
+			submissionForm({
+				endsAt: "2026-09-02T20:00",
+				recurring: true,
+				startsAt: "2026-09-02T18:00",
+				title: "Second Pending Series Edit",
+				weekday: 3,
+			}),
+		);
+		const pendingCount = await database.query<{ count: number }>(`
+			SELECT COUNT(*)::integer AS count
+			FROM "event_change_request"
+			WHERE event_id = '${eventId}' AND status = 'pending'
+		`);
+
+		expect(duplicate).toMatchObject({
+			message: "This series already has changes waiting for review.",
+			status: "error",
+		});
+		expect(pendingCount.rows).toEqual([{ count: 1 }]);
+
+		getCurrentSessionMock.mockResolvedValue(session(APPROVER_ID, "approver"));
+		const approved = await actions.moderateEventEdit(
+			pendingChanges.rows[0].id,
+			idleState,
+			moderationForm("approved"),
+		);
+		const liveAfterReview = await database.query<{
+			content_version: number;
+			description: string;
+			title: string;
+		}>(`
+			SELECT content_version, description, title
+			FROM "event"
+			WHERE id = '${eventId}'
+		`);
+		const reviewed = await database.query<{
+			reviewed_by: string;
+			status: string;
+		}>(`
+			SELECT reviewed_by, status
+			FROM "event_change_request"
+			WHERE id = '${pendingChanges.rows[0].id}'
+		`);
+		const publicAfterReview = (await queries.getApprovedEvents())[0];
+
+		expect(approved).toMatchObject({ status: "success" });
+		expect(liveAfterReview.rows).toEqual([
+			{
+				content_version: 2,
+				description: updatedDescription,
+				title: "Updated Recurring Integration Series",
+			},
+		]);
+		expect(reviewed.rows).toEqual([
+			{ reviewed_by: APPROVER_ID, status: "approved" },
+		]);
+		expect(publicAfterReview).toMatchObject({
+			description: updatedDescription,
+			title: "Updated Recurring Integration Series",
+		});
+	});
+
+	it("publishes one approved occurrence override and excludes its generated base date", async () => {
+		const eventId = await seedApprovedRecurringEvent();
+		const occurrenceDate = "2026-09-09";
+		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
+
+		const requested = await actions.requestEventEdit(
+			eventId,
+			"occurrence",
+			occurrenceDate,
+			idleState,
+			submissionForm({
+				description:
+					"This single session has a special speaker and updated event details.",
+				endsAt: "2026-09-09T21:00",
+				startsAt: "2026-09-09T19:00",
+				title: "Special Recurring Session",
+			}),
+		);
+		const [pendingChange] = (
+			await database.query<{ id: string }>(`
+				SELECT id
+				FROM "event_change_request"
+				WHERE event_id = '${eventId}' AND occurrence_date = '${occurrenceDate}'
+			`)
+		).rows;
+		const publicBeforeReview = (await queries.getApprovedEvents())[0];
+
+		expect(requested).toMatchObject({ status: "success" });
+		expect(pendingChange).toBeDefined();
+		expect(publicBeforeReview.blocks).toHaveLength(1);
+		expect(publicBeforeReview.recurrence_rule?.excludedDates).toEqual([]);
+
+		getCurrentSessionMock.mockResolvedValue(session(ADMIN_ID, "admin"));
+		const approved = await actions.moderateEventEdit(
+			pendingChange.id,
+			idleState,
+			moderationForm("approved"),
+		);
+		const overrides = await database.query<{
+			approved_change_id: string;
+			event_id: string;
+			occurrence_date: string;
+			title: string;
+			version: number;
+		}>(`
+			SELECT
+				event_id,
+				occurrence_date::text AS occurrence_date,
+				approved_change_id,
+				title,
+				version
+			FROM "event_occurrence_override"
+			WHERE event_id = '${eventId}'
+		`);
+		const liveEvent = await database.query<{ title: string }>(`
+			SELECT title FROM "event" WHERE id = '${eventId}'
+		`);
+		const publicAfterReview = (await queries.getApprovedEvents())[0];
+		const datedBlocks = publicAfterReview.blocks.filter(
+			(block) => block.recurrence_date === occurrenceDate,
+		);
+
+		expect(approved).toMatchObject({ status: "success" });
+		expect(overrides.rows).toEqual([
+			{
+				approved_change_id: pendingChange.id,
+				event_id: eventId,
+				occurrence_date: occurrenceDate,
+				title: "Special Recurring Session",
+				version: 1,
+			},
+		]);
+		expect(liveEvent.rows).toEqual([{ title: "Recurring Integration Series" }]);
+		expect(publicAfterReview.title).toBe("Recurring Integration Series");
+		expect(publicAfterReview.recurrence_rule?.excludedDates).toEqual([
+			occurrenceDate,
+		]);
+		expect(datedBlocks).toHaveLength(1);
+		expect(datedBlocks[0]).toMatchObject({
+			recurrence_date: occurrenceDate,
+			title: "Special Recurring Session",
+		});
+	});
+
+	it("keeps the live event unchanged when an approved-event edit is rejected", async () => {
+		const eventId = await submitOneTimeEvent("Live Event Before Rejected Edit");
+		await approveEvent(eventId);
+		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
+		const requested = await actions.requestEventEdit(
+			eventId,
+			"series",
+			null,
+			idleState,
+			submissionForm({
+				description:
+					"This proposed replacement should never become public after rejection.",
+				title: "Rejected Replacement Title",
+			}),
+		);
+		const [pendingChange] = (
+			await database.query<{ id: string }>(`
+				SELECT id
+				FROM "event_change_request"
+				WHERE event_id = '${eventId}' AND status = 'pending'
+			`)
+		).rows;
+
+		expect(requested).toMatchObject({ status: "success" });
+		expect(pendingChange).toBeDefined();
+
+		getCurrentSessionMock.mockResolvedValue(session(APPROVER_ID, "approver"));
+		const rejected = await actions.moderateEventEdit(
+			pendingChange.id,
+			idleState,
+			moderationForm(
+				"rejected",
+				"Please keep the original title for this event.",
+			),
+		);
+		const live = await database.query<{
+			content_version: number;
+			description: string;
+			title: string;
+		}>(`
+			SELECT content_version, description, title
+			FROM "event"
+			WHERE id = '${eventId}'
+		`);
+		const change = await database.query<{
+			moderation_note: string;
+			reviewed_by: string;
+			status: string;
+		}>(`
+			SELECT moderation_note, reviewed_by, status
+			FROM "event_change_request"
+			WHERE id = '${pendingChange.id}'
+		`);
+		const publicEvent = (await queries.getApprovedEvents())[0];
+
+		expect(rejected).toMatchObject({ status: "success" });
+		expect(live.rows).toEqual([
+			{
+				content_version: 1,
+				description:
+					"A detailed Sacramento technology community event for integration testing.",
+				title: "Live Event Before Rejected Edit",
+			},
+		]);
+		expect(change.rows).toEqual([
+			{
+				moderation_note: "Please keep the original title for this event.",
+				reviewed_by: APPROVER_ID,
+				status: "rejected",
+			},
+		]);
+		expect(publicEvent).toMatchObject({
+			description:
+				"A detailed Sacramento technology community event for integration testing.",
+			title: "Live Event Before Rejected Edit",
+		});
 	});
 
 	it("does not let another user cancel an event they do not own", async () => {

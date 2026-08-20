@@ -22,9 +22,15 @@ interface CalendarEntry {
 }
 
 function getRecurrenceSeed(event: Event) {
-	return [...event.blocks].sort(
-		(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
-	)[0];
+	return event.blocks
+		.filter((block) => !block.recurrence_date)
+		.sort(
+			(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+		)[0];
+}
+
+function getOccurrenceOverrides(event: Event) {
+	return event.blocks.filter((block) => block.recurrence_date);
 }
 
 function createOccurrenceBlock(seed: EventBlock, startsAt: Date): EventBlock {
@@ -42,16 +48,24 @@ function getInitialMonth(events: Event[], referenceDate: string) {
 		.flatMap((event) => {
 			const seed = getRecurrenceSeed(event);
 
-			if (event.recurrence_rule && seed) {
-				const nextOccurrence = getNextOccurrence(
-					seed.starts_at,
-					event.recurrence_rule,
-					referenceDate,
+			if (event.recurrence_rule) {
+				const nextOccurrence = seed
+					? getNextOccurrence(
+							seed.starts_at,
+							event.recurrence_rule,
+							referenceDate,
+						)
+					: null;
+				const nextBaseBlock =
+					seed && nextOccurrence
+						? [createOccurrenceBlock(seed, nextOccurrence)]
+						: [];
+				const upcomingOverrides = getOccurrenceOverrides(event).filter(
+					(block) =>
+						formatDateKey(block.starts_at, block.timezone) >= referenceDate,
 				);
 
-				return nextOccurrence
-					? [createOccurrenceBlock(seed, nextOccurrence)]
-					: [];
+				return [...nextBaseBlock, ...upcomingOverrides];
 			}
 
 			return event.blocks.filter(
@@ -128,18 +142,25 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 
 		for (const event of events) {
 			const seed = getRecurrenceSeed(event);
-			const visibleBlocks =
-				event.recurrence_rule && seed
-					? getOccurrencesInRange(
-							seed.starts_at,
-							event.recurrence_rule,
-							visibleRangeStart,
-							visibleRangeEnd,
-						).map((occurrence) => createOccurrenceBlock(seed, occurrence))
-					: event.blocks.filter((block) => {
+			const visibleBlocks = event.recurrence_rule
+				? [
+						...(seed
+							? getOccurrencesInRange(
+									seed.starts_at,
+									event.recurrence_rule,
+									visibleRangeStart,
+									visibleRangeEnd,
+								).map((occurrence) => createOccurrenceBlock(seed, occurrence))
+							: []),
+						...getOccurrenceOverrides(event).filter((block) => {
 							const key = formatDateKey(block.starts_at, block.timezone);
 							return key >= visibleRangeStart && key <= visibleRangeEnd;
-						});
+						}),
+					]
+				: event.blocks.filter((block) => {
+						const key = formatDateKey(block.starts_at, block.timezone);
+						return key >= visibleRangeStart && key <= visibleRangeEnd;
+					});
 
 			for (const block of visibleBlocks) {
 				const key = formatDateKey(block.starts_at, block.timezone);
@@ -297,27 +318,31 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 						<h3 id="events-calendar-day-details-title">{selectedDateLabel}</h3>
 					</div>
 					<ul role="list">
-						{selectedEntries.map(({ block, event }) => (
-							<li key={`${event.slug}-${block.slug}`}>
-								<div>
-									<strong>{event.title}</strong>
-									<span>
-										{formatDateInTimeZone(block.starts_at, block.timezone, {
-											hour: "numeric",
-											minute: "2-digit",
-										})}
-									</span>
-								</div>
-								{block.location_url && (
-									<a
-										aria-label={`View details for ${event.title}`}
-										href={block.location_url}
-									>
-										Event details
-									</a>
-								)}
-							</li>
-						))}
+						{selectedEntries.map(({ block, event }) => {
+							const title = block.title ?? event.title;
+
+							return (
+								<li key={`${event.slug}-${block.slug}`}>
+									<div>
+										<strong>{title}</strong>
+										<span>
+											{formatDateInTimeZone(block.starts_at, block.timezone, {
+												hour: "numeric",
+												minute: "2-digit",
+											})}
+										</span>
+									</div>
+									{block.location_url && (
+										<a
+											aria-label={`View details for ${title}`}
+											href={block.location_url}
+										>
+											Event details
+										</a>
+									)}
+								</li>
+							);
+						})}
 					</ul>
 				</div>
 			)}

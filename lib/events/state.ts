@@ -32,6 +32,11 @@ export interface CancellationFormState {
 	message: string;
 }
 
+export interface CollaboratorFormState {
+	status: "idle" | "error" | "success";
+	message: string;
+}
+
 export const initialEventFormState: EventFormState = {
 	status: "idle",
 	message: "",
@@ -43,6 +48,11 @@ export const initialModerationFormState: ModerationFormState = {
 };
 
 export const initialCancellationFormState: CancellationFormState = {
+	status: "idle",
+	message: "",
+};
+
+export const initialCollaboratorFormState: CollaboratorFormState = {
 	status: "idle",
 	message: "",
 };

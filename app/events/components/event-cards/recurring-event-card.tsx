@@ -1,6 +1,6 @@
 import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
-import { formatDateInTimeZone } from "../../date-utils";
+import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
 import type { RecurringEventsCardProps } from "./types";
 import style from "./recurring-event-card.module.css";
@@ -9,25 +9,44 @@ export function RecurringEventsCard({
 	event,
 	referenceDate,
 }: RecurringEventsCardProps) {
-	const seed = [...event.blocks].sort(
-		(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
-	)[0];
+	const seed = event.blocks
+		.filter((block) => !block.recurrence_date)
+		.sort(
+			(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+		)[0];
 	const nextStart =
 		event.recurrence_rule && seed
 			? getNextOccurrence(seed.starts_at, event.recurrence_rule, referenceDate)
 			: null;
-	const featuredBlock =
+	const nextBaseBlock =
 		seed && nextStart
 			? {
 					...seed,
 					ends_at: getOccurrenceEnd(seed.starts_at, seed.ends_at, nextStart),
+					slug: `${seed.slug}-${nextStart.toISOString()}`,
 					starts_at: nextStart,
 				}
 			: null;
-	const primaryLocationUrl =
-		event.location_url && event.location_description
-			? event.location_url
-			: null;
+	const upcomingOverrides = event.blocks.filter(
+		(block) =>
+			block.recurrence_date &&
+			formatDateKey(block.starts_at, block.timezone) >= referenceDate,
+	);
+	const featuredBlock = [
+		...(nextBaseBlock ? [nextBaseBlock] : []),
+		...upcomingOverrides,
+	].sort(
+		(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+	)[0];
+	const featuredTitle = featuredBlock?.title ?? event.title;
+	const featuredDescription = featuredBlock?.description ?? event.description;
+	const featuredInPerson = featuredBlock?.in_person ?? event.in_person;
+	const featuredIsOnline = featuredBlock?.is_online ?? event.is_online;
+	const featuredLocationDescription =
+		featuredBlock?.location_description ?? event.location_description;
+	const featuredLocationUrl = featuredBlock
+		? featuredBlock.location_url
+		: event.location_url;
 
 	return (
 		<li className={style.card}>
@@ -35,7 +54,7 @@ export function RecurringEventsCard({
 				<span aria-hidden="true" className={style.accentMark} />
 				<span>Recurring</span>
 			</div>
-			<h3 className={style.title}>{event.title}</h3>
+			<h3 className={style.title}>{featuredTitle}</h3>
 
 			{featuredBlock ? (
 				<p className={style.eventDate}>
@@ -62,12 +81,12 @@ export function RecurringEventsCard({
 			)}
 
 			<ul aria-label="Event type" className={style.chips}>
-				{event.in_person && (
+				{featuredInPerson && (
 					<li>
 						<EventChip size="compact" variant="in-person" />
 					</li>
 				)}
-				{event.is_online && (
+				{featuredIsOnline && (
 					<li>
 						<EventChip size="compact" variant="online" />
 					</li>
@@ -76,8 +95,8 @@ export function RecurringEventsCard({
 
 			<CollapsibleEventDescription
 				className={style.description}
-				eventTitle={event.title}
-				markdown={event.description}
+				eventTitle={featuredTitle}
+				markdown={featuredDescription}
 			/>
 
 			{featuredBlock?.location_description && (
@@ -86,25 +105,16 @@ export function RecurringEventsCard({
 						<span>Next location</span>
 						<strong>{featuredBlock.location_description}</strong>
 					</div>
-					{featuredBlock.location_url &&
-						featuredBlock.location_url !== primaryLocationUrl && (
-							<a
-								aria-label={`View details for ${event.title}`}
-								href={featuredBlock.location_url}
-							>
-								View details
-							</a>
-						)}
 				</div>
 			)}
 
-			{primaryLocationUrl && event.location_description && (
+			{featuredLocationUrl && featuredLocationDescription && (
 				<a
-					aria-label={`${event.location_description}: ${event.title}`}
+					aria-label={`${featuredLocationDescription}: ${featuredTitle}`}
 					className={style.primaryLink}
-					href={primaryLocationUrl}
+					href={featuredLocationUrl}
 				>
-					{event.location_description}
+					{featuredLocationDescription}
 					<span aria-hidden="true">→</span>
 				</a>
 			)}

@@ -154,6 +154,15 @@
 	margin: 0.35rem 0 0;
 }
 
+.cardHeading .accessLabel {
+	color: var(--color-bridge-deep);
+	font-size: 0.74rem;
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	margin: 0 0 0.35rem;
+	text-transform: uppercase;
+}
+
 .cardHeading .recurrenceSummary {
 	align-items: baseline;
 	background: var(--color-cream);
@@ -240,6 +249,40 @@
 
 .reviewNote p {
 	margin: 0.25rem 0 0;
+}
+
+.changeStatus {
+	background: rgb(242 171 24 / 12%);
+	border-left: 0.25rem solid var(--color-bridge);
+	margin-top: 1rem;
+	padding: 0.85rem 1rem;
+}
+
+.changeStatus p {
+	color: var(--color-ink-muted);
+	margin: 0.25rem 0 0;
+}
+
+.managementActions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem;
+	margin-top: 1.25rem;
+}
+
+.managementActions a {
+	background: var(--color-river-deep);
+	border: 2px solid var(--color-river-deep);
+	color: var(--color-paper);
+	font-weight: 850;
+	min-height: 2.9rem;
+	padding: 0.65rem 0.9rem;
+	text-decoration: none;
+}
+
+.managementActions a:hover {
+	background: var(--color-navy);
+	border-color: var(--color-navy);
 }
 
 .cancellationPanel {

@@ -23,20 +23,63 @@ export interface ApprovedEventRecord {
 	recurrenceEndType: RecurrenceRule["endType"] | null;
 	recurrenceEndDate: string | null;
 	recurrenceCount: number | null;
+	occurrenceOverrides: Array<{
+		description: string;
+		endsAt: Date;
+		eventUrl: string | null;
+		locationAddress: string | null;
+		locationName: string | null;
+		mode: EventMode;
+		occurrenceDate: string;
+		startsAt: Date;
+		timezone: string;
+		title: string;
+	}>;
+}
+
+function getLocationDescription(mode: EventMode, locationName: string | null) {
+	return mode === "online" ? "Online" : (locationName ?? "Sacramento");
+}
+
+function getAttendance(mode: EventMode) {
+	return {
+		inPerson: mode !== "online",
+		isOnline: mode !== "in_person",
+	};
 }
 
 export function mapApprovedEventsToCalendar(
 	rows: ApprovedEventRecord[],
 ): CalendarEvent[] {
 	return rows.map((row) => {
-		const locationDescription =
-			row.mode === "online" ? "Online" : (row.locationName ?? "Sacramento");
+		const locationDescription = getLocationDescription(
+			row.mode,
+			row.locationName,
+		);
+		const attendance = getAttendance(row.mode);
+		const canceledOccurrenceDates = new Set(row.canceledOccurrenceDates);
+		const occurrenceOverrides = row.occurrenceOverrides.filter(
+			(override) => !canceledOccurrenceDates.has(override.occurrenceDate),
+		);
+		const hasInPersonOccurrence = occurrenceOverrides.some(
+			(override) => override.mode !== "online",
+		);
+		const hasOnlineOccurrence = occurrenceOverrides.some(
+			(override) => override.mode !== "in_person",
+		);
 		const recurrenceRule: RecurrenceRule | null =
 			row.recurrenceFrequency && row.recurrenceInterval && row.recurrenceEndType
 				? {
 						endDate: row.recurrenceEndDate,
 						endType: row.recurrenceEndType,
-						excludedDates: row.canceledOccurrenceDates,
+						excludedDates: [
+							...new Set([
+								...row.canceledOccurrenceDates,
+								...occurrenceOverrides.map(
+									(override) => override.occurrenceDate,
+								),
+							]),
+						],
 						frequency: row.recurrenceFrequency,
 						interval: row.recurrenceInterval,
 						monthlyPattern: row.recurrenceMonthlyPattern,
@@ -50,6 +93,8 @@ export function mapApprovedEventsToCalendar(
 				{
 					description: row.description,
 					ends_at: row.endsAt,
+					in_person: attendance.inPerson,
+					is_online: attendance.isOnline,
 					location_address: row.locationAddress ?? undefined,
 					location_description: locationDescription,
 					location_url: row.eventUrl ?? undefined,
@@ -59,11 +104,36 @@ export function mapApprovedEventsToCalendar(
 					timezone: row.timezone,
 					title: row.title,
 				},
+				...occurrenceOverrides.map((override) => {
+					const overrideAttendance = getAttendance(override.mode);
+
+					return {
+						description: override.description,
+						ends_at: override.endsAt,
+						in_person: overrideAttendance.inPerson,
+						is_online: overrideAttendance.isOnline,
+						location_address: override.locationAddress ?? undefined,
+						location_description: getLocationDescription(
+							override.mode,
+							override.locationName,
+						),
+						location_url: override.eventUrl ?? undefined,
+						presenters: [],
+						recurrence_date: override.occurrenceDate,
+						slug: `${row.id}-occurrence-${override.occurrenceDate}`,
+						starts_at: override.startsAt,
+						timezone: override.timezone,
+						title: override.title,
+					};
+				}),
 			],
 			description: row.description,
-			has_event_page: Boolean(row.eventUrl),
-			in_person: row.mode !== "online",
-			is_online: row.mode !== "in_person",
+			has_event_page: Boolean(
+				row.eventUrl ||
+				occurrenceOverrides.some((override) => override.eventUrl),
+			),
+			in_person: attendance.inPerson || hasInPersonOccurrence,
+			is_online: attendance.isOnline || hasOnlineOccurrence,
 			is_recurring: recurrenceRule !== null,
 			location_address: row.locationAddress ?? undefined,
 			location_description: locationDescription,

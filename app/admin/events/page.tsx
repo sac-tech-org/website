@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import type { RecurrenceRule } from "@/app/events/types";
 import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
-import { getPendingEvents } from "@/lib/events/queries";
+import { getPendingEventEdits, getPendingEvents } from "@/lib/events/queries";
+import {
+	getOccurrenceEnd,
+	getOccurrencesInRange,
+} from "@/lib/events/recurrence";
 import { requireEventReviewerSession } from "@/lib/session";
 import style from "./admin-events.module.css";
 import { ModerationForm } from "./moderation-form";
@@ -41,7 +46,10 @@ function formatCancellationDate(dateKey: string) {
 
 export default async function AdminEventsPage() {
 	await requireEventReviewerSession();
-	const pendingEvents = await getPendingEvents();
+	const [pendingEvents, pendingEdits] = await Promise.all([
+		getPendingEvents(),
+		getPendingEventEdits(),
+	]);
 
 	return (
 		<main className={style.page} id="main-content">
@@ -195,6 +203,216 @@ export default async function AdminEventsPage() {
 										<ModerationForm
 											eventId={event.id}
 											eventTitle={event.title}
+										/>
+									</article>
+								</li>
+							);
+						})}
+					</ul>
+				)}
+			</section>
+
+			<section aria-labelledby="changes-title" className={style.queue}>
+				<header className={style.queueHeader}>
+					<div>
+						<p className={style.queueEyebrow}>Published event updates</p>
+						<h2 id="changes-title">Pending changes</h2>
+					</div>
+					<p className={style.queueCount}>
+						<strong>{pendingEdits.length}</strong>{" "}
+						{pendingEdits.length === 1 ? "change" : "changes"} waiting
+					</p>
+				</header>
+
+				{pendingEdits.length === 0 ? (
+					<div className={style.emptyState}>
+						<div>
+							<h3>No event changes are waiting.</h3>
+							<p>Edits to approved events will show up here.</p>
+						</div>
+					</div>
+				) : (
+					<ul className={style.eventList}>
+						{pendingEdits.map((edit) => {
+							const titleId = `edit-${edit.id}-title`;
+							const currentRule: RecurrenceRule | null =
+								edit.currentRecurrenceFrequency &&
+								edit.currentRecurrenceInterval &&
+								edit.currentRecurrenceEndType
+									? {
+											endDate: edit.currentRecurrenceEndDate,
+											endType: edit.currentRecurrenceEndType,
+											excludedDates: [],
+											frequency: edit.currentRecurrenceFrequency,
+											interval: edit.currentRecurrenceInterval,
+											monthlyPattern: edit.currentRecurrenceMonthlyPattern,
+											occurrenceCount: edit.currentRecurrenceCount,
+											weekdays: edit.currentRecurrenceWeekdays,
+										}
+									: null;
+							let currentStartsAt = edit.currentStartsAt;
+							let currentEndsAt = edit.currentEndsAt;
+
+							if (
+								edit.scope === "occurrence" &&
+								edit.occurrenceDate &&
+								currentRule &&
+								!edit.hasCurrentOccurrenceOverride
+							) {
+								const [scheduledStart] = getOccurrencesInRange(
+									edit.seriesStartsAt,
+									currentRule,
+									edit.occurrenceDate,
+									edit.occurrenceDate,
+								);
+
+								if (scheduledStart) {
+									currentStartsAt = scheduledStart;
+									currentEndsAt = getOccurrenceEnd(
+										edit.seriesStartsAt,
+										edit.seriesEndsAt,
+										scheduledStart,
+									);
+								}
+							}
+							const currentRecurrence = formatRecurrenceSummary({
+								recurrenceCount: edit.currentRecurrenceCount,
+								recurrenceEndDate: edit.currentRecurrenceEndDate,
+								recurrenceEndType: edit.currentRecurrenceEndType,
+								recurrenceFrequency: edit.currentRecurrenceFrequency,
+								recurrenceInterval: edit.currentRecurrenceInterval,
+								recurrenceMonthlyPattern: edit.currentRecurrenceMonthlyPattern,
+								recurrenceWeekdays: edit.currentRecurrenceWeekdays,
+								startsAt: currentStartsAt,
+							});
+							const proposedRecurrence = formatRecurrenceSummary(edit);
+							const scopeLabel =
+								edit.scope === "series"
+									? "Whole series"
+									: `One occurrence · ${formatCancellationDate(edit.occurrenceDate!)}`;
+
+							return (
+								<li key={edit.id}>
+									<article
+										aria-labelledby={titleId}
+										className={style.eventCard}
+									>
+										<header className={style.cardHeader}>
+											<div>
+												<p className={style.submittedAt}>
+													Proposed by{" "}
+													{edit.proposerName ?? "Account unavailable"}
+													{" · "}
+													<time dateTime={edit.createdAt.toISOString()}>
+														{formatDateTime(edit.createdAt, edit.timezone)}
+													</time>
+												</p>
+												<h3 id={titleId}>{edit.title}</h3>
+												{edit.proposerEmail && (
+													<a href={`mailto:${edit.proposerEmail}`}>
+														{edit.proposerEmail}
+													</a>
+												)}
+											</div>
+											<span className={style.pendingBadge}>{scopeLabel}</span>
+										</header>
+
+										<div className={style.comparison}>
+											<section aria-label="Currently live details">
+												<h4>Currently live</h4>
+												<dl>
+													<div>
+														<dt>Title</dt>
+														<dd>{edit.currentTitle}</dd>
+													</div>
+													<div>
+														<dt>Starts</dt>
+														<dd>
+															{formatDateTime(currentStartsAt, edit.timezone)}
+														</dd>
+													</div>
+													<div>
+														<dt>Ends</dt>
+														<dd>
+															{formatDateTime(currentEndsAt, edit.timezone)}
+														</dd>
+													</div>
+													<div>
+														<dt>Attendance</dt>
+														<dd>{modeLabels[edit.currentMode]}</dd>
+													</div>
+													<div>
+														<dt>Venue</dt>
+														<dd>
+															{edit.currentLocationName ?? "Not provided"}
+														</dd>
+													</div>
+													{edit.scope === "series" && (
+														<div>
+															<dt>Recurrence</dt>
+															<dd>{currentRecurrence}</dd>
+														</div>
+													)}
+												</dl>
+												<EventDescriptionMarkdown
+													markdown={edit.currentDescription}
+												/>
+											</section>
+
+											<section aria-label="Proposed details">
+												<h4>Proposed</h4>
+												<dl>
+													<div>
+														<dt>Title</dt>
+														<dd>{edit.title}</dd>
+													</div>
+													<div>
+														<dt>Starts</dt>
+														<dd>
+															{formatDateTime(edit.startsAt, edit.timezone)}
+														</dd>
+													</div>
+													<div>
+														<dt>Ends</dt>
+														<dd>
+															{formatDateTime(edit.endsAt, edit.timezone)}
+														</dd>
+													</div>
+													<div>
+														<dt>Attendance</dt>
+														<dd>{modeLabels[edit.mode]}</dd>
+													</div>
+													<div>
+														<dt>Venue</dt>
+														<dd>{edit.locationName ?? "Not provided"}</dd>
+													</div>
+													{edit.scope === "series" && (
+														<div>
+															<dt>Recurrence</dt>
+															<dd>{proposedRecurrence}</dd>
+														</div>
+													)}
+												</dl>
+												<EventDescriptionMarkdown markdown={edit.description} />
+											</section>
+										</div>
+
+										{edit.eventUrl && (
+											<a
+												className={style.eventLink}
+												href={edit.eventUrl}
+												rel="noopener noreferrer"
+												target="_blank"
+											>
+												Open proposed event link{" "}
+												<span aria-hidden="true">↗</span>
+											</a>
+										)}
+
+										<ModerationForm
+											eventId={edit.id}
+											eventTitle={edit.title}
+											reviewType="edit"
 										/>
 									</article>
 								</li>

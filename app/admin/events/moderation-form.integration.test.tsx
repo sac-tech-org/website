@@ -7,10 +7,12 @@ import { ModerationForm } from "./moderation-form";
 
 const serverActions = vi.hoisted(() => ({
 	moderateEvent: vi.fn(),
+	moderateEventEdit: vi.fn(),
 }));
 
 vi.mock("@/lib/events/actions", () => ({
 	moderateEvent: serverActions.moderateEvent,
+	moderateEventEdit: serverActions.moderateEventEdit,
 }));
 
 const EVENT_ID = "4af57f4b-f482-4e8a-922b-0c965329ece4";
@@ -38,6 +40,10 @@ describe("ModerationForm", () => {
 	beforeEach(() => {
 		serverActions.moderateEvent.mockResolvedValue({
 			message: "Event approved and published.",
+			status: "success",
+		} satisfies ModerationFormState);
+		serverActions.moderateEventEdit.mockResolvedValue({
+			message: "Series changes approved and published.",
 			status: "success",
 		} satisfies ModerationFormState);
 	});

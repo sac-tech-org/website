@@ -19,8 +19,7 @@ import style from "./account.module.css";
 
 export const metadata: Metadata = {
 	title: "Your account",
-	description:
-		"Submit events and check their review status in your SacTech account.",
+	description: "Submit, edit, and manage events in your SacTech account.",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -104,7 +103,7 @@ export default async function AccountPage() {
 				<div>
 					<p className={style.eyebrow}>Your account</p>
 					<h1>Welcome, {session.user.name}.</h1>
-					<p>Submit an event and check its review status here.</p>
+					<p>Submit events, share access, and manage their details here.</p>
 				</div>
 				<div className={style.accountActions}>
 					<Link className={style.primaryAction} href="/events/submit">
@@ -129,15 +128,13 @@ export default async function AccountPage() {
 				className={style.submissions}
 			>
 				<div className={style.sectionHeading}>
-					<h2 id="submissions-title">Events you&apos;ve sent us</h2>
+					<h2 id="submissions-title">Events you manage</h2>
 				</div>
 
 				{submissions.length === 0 ? (
 					<div className={style.emptyState}>
 						<h3>No events here yet</h3>
-						<p>
-							Once you send us an event, you&apos;ll see its review status here.
-						</p>
+						<p>Events you submit or are invited to manage will appear here.</p>
 						<Link href="/events/submit">Submit an event →</Link>
 					</div>
 				) : (
@@ -162,11 +159,22 @@ export default async function AccountPage() {
 							const canceledOccurrences = [
 								...submission.canceledOccurrences,
 							].sort();
+							const pendingChanges = submission.changeRequests.filter(
+								(change) => change.status === "pending",
+							);
+							const latestRejectedChange = submission.changeRequests.find(
+								(change) => change.status === "rejected",
+							);
 
 							return (
 								<li className={style.submissionCard} key={submission.id}>
 									<div className={style.cardHeading}>
 										<div>
+											<p className={style.accessLabel}>
+												{submission.isOwner
+													? "Submitted by you"
+													: "Shared with you"}
+											</p>
 											<h3>{submission.title}</h3>
 											<p className={style.eventDate}>
 												{dateFormatter.format(submission.startsAt)}
@@ -183,6 +191,25 @@ export default async function AccountPage() {
 										<p className={style.canceledEventNotice}>
 											Canceled on {dateFormatter.format(submission.canceledAt)}.
 										</p>
+									)}
+									{pendingChanges.length > 0 && (
+										<div className={style.changeStatus}>
+											<strong>
+												{pendingChanges.length === 1
+													? "1 change is pending review"
+													: `${pendingChanges.length} changes are pending review`}
+											</strong>
+											<p>
+												The approved details stay live until a reviewer accepts
+												each change.
+											</p>
+										</div>
+									)}
+									{latestRejectedChange?.moderationNote && (
+										<div className={style.reviewNote}>
+											<strong>Note about your latest edit</strong>
+											<p>{latestRejectedChange.moderationNote}</p>
+										</div>
 									)}
 									{canceledOccurrences.length > 0 && (
 										<div className={style.canceledOccurrences}>
@@ -205,18 +232,36 @@ export default async function AccountPage() {
 										</div>
 									)}
 									{!submission.canceledAt && (
-										<CancelEventForm
-											defaultOccurrenceDate={defaultOccurrenceDate}
-											eventId={submission.id}
-											eventTitle={submission.title}
-											isRecurring={Boolean(recurrenceRule)}
-											maxOccurrenceDate={
-												recurrenceRule?.endType === "on_date"
-													? recurrenceRule.endDate
-													: null
-											}
-											minOccurrenceDate={today}
-										/>
+										<>
+											<div className={style.managementActions}>
+												<Link
+													href={`/events/${submission.id}/edit?scope=series`}
+												>
+													Edit {recurrenceRule ? "the whole series" : "event"}
+												</Link>
+												{recurrenceRule &&
+													submission.status === "approved" &&
+													defaultOccurrenceDate && (
+														<Link
+															href={`/events/${submission.id}/edit?scope=occurrence&occurrenceDate=${defaultOccurrenceDate}`}
+														>
+															Edit one occurrence
+														</Link>
+													)}
+											</div>
+											<CancelEventForm
+												defaultOccurrenceDate={defaultOccurrenceDate}
+												eventId={submission.id}
+												eventTitle={submission.title}
+												isRecurring={Boolean(recurrenceRule)}
+												maxOccurrenceDate={
+													recurrenceRule?.endType === "on_date"
+														? recurrenceRule.endDate
+														: null
+												}
+												minOccurrenceDate={today}
+											/>
+										</>
 									)}
 								</li>
 							);

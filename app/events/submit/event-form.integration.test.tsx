@@ -2,7 +2,11 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import type { EventFormState } from "@/lib/events/state";
-import { EventForm } from "./event-form";
+import {
+	EventForm,
+	type EventFormAction,
+	type EventFormValues,
+} from "./event-form";
 
 const serverActions = vi.hoisted(() => ({
 	submitEvent: vi.fn(),
@@ -21,6 +25,25 @@ const ENDS_AT = "2099-05-19T12:00";
 const successState: EventFormState = {
 	message: "Event submitted for review.",
 	status: "success",
+};
+
+const editInitialValues: EventFormValues = {
+	description: DESCRIPTION,
+	endsAt: ENDS_AT,
+	eventUrl: "https://example.com/demo-night",
+	locationAddress: "828 I Street, Sacramento, CA",
+	locationName: "Central Library",
+	mode: "hybrid",
+	recurrenceCount: "",
+	recurrenceEndDate: "2099-08-19",
+	recurrenceEndType: "on_date",
+	recurrenceFrequency: "week",
+	recurrenceInterval: "2",
+	recurrenceMonthlyPattern: "day_of_month",
+	recurrenceWeekdays: [2, 4],
+	recurring: true,
+	startsAt: STARTS_AT,
+	title: TITLE,
 };
 
 function deferred<T>() {
@@ -516,5 +539,136 @@ describe("EventForm", () => {
 
 		await user.type(screen.getByLabelText(/Event title/), "Another meetup");
 		expect(screen.queryByRole("status")).not.toBeInTheDocument();
+	});
+
+	it("prefills recurring edits and preserves their fields after success", async () => {
+		const user = userEvent.setup();
+		const editAction = vi.fn<EventFormAction>(
+			async () =>
+				({
+					message: "Changes submitted for review.",
+					status: "success",
+				}) satisfies EventFormState,
+		);
+		render(
+			<EventForm
+				action={editAction}
+				initialValues={editInitialValues}
+				variant="edit"
+			/>,
+		);
+
+		expect(
+			screen.getByRole("heading", { name: "Update the event details" }),
+		).toBeVisible();
+		expect(screen.getByText("Event edit")).toBeVisible();
+		expect(screen.getByLabelText(/Event title/)).toHaveValue(TITLE);
+		expect(getDescriptionEditor()).toHaveTextContent(DESCRIPTION);
+		expect(screen.getByRole("radio", { name: /^Hybrid/ })).toBeChecked();
+		expect(
+			screen.getByRole("checkbox", { name: /This event repeats/ }),
+		).toBeChecked();
+		expect(screen.getByLabelText("Repeat every")).toHaveValue(2);
+		expect(screen.getByLabelText("Recurrence unit")).toHaveValue("week");
+		expect(screen.getByRole("checkbox", { name: "Tuesday" })).toBeChecked();
+		expect(screen.getByRole("checkbox", { name: "Thursday" })).toBeChecked();
+		expect(screen.getByRole("radio", { name: "On date" })).toBeChecked();
+		expect(screen.getByLabelText("Recurrence end date")).toHaveValue(
+			"2099-08-19",
+		);
+		expect(
+			screen.getByText(
+				"These changes won't go live right away. A SacTech reviewer must approve them first.",
+			),
+		).toBeVisible();
+
+		await user.click(
+			screen.getByRole("button", { name: "Submit changes for review" }),
+		);
+
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Changes submitted for review.",
+		);
+		expect(editAction).toHaveBeenCalledTimes(1);
+		const submittedFormData = editAction.mock.calls[0]?.[1];
+
+		if (!(submittedFormData instanceof FormData)) {
+			throw new TypeError("The edit action did not receive FormData.");
+		}
+
+		expect(Array.from(submittedFormData.entries())).toEqual(
+			eventEntries([
+				["recurring", "on"],
+				["recurrenceInterval", "2"],
+				["recurrenceFrequency", "week"],
+				["recurrenceWeekdays", "2"],
+				["recurrenceWeekdays", "4"],
+				["recurrenceEndType", "on_date"],
+				["recurrenceEndDate", "2099-08-19"],
+			]).map(([field, value]) =>
+				field === "mode"
+					? [field, "hybrid"]
+					: field === "eventUrl"
+						? [field, "https://example.com/demo-night"]
+						: [field, value],
+			),
+		);
+		await waitFor(() => {
+			expect(screen.getByLabelText(/Event title/)).toHaveValue(TITLE);
+			expect(getDescriptionEditor()).toHaveTextContent(DESCRIPTION);
+			expect(
+				screen.getByRole("checkbox", { name: /This event repeats/ }),
+			).toBeChecked();
+			expect(screen.getByRole("radio", { name: /^Hybrid/ })).toBeChecked();
+		});
+	});
+
+	it("hides and omits recurrence controls for a single-occurrence edit", async () => {
+		const user = userEvent.setup();
+		const editAction = vi.fn<EventFormAction>(
+			async () =>
+				({
+					message: "Occurrence changes submitted for review.",
+					status: "success",
+				}) satisfies EventFormState,
+		);
+		render(
+			<EventForm
+				action={editAction}
+				allowRecurrence={false}
+				initialValues={editInitialValues}
+				variant="edit"
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("checkbox", { name: /This event repeats/ }),
+		).not.toBeInTheDocument();
+
+		await user.click(
+			screen.getByRole("button", { name: "Submit changes for review" }),
+		);
+		await screen.findByRole("status");
+
+		const submittedFormData = editAction.mock.calls[0]?.[1];
+
+		if (!(submittedFormData instanceof FormData)) {
+			throw new TypeError("The edit action did not receive FormData.");
+		}
+
+		const submittedEntries = Array.from(submittedFormData.entries());
+		expect(submittedEntries.map(([field]) => field)).toEqual([
+			"title",
+			"description",
+			"startsAt",
+			"endsAt",
+			"mode",
+			"locationName",
+			"locationAddress",
+			"eventUrl",
+		]);
+		expect(
+			submittedEntries.some(([field]) => field.startsWith("recurrence")),
+		).toBe(false);
 	});
 });
