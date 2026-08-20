@@ -1,6 +1,45 @@
 import { fileURLToPath } from "node:url";
 import { NetlifyDB } from "@netlify/database-dev";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+
+interface AuthEmailOptions {
+	to: string;
+	url: string;
+	userName?: string;
+}
+
+const authMocks = vi.hoisted(() => {
+	const backgroundTasks: Promise<unknown>[] = [];
+
+	return {
+		after: vi.fn((callback: () => unknown) => {
+			backgroundTasks.push(Promise.resolve().then(callback));
+		}),
+		backgroundTasks,
+		sendPasswordResetEmail: vi
+			.fn<(options: AuthEmailOptions) => Promise<void>>()
+			.mockResolvedValue(undefined),
+		sendVerificationEmail: vi
+			.fn<(options: AuthEmailOptions) => Promise<void>>()
+			.mockResolvedValue(undefined),
+	};
+});
+
+vi.mock("next/server", () => ({ after: authMocks.after }));
+
+vi.mock("@/lib/auth-email", () => ({
+	sendPasswordResetEmail: authMocks.sendPasswordResetEmail,
+	sendVerificationEmail: authMocks.sendVerificationEmail,
+}));
 
 const migrationsDirectory = fileURLToPath(
 	new URL("../netlify/database/migrations", import.meta.url),
@@ -16,6 +55,8 @@ const environmentKeys = [
 	"NETLIFY",
 	"NETLIFY_DB_DRIVER",
 	"NETLIFY_DB_URL",
+	"RESEND_API_KEY",
+	"RESEND_FROM_EMAIL",
 	"SITE_ID",
 	"SITE_NAME",
 	"URL",
@@ -24,6 +65,13 @@ const environmentKeys = [
 const originalEnvironment = Object.fromEntries(
 	environmentKeys.map((key) => [key, process.env[key]]),
 ) as Record<(typeof environmentKeys)[number], string | undefined>;
+
+async function flushBackgroundTasks() {
+	while (authMocks.backgroundTasks.length > 0) {
+		const tasks = authMocks.backgroundTasks.splice(0);
+		await Promise.all(tasks);
+	}
+}
 
 describe("Better Auth with the Netlify Drizzle adapter", () => {
 	const database = new NetlifyDB({ logger: () => undefined });
@@ -53,6 +101,8 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		delete process.env.DEPLOY_PRIME_URL;
 		delete process.env.DEPLOY_URL;
 		delete process.env.NETLIFY;
+		delete process.env.RESEND_API_KEY;
+		delete process.env.RESEND_FROM_EMAIL;
 
 		await database.applyMigrations(migrationsDirectory);
 		vi.resetModules();
@@ -70,6 +120,16 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		}
 
 		({ auth } = await import("@/lib/auth-config"));
+	});
+
+	beforeEach(() => {
+		authMocks.after.mockClear();
+		authMocks.sendPasswordResetEmail.mockClear();
+		authMocks.sendVerificationEmail.mockClear();
+	});
+
+	afterEach(async () => {
+		await flushBackgroundTasks();
 	});
 
 	afterAll(async () => {
@@ -172,5 +232,238 @@ describe("Better Auth with the Netlify Drizzle adapter", () => {
 		});
 		expect(accounts.rows[0].password).toEqual(expect.any(String));
 		expect(accounts.rows[0].password).not.toBe(password);
+	});
+
+	it("keeps public verification resend responses generic during delivery failures", async () => {
+		const email = "verification-outage@sactech.test";
+		const callbackURL = "/auth/verify-email";
+		await auth.api.signUpEmail({
+			body: {
+				callbackURL,
+				email,
+				name: "Verification Outage Test Member",
+				password: "deterministic-password",
+			},
+		});
+		await flushBackgroundTasks();
+
+		authMocks.sendVerificationEmail.mockRejectedValueOnce(
+			new Error(`provider failure for ${email}; token=do-not-log`),
+		);
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+
+		try {
+			const existingAccountResult = await auth.api.sendVerificationEmail({
+				body: { callbackURL, email },
+			});
+			const unknownAccountResult = await auth.api.sendVerificationEmail({
+				body: {
+					callbackURL,
+					email: "missing-verification-outage@sactech.test",
+				},
+			});
+
+			expect(existingAccountResult).toEqual({ status: true });
+			expect(unknownAccountResult).toEqual(existingAccountResult);
+			expect(consoleError).toHaveBeenCalledWith(
+				"Failed to deliver verification email. Check the server email configuration and Resend logs.",
+				{ errorType: "Error" },
+			);
+			const loggedValues = JSON.stringify(consoleError.mock.calls);
+			expect(loggedValues).not.toContain(email);
+			expect(loggedValues).not.toContain("do-not-log");
+		} finally {
+			consoleError.mockRestore();
+		}
+	});
+
+	it("verifies an email and resets its password through generated auth links", async () => {
+		const authOrigin = "https://auth-integration.sactech.test";
+		const email = "email-flow-integration@sactech.test";
+		const name = "Email Flow Test Member";
+		const originalPassword = "original-deterministic-password";
+		const newPassword = "replacement-deterministic-password";
+		const verificationCallback = "/auth/verify-email";
+		const resetCallback = "/auth/reset-password";
+
+		const signUpResult = await auth.api.signUpEmail({
+			body: {
+				callbackURL: verificationCallback,
+				email,
+				name,
+				password: originalPassword,
+			},
+		});
+		await flushBackgroundTasks();
+
+		expect(signUpResult).toMatchObject({
+			token: null,
+			user: { email, emailVerified: false, name },
+		});
+		expect(authMocks.after).toHaveBeenCalledOnce();
+		expect(authMocks.sendVerificationEmail).toHaveBeenCalledWith({
+			to: email,
+			url: expect.any(String),
+			userName: name,
+		});
+
+		const verificationEmail =
+			authMocks.sendVerificationEmail.mock.calls[0]?.[0];
+		expect(verificationEmail).toBeDefined();
+		const verificationUrl = new URL(verificationEmail?.url ?? "");
+		expect(verificationUrl.origin).toBe(authOrigin);
+		expect(verificationUrl.pathname).toBe("/api/auth/verify-email");
+		expect(verificationUrl.searchParams.get("token")).toEqual(
+			expect.any(String),
+		);
+		expect(verificationUrl.searchParams.get("callbackURL")).toBe(
+			verificationCallback,
+		);
+
+		const invalidVerificationUrl = new URL(
+			"/api/auth/verify-email",
+			authOrigin,
+		);
+		invalidVerificationUrl.searchParams.set("token", "invalid-token");
+		invalidVerificationUrl.searchParams.set(
+			"callbackURL",
+			verificationCallback,
+		);
+		const invalidVerificationResponse = await auth.handler(
+			new Request(invalidVerificationUrl, { redirect: "manual" }),
+		);
+		expect(invalidVerificationResponse.status).toBe(302);
+		const invalidVerificationLocation = new URL(
+			invalidVerificationResponse.headers.get("location") ?? "",
+			invalidVerificationUrl,
+		);
+		expect(invalidVerificationLocation.pathname).toBe(verificationCallback);
+		expect(invalidVerificationLocation.searchParams.get("error")).toBe(
+			"INVALID_TOKEN",
+		);
+
+		const verificationResponse = await auth.handler(
+			new Request(verificationUrl.href, { redirect: "manual" }),
+		);
+		expect(verificationResponse.status).toBe(302);
+		const verificationLocation = verificationResponse.headers.get("location");
+		expect(verificationLocation).not.toBeNull();
+		expect(new URL(verificationLocation ?? "", verificationUrl).pathname).toBe(
+			verificationCallback,
+		);
+
+		const verificationSetCookie =
+			verificationResponse.headers.get("set-cookie");
+		expect(verificationSetCookie).toMatch(
+			/(?:__Secure-)?better-auth\.session_token=/,
+		);
+		const verificationSessionCookie = verificationSetCookie?.split(";", 1)[0];
+		expect(verificationSessionCookie).toBeDefined();
+
+		const verifiedUsers = await database.query<{
+			email_verified: boolean;
+		}>(
+			`SELECT email_verified
+			 FROM "user"
+			 WHERE email = $1`,
+			[email],
+		);
+		expect(verifiedUsers.rows).toEqual([{ email_verified: true }]);
+
+		const verifiedSessionResponse = await auth.handler(
+			new Request(`${authOrigin}/api/auth/get-session`, {
+				headers: { cookie: verificationSessionCookie ?? "" },
+			}),
+		);
+		expect(await verifiedSessionResponse.json()).toMatchObject({
+			user: { email, emailVerified: true },
+		});
+
+		const resetRequestResult = await auth.api.requestPasswordReset({
+			body: { email, redirectTo: resetCallback },
+		});
+		await flushBackgroundTasks();
+		const unknownAccountResult = await auth.api.requestPasswordReset({
+			body: {
+				email: "missing-email-flow@sactech.test",
+				redirectTo: resetCallback,
+			},
+		});
+
+		expect(resetRequestResult).toEqual({
+			message:
+				"If this email exists in our system, check your email for the reset link",
+			status: true,
+		});
+		expect(unknownAccountResult).toEqual(resetRequestResult);
+		expect(authMocks.sendPasswordResetEmail).toHaveBeenCalledOnce();
+		expect(authMocks.sendPasswordResetEmail).toHaveBeenCalledWith({
+			to: email,
+			url: expect.any(String),
+			userName: name,
+		});
+
+		const resetEmail = authMocks.sendPasswordResetEmail.mock.calls[0]?.[0];
+		expect(resetEmail).toBeDefined();
+		const resetUrl = new URL(resetEmail?.url ?? "");
+		expect(resetUrl.origin).toBe(authOrigin);
+		expect(resetUrl.pathname).toMatch(/^\/api\/auth\/reset-password\/.+/);
+		expect(resetUrl.searchParams.get("callbackURL")).toBe(resetCallback);
+		const emailedResetToken = resetUrl.pathname.split("/").at(-1);
+		expect(emailedResetToken).toEqual(expect.any(String));
+
+		const resetCallbackResponse = await auth.handler(
+			new Request(resetUrl.href, { redirect: "manual" }),
+		);
+		expect(resetCallbackResponse.status).toBe(302);
+		const resetLocation = resetCallbackResponse.headers.get("location");
+		expect(resetLocation).not.toBeNull();
+		const resetLandingUrl = new URL(resetLocation ?? "", resetUrl);
+		expect(resetLandingUrl.pathname).toBe(resetCallback);
+		expect(resetLandingUrl.searchParams.get("token")).toBe(emailedResetToken);
+
+		expect(
+			await auth.api.resetPassword({
+				body: {
+					newPassword,
+					token: resetLandingUrl.searchParams.get("token") ?? undefined,
+				},
+			}),
+		).toEqual({ status: true });
+
+		const revokedSessionResponse = await auth.handler(
+			new Request(`${authOrigin}/api/auth/get-session`, {
+				headers: { cookie: verificationSessionCookie ?? "" },
+			}),
+		);
+		expect(await revokedSessionResponse.json()).toBeNull();
+
+		async function signIn(password: string) {
+			return auth.handler(
+				new Request(`${authOrigin}/api/auth/sign-in/email`, {
+					body: JSON.stringify({ email, password }),
+					headers: {
+						"content-type": "application/json",
+						origin: authOrigin,
+					},
+					method: "POST",
+				}),
+			);
+		}
+
+		const oldPasswordResponse = await signIn(originalPassword);
+		expect(oldPasswordResponse.status).toBe(401);
+		expect(await oldPasswordResponse.json()).toMatchObject({
+			code: "INVALID_EMAIL_OR_PASSWORD",
+		});
+
+		const newPasswordResponse = await signIn(newPassword);
+		expect(newPasswordResponse.status).toBe(200);
+		expect(await newPasswordResponse.json()).toMatchObject({
+			token: expect.any(String),
+			user: { email, emailVerified: true },
+		});
 	});
 });

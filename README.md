@@ -4,7 +4,7 @@ The community website for SacTech. It is a Next.js application deployed on Netli
 
 The event flow is deliberately moderated:
 
-1. A person creates an account or signs in at `/auth`.
+1. A person creates an account at `/auth` and verifies their email through a Resend-delivered link, or signs in to an existing account.
 2. From `/account`, they open `/events/submit` and send an event for review. New events always start as `pending`, and the account page tracks their status.
 3. A SacTech admin reviews the queue at `/admin/events` and approves or rejects each event.
 4. Only `approved` events are returned to the public `/events` calendar.
@@ -18,6 +18,7 @@ Authorization and status checks are enforced on the server. Hiding an admin link
 - [Netlify Database](https://docs.netlify.com/build/data-and-storage/netlify-database/), a managed Postgres database
 - [Drizzle ORM's native Netlify Database driver](https://orm.drizzle.team/docs/connect-netlify-db)
 - [Better Auth](https://better-auth.com/docs/integrations/next) with its Drizzle adapter, email/password authentication, and Admin plugin
+- [Resend](https://resend.com/docs/send-with-better-auth) with [React Email](https://react.email/) templates for verification and password recovery
 
 Netlify Database is currently available only on Netlify's **Credit-based plans**. Database compute and bandwidth consume credits; review the current [billing and limits documentation](https://docs.netlify.com/build/data-and-storage/netlify-database/billing-and-usage/) before enabling it for the project.
 
@@ -50,6 +51,10 @@ BETTER_AUTH_SECRET=<generated-secret>
 BETTER_AUTH_URL=http://localhost:8888
 BETTER_AUTH_ALLOWED_HOSTS=localhost:3000,localhost:8888,127.0.0.1:3000,127.0.0.1:8888
 
+# Both values stay on the server. Use a sender on your verified Resend domain.
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=SacTech <accounts@mail.example.com>
+
 # Optional Slack/community invitation used by the existing site UI.
 NEXT_PUBLIC_INVITE_LINK=
 ```
@@ -81,7 +86,25 @@ The local database does not apply migrations automatically. Run `pnpm db:migrate
 | `BETTER_AUTH_URL`           | Local; Netlify override | Optional explicit canonical fallback. Normal Netlify deploys derive this from Netlify's read-only `URL` variable.                                           |
 | `BETTER_AUTH_ALLOWED_HOSTS` | Local; Netlify override | Optional comma-separated host allowlist. Setting it replaces the automatic Netlify host list; values do not include URL paths.                              |
 | `NETLIFY_DB_URL`            | Supplied by Netlify     | Database connection string selected for the local, preview, or production database branch. Do not commit or manually configure it for normal app execution. |
+| `RESEND_API_KEY`            | Local and Netlify       | Private Resend key used only by the server to send authentication emails. A key restricted to sending from the configured domain is preferred.              |
+| `RESEND_FROM_EMAIL`         | Local and Netlify       | Sender in `Name <address@example.com>` or plain-address form. Its domain must be verified in Resend.                                                        |
 | `NEXT_PUBLIC_INVITE_LINK`   | Optional                | Public community invitation displayed by the site. It is intentionally browser-visible.                                                                     |
+
+### Authentication email delivery
+
+Better Auth sends signup verification and password-reset messages through Resend. Before exercising either flow:
+
+1. Add and verify a sending domain in Resend. A dedicated sending subdomain keeps transactional-email DNS separate from other mail; keep open and click tracking off for security messages.
+2. Create a Resend API key with sending access scoped to that domain.
+3. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env.local` and in every Netlify deploy context where accounts should work.
+
+The sender is read at delivery time, so builds, schema generation, and other commands do not need live Resend credentials. Missing or invalid delivery configuration is logged by the server without revealing whether an account exists. Better Auth generates and validates the one-hour links; the application sends those URLs unchanged so local, preview, and production origins continue to follow the auth host policy above. React Email templates live in `emails/` and include both styled markup and plain-text alternatives.
+
+Preview the React Email templates without sending mail at <http://localhost:3001>:
+
+```sh
+pnpm email:dev
+```
 
 ### Production and deploy-preview hosts
 
@@ -183,7 +206,7 @@ Changes made through the production database editor take effect immediately. Ver
 
 1. Push the repository, including `netlify.toml` and all generated migrations, to the Git provider Netlify will use.
 2. In Netlify, choose **Add new project** and import the repository. The checked-in configuration installs Chromium for the browser integration tests, runs `pnpm verify`, publishes `.next`, and selects Node 24.19.0. Verification runs formatting, linting, type checking, tests, and one production build, so a failed quality gate blocks the deploy.
-3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET` and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication. Netlify supplies the auth URLs and database connection automatically.
+3. Under **Project configuration → Environment variables**, add `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and the optional `NEXT_PUBLIC_INVITE_LINK`. Configure the values for every deploy context that should support authentication. Netlify supplies the auth URLs and database connection automatically.
 4. Deploy the site.
 
 Because `@netlify/database` is a project dependency, Netlify uses [package-based provisioning](https://docs.netlify.com/build/data-and-storage/netlify-database/getting-started/): on the first deploy it creates the database if needed, injects the branch-specific `NETLIFY_DB_URL`, and applies committed migrations as part of the deploy lifecycle. A database does not need to be created manually first. It can still be provisioned from the Netlify Database page if the team prefers to do that before the first deploy.
@@ -192,7 +215,7 @@ After the production deploy succeeds:
 
 1. Confirm the production database branch and migrations in Netlify's **Database** view.
 2. Create or promote the first admin.
-3. Test account creation, event submission, moderation, and the public calendar.
+3. Test account creation, email verification, forgot-password recovery, event submission, moderation, and the public calendar.
 4. Verify a deploy preview separately; it uses an isolated database branch and its own preview hostname.
 
 ## Scripts
@@ -201,6 +224,7 @@ After the production deploy succeeds:
 | ------------------------ | ---------------------------------------------------------------------------------------------- |
 | `pnpm dev`               | Start Netlify Dev, the local database, and the Next.js app on port 8888.                       |
 | `pnpm dev:next`          | Start only Next.js on port 3000; useful for UI-only work, but no Netlify database is injected. |
+| `pnpm email:dev`         | Preview the React Email authentication templates locally on port 3001.                         |
 | `pnpm build`             | Create a production Next.js build.                                                             |
 | `pnpm start`             | Serve an already-built Next.js app.                                                            |
 | `pnpm format`            | Format supported project files with the pinned Prettier version.                               |
@@ -261,12 +285,12 @@ path.
 
 ## Security notes
 
-- Keep `BETTER_AUTH_SECRET` and `NETLIFY_DB_URL` out of Git, logs, screenshots, client components, and `NEXT_PUBLIC_*` variables. Rotate any value that is exposed.
+- Keep `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, and `NETLIFY_DB_URL` out of Git, logs, screenshots, client components, and `NEXT_PUBLIC_*` variables. Rotate any value that is exposed.
 - Keep the Better Auth host allowlist narrow. Add exact custom domains and the site-specific `*--SITE.netlify.app` preview pattern only.
 - Protect deploy previews appropriately. Preview database branches are isolated, but can contain copied production-shaped data and run server code with preview-scoped environment variables.
 - Grant the `admin` role sparingly. Approval and rejection actions mutate public content and are enforced from the server session's role.
 - Review every migration before committing it and test it on a local database and deploy preview before production.
-- The current setup enables email/password sign-up but does not configure an email delivery provider. Add verified-email and password-reset delivery before treating possession of an email address as verified identity.
+- Email/password accounts cannot sign in until Better Auth verifies their address. Password resets revoke the account's existing sessions.
 - Account creation and event submission are intentionally open. Add project-appropriate rate limiting or abuse controls before a high-traffic public launch.
 - Event links are restricted to `http://` and `https://`, submitted dates are interpreted in `America/Los_Angeles`, and only approved rows are queried for the public calendar. Preserve those checks when extending the workflow.
 
@@ -281,6 +305,10 @@ path.
 - [Better Auth dynamic base URL](https://better-auth.com/docs/guides/dynamic-base-url)
 - [Better Auth CLI and `create-admin`](https://better-auth.com/docs/concepts/cli)
 - [Better Auth Admin plugin](https://better-auth.com/docs/plugins/admin)
+- [Resend with Better Auth](https://resend.com/docs/send-with-better-auth)
+- [Resend with Next.js](https://resend.com/docs/send-with-nextjs)
+- [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction)
+- [React Email with Resend](https://react.email/docs/integrations/resend)
 - [Vitest guide](https://main.vitest.dev/guide/)
 - [React Testing Library introduction](https://testing-library.com/docs/react-testing-library/intro/)
 - [DOM Testing Library installation](https://testing-library.com/docs/dom-testing-library/install/)

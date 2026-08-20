@@ -6,9 +6,11 @@ import { authClient } from "@/lib/auth-client";
 import style from "./auth-form.module.css";
 
 const ACCOUNT_ROUTE = "/account";
+const RESET_PASSWORD_ROUTE = "/auth/reset-password";
+const VERIFICATION_CALLBACK_ROUTE = "/auth/verify-email";
 const MINIMUM_PASSWORD_LENGTH = 10;
 
-type AuthMode = "sign-in" | "sign-up";
+type AuthMode = "forgot-password" | "sign-in" | "sign-up";
 type AuthField = "email" | "name" | "password";
 
 interface AuthError {
@@ -20,6 +22,11 @@ interface AuthIssue {
 	describedFields: AuthField[];
 	focusField: AuthField;
 	invalidFields: AuthField[];
+	message: string;
+}
+
+interface AuthSuccess {
+	heading: string;
 	message: string;
 }
 
@@ -38,6 +45,14 @@ function getAuthIssue(error: AuthError, mode: AuthMode): AuthIssue {
 				focusField: "password",
 				invalidFields: ["password"],
 				message: `Your password must be at least ${MINIMUM_PASSWORD_LENGTH} characters.`,
+			};
+		case "EMAIL_NOT_VERIFIED":
+			return {
+				describedFields: ["email", "password"],
+				focusField: "email",
+				invalidFields: [],
+				message:
+					"Verify your email before signing in. Check your inbox for a new link; if it doesn't arrive, try again later.",
 			};
 		case "USER_ALREADY_EXISTS":
 		case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
@@ -66,10 +81,14 @@ export function AuthForm() {
 	const router = useRouter();
 	const [mode, setMode] = useState<AuthMode>("sign-in");
 	const [issue, setIssue] = useState<AuthIssue | null>(null);
+	const [success, setSuccess] = useState<AuthSuccess | null>(null);
 	const [isPending, setIsPending] = useState(false);
 	const emailRef = useRef<HTMLInputElement>(null);
+	const formHeadingRef = useRef<HTMLHeadingElement>(null);
 	const nameRef = useRef<HTMLInputElement>(null);
 	const passwordRef = useRef<HTMLInputElement>(null);
+	const shouldFocusHeadingRef = useRef(false);
+	const successHeadingRef = useRef<HTMLHeadingElement>(null);
 
 	useEffect(() => {
 		if (!issue || isPending) {
@@ -84,9 +103,23 @@ export function AuthForm() {
 		focusTargets[issue.focusField]?.focus();
 	}, [isPending, issue]);
 
-	function selectMode(nextMode: AuthMode) {
+	useEffect(() => {
+		if (!shouldFocusHeadingRef.current) {
+			return;
+		}
+
+		const heading = success
+			? successHeadingRef.current
+			: formHeadingRef.current;
+		heading?.focus();
+		shouldFocusHeadingRef.current = false;
+	}, [mode, success]);
+
+	function selectMode(nextMode: AuthMode, focusHeading = false) {
+		shouldFocusHeadingRef.current = focusHeading;
 		setMode(nextMode);
 		setIssue(null);
+		setSuccess(null);
 	}
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -108,7 +141,10 @@ export function AuthForm() {
 			return;
 		}
 
-		if (password.length < MINIMUM_PASSWORD_LENGTH) {
+		if (
+			mode !== "forgot-password" &&
+			password.length < MINIMUM_PASSWORD_LENGTH
+		) {
 			setIssue({
 				describedFields: ["password"],
 				focusField: "password",
@@ -121,17 +157,58 @@ export function AuthForm() {
 		setIsPending(true);
 
 		try {
+			if (mode === "forgot-password") {
+				const result = await authClient.requestPasswordReset({
+					email,
+					redirectTo: RESET_PASSWORD_ROUTE,
+				});
+
+				if (result.error) {
+					setIssue({
+						describedFields: ["email"],
+						focusField: "email",
+						invalidFields: [],
+						message:
+							"We couldn't start a password reset. Try again in a moment.",
+					});
+					return;
+				}
+
+				shouldFocusHeadingRef.current = true;
+				setSuccess({
+					heading: "Check your email",
+					message:
+						"If an account exists for that address, we'll send a password reset link shortly.",
+				});
+				return;
+			}
+
 			const result =
 				mode === "sign-up"
 					? await authClient.signUp.email({
+							callbackURL: VERIFICATION_CALLBACK_ROUTE,
 							email,
 							name,
 							password,
 						})
-					: await authClient.signIn.email({ email, password });
+					: await authClient.signIn.email({
+							callbackURL: VERIFICATION_CALLBACK_ROUTE,
+							email,
+							password,
+						});
 
 			if (result.error) {
 				setIssue(getAuthIssue(result.error, mode));
+				return;
+			}
+
+			if (mode === "sign-up") {
+				shouldFocusHeadingRef.current = true;
+				setSuccess({
+					heading: "Check your email",
+					message:
+						"If this address can be used to create an account, we'll send a verification link shortly. The link expires in one hour.",
+				});
 				return;
 			}
 
@@ -152,40 +229,72 @@ export function AuthForm() {
 	}
 
 	const isCreatingAccount = mode === "sign-up";
+	const isResetRequest = mode === "forgot-password";
+
+	if (success) {
+		return (
+			<div className={style.formCard}>
+				<div aria-live="polite" className={style.successMessage} role="status">
+					<p className={style.successEyebrow}>Next step</p>
+					<h2 ref={successHeadingRef} tabIndex={-1}>
+						{success.heading}
+					</h2>
+					<p>{success.message}</p>
+				</div>
+				<button
+					className={style.textButton}
+					onClick={() => selectMode("sign-in", true)}
+					type="button"
+				>
+					Back to sign in
+				</button>
+			</div>
+		);
+	}
 
 	return (
 		<div className={style.formCard}>
-			<div
-				aria-label="Sign in or create an account"
-				className={style.modeSwitcher}
-				role="group"
-			>
-				<button
-					aria-pressed={mode === "sign-in"}
-					className={style.modeButton}
-					disabled={isPending}
-					onClick={() => selectMode("sign-in")}
-					type="button"
+			{!isResetRequest && (
+				<div
+					aria-label="Sign in or create an account"
+					className={style.modeSwitcher}
+					role="group"
 				>
-					Sign in
-				</button>
-				<button
-					aria-pressed={isCreatingAccount}
-					className={style.modeButton}
-					disabled={isPending}
-					onClick={() => selectMode("sign-up")}
-					type="button"
-				>
-					Create account
-				</button>
-			</div>
+					<button
+						aria-pressed={mode === "sign-in"}
+						className={style.modeButton}
+						disabled={isPending}
+						onClick={() => selectMode("sign-in")}
+						type="button"
+					>
+						Sign in
+					</button>
+					<button
+						aria-pressed={isCreatingAccount}
+						className={style.modeButton}
+						disabled={isPending}
+						onClick={() => selectMode("sign-up")}
+						type="button"
+					>
+						Create account
+					</button>
+				</div>
+			)}
 
 			<div className={style.formHeading}>
-				<h2>{isCreatingAccount ? "Create an account" : "Welcome back"}</h2>
+				<h2 ref={formHeadingRef} tabIndex={-1}>
+					{isResetRequest
+						? "Reset your password"
+						: isCreatingAccount
+							? "Create an account"
+							: "Welcome back"}
+				</h2>
 				<p>
-					{isCreatingAccount
-						? "Create an account to send events to SacTech for review."
-						: "Sign in to submit an event or check one you've already sent."}
+					{isResetRequest
+						? "Enter your email and we'll send you a secure reset link."
+						: isCreatingAccount
+							? "Create an account to send events to SacTech for review."
+							: "Sign in to submit an event or check one you've already sent."}
 				</p>
 			</div>
 
@@ -238,33 +347,45 @@ export function AuthForm() {
 					/>
 				</div>
 
-				<div className={style.field}>
-					<label htmlFor="auth-password">Password</label>
-					<input
-						aria-describedby={
-							issue?.describedFields.includes("password")
-								? "auth-password-hint auth-error"
-								: "auth-password-hint"
-						}
-						aria-invalid={
-							issue?.invalidFields.includes("password") || undefined
-						}
-						autoComplete={
-							isCreatingAccount ? "new-password" : "current-password"
-						}
-						disabled={isPending}
-						id="auth-password"
-						maxLength={128}
-						minLength={MINIMUM_PASSWORD_LENGTH}
-						name="password"
-						ref={passwordRef}
-						required
-						type="password"
-					/>
-					<p className={style.hint} id="auth-password-hint">
-						At least {MINIMUM_PASSWORD_LENGTH} characters.
-					</p>
-				</div>
+				{!isResetRequest && (
+					<div className={style.field}>
+						<label htmlFor="auth-password">Password</label>
+						<input
+							aria-describedby={
+								issue?.describedFields.includes("password")
+									? "auth-password-hint auth-error"
+									: "auth-password-hint"
+							}
+							aria-invalid={
+								issue?.invalidFields.includes("password") || undefined
+							}
+							autoComplete={
+								isCreatingAccount ? "new-password" : "current-password"
+							}
+							disabled={isPending}
+							id="auth-password"
+							maxLength={128}
+							minLength={MINIMUM_PASSWORD_LENGTH}
+							name="password"
+							ref={passwordRef}
+							required
+							type="password"
+						/>
+						<p className={style.hint} id="auth-password-hint">
+							At least {MINIMUM_PASSWORD_LENGTH} characters.
+						</p>
+						{mode === "sign-in" && (
+							<button
+								className={style.textButton}
+								disabled={isPending}
+								onClick={() => selectMode("forgot-password", true)}
+								type="button"
+							>
+								Forgot your password?
+							</button>
+						)}
+					</div>
+				)}
 
 				<button
 					className={style.submitButton}
@@ -272,14 +393,29 @@ export function AuthForm() {
 					type="submit"
 				>
 					{isPending
-						? isCreatingAccount
-							? "Creating account…"
-							: "Signing in…"
-						: isCreatingAccount
-							? "Create account"
-							: "Sign in"}
+						? isResetRequest
+							? "Sending reset link…"
+							: isCreatingAccount
+								? "Creating account…"
+								: "Signing in…"
+						: isResetRequest
+							? "Send reset link"
+							: isCreatingAccount
+								? "Create account"
+								: "Sign in"}
 					<span aria-hidden="true">→</span>
 				</button>
+
+				{isResetRequest && (
+					<button
+						className={style.textButton}
+						disabled={isPending}
+						onClick={() => selectMode("sign-in", true)}
+						type="button"
+					>
+						Back to sign in
+					</button>
+				)}
 
 				<div className={style.status}>
 					{issue && (
