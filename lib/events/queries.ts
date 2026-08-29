@@ -1,5 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
 import {
@@ -11,7 +12,28 @@ import {
 	eventRecurrence,
 } from "@/db/schema";
 import type { Event as CalendarEvent } from "@/app/events/types";
-import { mapApprovedEventsToCalendar } from "@/lib/events/mapper";
+import { APPROVED_EVENTS_CACHE_TAG } from "@/lib/events/cache";
+import {
+	mapApprovedEventsToCalendar,
+	type ApprovedEventRecord,
+} from "@/lib/events/mapper";
+
+type SerializedApprovedEventRecord = Omit<
+	ApprovedEventRecord,
+	"endsAt" | "occurrenceOverrides" | "startsAt"
+> & {
+	endsAt: string;
+	occurrenceOverrides: Array<
+		Omit<
+			ApprovedEventRecord["occurrenceOverrides"][number],
+			"endsAt" | "startsAt"
+		> & {
+			endsAt: string;
+			startsAt: string;
+		}
+	>;
+	startsAt: string;
+};
 
 function groupCanceledOccurrences(
 	rows: Array<{ eventId: string; occurrenceDate: string }>,
@@ -41,7 +63,9 @@ function groupByEventId<T extends { eventId: string }>(rows: T[]) {
 	return rowsByEvent;
 }
 
-export async function getApprovedEvents(): Promise<CalendarEvent[]> {
+async function queryApprovedEventRecords(): Promise<
+	SerializedApprovedEventRecord[]
+> {
 	const [rows, cancellations, overrides] = await Promise.all([
 		db
 			.select({
@@ -98,11 +122,43 @@ export async function getApprovedEvents(): Promise<CalendarEvent[]> {
 	const cancellationsByEvent = groupCanceledOccurrences(cancellations);
 	const overridesByEvent = groupByEventId(overrides);
 
+	return rows.map((row) => ({
+		...row,
+		canceledOccurrenceDates: cancellationsByEvent.get(row.id) ?? [],
+		endsAt: row.endsAt.toISOString(),
+		occurrenceOverrides: (overridesByEvent.get(row.id) ?? []).map(
+			(override) => ({
+				...override,
+				endsAt: override.endsAt.toISOString(),
+				startsAt: override.startsAt.toISOString(),
+			}),
+		),
+		startsAt: row.startsAt.toISOString(),
+	}));
+}
+
+const getCachedApprovedEventRecords = unstable_cache(
+	queryApprovedEventRecords,
+	[APPROVED_EVENTS_CACHE_TAG],
+	{
+		revalidate: false,
+		tags: [APPROVED_EVENTS_CACHE_TAG],
+	},
+);
+
+export async function getApprovedEvents(): Promise<CalendarEvent[]> {
+	const rows = await getCachedApprovedEventRecords();
+
 	return mapApprovedEventsToCalendar(
 		rows.map((row) => ({
 			...row,
-			canceledOccurrenceDates: cancellationsByEvent.get(row.id) ?? [],
-			occurrenceOverrides: overridesByEvent.get(row.id) ?? [],
+			endsAt: new Date(row.endsAt),
+			occurrenceOverrides: row.occurrenceOverrides.map((override) => ({
+				...override,
+				endsAt: new Date(override.endsAt),
+				startsAt: new Date(override.startsAt),
+			})),
+			startsAt: new Date(row.startsAt),
 		})),
 	);
 }

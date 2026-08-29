@@ -9,10 +9,35 @@ import {
 } from "vitest";
 import { testDatabase as database } from "@/test-support/database-client";
 
-const { getCurrentSessionMock, revalidatePathMock } = vi.hoisted(() => ({
-	getCurrentSessionMock: vi.fn(),
-	revalidatePathMock: vi.fn(),
-}));
+const {
+	cacheRegistrations,
+	getCurrentSessionMock,
+	revalidatePathMock,
+	unstableCacheMock,
+	updateTagMock,
+} = vi.hoisted(() => {
+	const cacheRegistrations: Array<{
+		keyParts?: string[];
+		options?: { revalidate?: number | false; tags?: string[] };
+	}> = [];
+
+	return {
+		cacheRegistrations,
+		getCurrentSessionMock: vi.fn(),
+		revalidatePathMock: vi.fn(),
+		unstableCacheMock: vi.fn(
+			(
+				callback,
+				keyParts?: string[],
+				options?: { revalidate?: number | false; tags?: string[] },
+			) => {
+				cacheRegistrations.push({ keyParts, options });
+				return callback;
+			},
+		),
+		updateTagMock: vi.fn(),
+	};
+});
 
 vi.mock("@/lib/session", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@/lib/session")>();
@@ -25,6 +50,8 @@ vi.mock("@/lib/session", async (importOriginal) => {
 
 vi.mock("next/cache", () => ({
 	revalidatePath: revalidatePathMock,
+	unstable_cache: unstableCacheMock,
+	updateTag: updateTagMock,
 }));
 
 // Vitest does not resolve the package's `react-server` condition. This marker
@@ -243,6 +270,7 @@ describe("event Server Actions and queries", () => {
 	beforeEach(async () => {
 		getCurrentSessionMock.mockReset();
 		revalidatePathMock.mockReset();
+		updateTagMock.mockReset();
 		await database.exec(`DELETE FROM "event"`);
 	});
 
@@ -286,6 +314,17 @@ describe("event Server Actions and queries", () => {
 		expect(cancellation).toMatchObject({ status: "error" });
 		expect(events.rows).toEqual([{ count: 0 }]);
 		expect(revalidatePathMock).not.toHaveBeenCalled();
+		expect(updateTagMock).not.toHaveBeenCalled();
+	});
+
+	it("caches approved event reads until the approved-events tag changes", () => {
+		expect(cacheRegistrations).toContainEqual({
+			keyParts: ["events:approved"],
+			options: {
+				revalidate: false,
+				tags: ["events:approved"],
+			},
+		});
 	});
 
 	it("inserts a one-time event as one pending parent row", async () => {
@@ -421,6 +460,7 @@ describe("event Server Actions and queries", () => {
 			["/account"],
 			["/admin/events"],
 		]);
+		expect(updateTagMock).toHaveBeenCalledWith("events:approved");
 
 		revalidatePathMock.mockClear();
 		const repeatedApproval = await actions.moderateEvent(
@@ -448,6 +488,7 @@ describe("event Server Actions and queries", () => {
 
 		expect(repeatedApproval).toMatchObject({ status: "error" });
 		expect(revalidatePathMock).not.toHaveBeenCalled();
+		expect(updateTagMock).toHaveBeenCalledTimes(1);
 		expect(stored.rows).toEqual([
 			{
 				recurrence_count: 1,
@@ -528,10 +569,10 @@ describe("event Server Actions and queries", () => {
 			),
 		).toBe(false);
 		expect(revalidatePathMock.mock.calls).toEqual([
-			["/events"],
 			["/account"],
 			["/admin/events"],
 		]);
+		expect(updateTagMock).not.toHaveBeenCalled();
 	});
 
 	it("lets only the original submitter invite an existing submit-capable collaborator", async () => {
@@ -621,6 +662,7 @@ describe("event Server Actions and queries", () => {
 		}
 
 		revalidatePathMock.mockClear();
+		updateTagMock.mockClear();
 		getCurrentSessionMock.mockResolvedValue(session(OTHER_USER_ID));
 		const cancellation = await actions.cancelEvent(
 			eventId,
@@ -646,6 +688,8 @@ describe("event Server Actions and queries", () => {
 			["/account"],
 			["/admin/events"],
 		]);
+		expect(updateTagMock).toHaveBeenCalledOnce();
+		expect(updateTagMock).toHaveBeenCalledWith("events:approved");
 	});
 
 	it("keeps an approved series edit pending until an approver publishes it", async () => {
@@ -653,6 +697,7 @@ describe("event Server Actions and queries", () => {
 		const updatedDescription =
 			"An approved replacement description for the complete recurring series.";
 		revalidatePathMock.mockClear();
+		updateTagMock.mockClear();
 		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
 
 		const requested = await actions.requestEventEdit(
@@ -712,6 +757,7 @@ describe("event Server Actions and queries", () => {
 				"A detailed Sacramento technology community event for integration testing.",
 			title: "Recurring Integration Series",
 		});
+		expect(updateTagMock).not.toHaveBeenCalled();
 
 		const duplicate = await actions.requestEventEdit(
 			eventId,
@@ -778,6 +824,8 @@ describe("event Server Actions and queries", () => {
 			description: updatedDescription,
 			title: "Updated Recurring Integration Series",
 		});
+		expect(updateTagMock).toHaveBeenCalledOnce();
+		expect(updateTagMock).toHaveBeenCalledWith("events:approved");
 	});
 
 	it("publishes one approved occurrence override and excludes its generated base date", async () => {
@@ -998,7 +1046,6 @@ describe("event Server Actions and queries", () => {
 			),
 		).toBe(false);
 		expect(revalidatePathMock.mock.calls).toEqual([
-			["/events"],
 			["/account"],
 			["/admin/events"],
 		]);
@@ -1102,6 +1149,7 @@ describe("event Server Actions and queries", () => {
 	it("stores one valid occurrence cancellation and rejects a duplicate", async () => {
 		const recurringEventId = await seedApprovedRecurringEvent();
 		revalidatePathMock.mockClear();
+		updateTagMock.mockClear();
 		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
 
 		const result = await actions.cancelEvent(
@@ -1140,8 +1188,11 @@ describe("event Server Actions and queries", () => {
 			["/account"],
 			["/admin/events"],
 		]);
+		expect(updateTagMock).toHaveBeenCalledOnce();
+		expect(updateTagMock).toHaveBeenCalledWith("events:approved");
 
 		revalidatePathMock.mockClear();
+		updateTagMock.mockClear();
 		const duplicate = await actions.cancelEvent(
 			recurringEventId,
 			idleState,
@@ -1159,6 +1210,7 @@ describe("event Server Actions and queries", () => {
 		});
 		expect(count.rows).toEqual([{ count: 1 }]);
 		expect(revalidatePathMock).not.toHaveBeenCalled();
+		expect(updateTagMock).not.toHaveBeenCalled();
 	});
 
 	it("shows pending exceptions to admins and the event owner", async () => {
@@ -1186,6 +1238,7 @@ describe("event Server Actions and queries", () => {
 		expect(cancellation).toMatchObject({ status: "success" });
 		expect(pendingEvent?.canceledOccurrences).toEqual(["2026-09-10"]);
 		expect(accountEvent?.canceledOccurrences).toEqual(["2026-09-10"]);
+		expect(updateTagMock).not.toHaveBeenCalled();
 	});
 
 	it("immediately hides a whole canceled series without changing its approval", async () => {
@@ -1210,6 +1263,7 @@ describe("event Server Actions and queries", () => {
 			weekday: 4,
 		});
 		revalidatePathMock.mockClear();
+		updateTagMock.mockClear();
 		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
 
 		const result = await actions.cancelEvent(
@@ -1247,5 +1301,7 @@ describe("event Server Actions and queries", () => {
 			["/account"],
 			["/admin/events"],
 		]);
+		expect(updateTagMock).toHaveBeenCalledOnce();
+		expect(updateTagMock).toHaveBeenCalledWith("events:approved");
 	});
 });

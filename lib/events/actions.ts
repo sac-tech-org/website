@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, isNull, or, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
@@ -16,6 +16,7 @@ import {
 import type { RecurrenceRule } from "@/app/events/types";
 import { roleHasEventPermission } from "@/lib/auth-permissions";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
+import { APPROVED_EVENTS_CACHE_TAG } from "@/lib/events/cache";
 import {
 	getCurrentSession,
 	sessionCanCancelOwnEvents,
@@ -83,6 +84,11 @@ function eventAccessCondition(userId: string) {
 		eq(event.submittedBy, userId),
 		eq(eventCollaborator.userId, userId),
 	);
+}
+
+function invalidateApprovedEvents() {
+	updateTag(APPROVED_EVENTS_CACHE_TAG);
+	revalidatePath("/events");
 }
 
 function recurrenceRuleFromRow(row: {
@@ -669,7 +675,9 @@ export async function moderateEvent(
 		};
 	}
 
-	revalidatePath("/events");
+	if (moderation.data.decision === "approved") {
+		invalidateApprovedEvents();
+	}
 	revalidatePath("/account");
 	revalidatePath("/admin/events");
 
@@ -1001,7 +1009,9 @@ export async function moderateEventEdit(
 		});
 
 		if (result.status === "success") {
-			revalidatePath("/events");
+			if (moderation.data.decision === "approved") {
+				invalidateApprovedEvents();
+			}
 			revalidatePath("/account");
 			revalidatePath("/admin/events");
 		}
@@ -1055,6 +1065,7 @@ export async function cancelEvent(
 	}
 
 	try {
+		let approvedEventsChanged = false;
 		const result = await db.transaction(async (transaction) => {
 			const [ownedEvent] = await transaction
 				.select({
@@ -1067,6 +1078,7 @@ export async function cancelEvent(
 					recurrenceMonthlyPattern: eventRecurrence.monthlyPattern,
 					recurrenceWeekdays: eventRecurrence.weekdays,
 					startsAt: event.startsAt,
+					status: event.status,
 				})
 				.from(event)
 				.leftJoin(eventCollaborator, eventAccessJoin(session.user.id))
@@ -1118,6 +1130,7 @@ export async function cancelEvent(
 							eq(eventChangeRequest.status, "pending"),
 						),
 					);
+				approvedEventsChanged = ownedEvent.status === "approved";
 
 				return {
 					status: "success",
@@ -1212,6 +1225,7 @@ export async function cancelEvent(
 						eq(eventOccurrenceOverride.occurrenceDate, occurrenceDate),
 					),
 				);
+			approvedEventsChanged = ownedEvent.status === "approved";
 
 			return {
 				status: "success",
@@ -1220,7 +1234,9 @@ export async function cancelEvent(
 		});
 
 		if (result.status === "success") {
-			revalidatePath("/events");
+			if (approvedEventsChanged) {
+				invalidateApprovedEvents();
+			}
 			revalidatePath("/account");
 			revalidatePath("/admin/events");
 		}
