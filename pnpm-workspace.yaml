@@ -1,2 +1,8 @@
 allowBuilds:
+  esbuild: true
+  netlify-cli: true
+  sharp: true
+  unix-dgram: true
   unrs-resolver: true
+patchedDependencies:
+  "drizzle-orm@1.0.0-rc.4": "patches/drizzle-orm@1.0.0-rc.4.patch"
