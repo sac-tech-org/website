@@ -28,9 +28,9 @@ vi.mock("./user-management-card", async () => {
 	};
 });
 
-import AdminUsersPage from "./page";
+import { AdminUsersContent } from "./admin-users-content";
 
-describe("AdminUsersPage", () => {
+describe("AdminUsersContent", () => {
 	beforeEach(() => {
 		mocks.requireAdminSession.mockResolvedValue({
 			user: { id: "current-admin" },
@@ -42,7 +42,7 @@ describe("AdminUsersPage", () => {
 	it("stops before listing users when the admin page guard denies access", async () => {
 		mocks.requireAdminSession.mockRejectedValue(new Error("admin-required"));
 
-		await expect(AdminUsersPage()).rejects.toThrow("admin-required");
+		await expect(AdminUsersContent()).rejects.toThrow("admin-required");
 		expect(mocks.listUsers).not.toHaveBeenCalled();
 	});
 
@@ -67,7 +67,7 @@ describe("AdminUsersPage", () => {
 			],
 		});
 
-		const markup = renderToStaticMarkup(await AdminUsersPage());
+		const markup = renderToStaticMarkup(await AdminUsersContent());
 
 		expect(markup).toContain("Other User");
 		expect(markup).not.toContain("Current Admin");

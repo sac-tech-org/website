@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ResetPasswordForm } from "./reset-password-form";
 import style from "../auth-form.module.css";
 
@@ -18,13 +19,28 @@ function getSingleSearchParam(value: string | string[] | undefined) {
 	return typeof value === "string" && value ? value : null;
 }
 
-export default async function ResetPasswordPage({
-	searchParams,
-}: ResetPasswordPageProps) {
+function ResetPasswordFallback() {
+	return (
+		<div className={style.formCard} role="status">
+			<div className={style.formHeading}>
+				<h2>Checking your reset link</h2>
+				<p>We’re getting the password reset form ready.</p>
+			</div>
+		</div>
+	);
+}
+
+async function ResetPasswordContent({ searchParams }: ResetPasswordPageProps) {
 	const params = await searchParams;
 	const error = getSingleSearchParam(params.error);
 	const token = getSingleSearchParam(params.token);
 
+	return <ResetPasswordForm error={error} token={token} />;
+}
+
+export default function ResetPasswordPage({
+	searchParams,
+}: ResetPasswordPageProps) {
 	return (
 		<main className={style.page} id="main-content">
 			<section
@@ -56,7 +72,9 @@ export default async function ResetPasswordPage({
 				</div>
 
 				<div className={style.formPanel}>
-					<ResetPasswordForm error={error} token={token} />
+					<Suspense fallback={<ResetPasswordFallback />}>
+						<ResetPasswordContent searchParams={searchParams} />
+					</Suspense>
 				</div>
 			</section>
 		</main>
