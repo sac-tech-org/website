@@ -29,7 +29,11 @@ function mockIdleActions() {
 }
 
 export const IdleEvent = meta.story({
-	args: {},
+	args: {
+		eventId: "9ae8c027-41d6-4890-a431-1d8208b22e40",
+		eventTitle: "Sacramento Community Demo Night",
+		reviewType: "event",
+	},
 	beforeEach: mockIdleActions,
 	play: async ({ canvas }) => {
 		await expect(
@@ -60,8 +64,7 @@ export const IdleChangeRequest = meta.story({
 	},
 });
 
-export const PendingDecision = meta.story({
-	args: {},
+export const PendingDecision = IdleEvent.extend({
 	beforeEach: () => {
 		mockIdleActions();
 		mocked(moderateEvent).mockImplementation(() => new Promise(() => {}));
@@ -80,8 +83,7 @@ export const PendingDecision = meta.story({
 	},
 });
 
-export const RejectionError = meta.story({
-	args: {},
+export const RejectionError = IdleEvent.extend({
 	beforeEach: () => {
 		mockIdleActions();
 		mocked(moderateEvent).mockResolvedValue({
@@ -105,8 +107,7 @@ export const RejectionError = meta.story({
 	},
 });
 
-export const Approved = meta.story({
-	args: {},
+export const Approved = IdleEvent.extend({
 	beforeEach: () => {
 		mockIdleActions();
 		mocked(moderateEvent).mockResolvedValue({
