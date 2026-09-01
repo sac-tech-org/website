@@ -22,7 +22,7 @@ export function createManagedEvent(
 			"A weekly meetup for Sacramento developers to learn together and share work in progress.",
 		endsAt: new Date("2026-10-15T03:30:00.000Z"),
 		eventUrl: "https://example.com/sacramento-typescript",
-		id: "storybook-managed-event",
+		id: "00000000-0000-4000-8000-000000000001",
 		isOwner: true,
 		locationAddress: "828 I Street, Sacramento, CA 95814",
 		locationName: "Sacramento Central Library",

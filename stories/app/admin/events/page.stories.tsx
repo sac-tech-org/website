@@ -81,7 +81,11 @@ export const PopulatedQueues = meta.story({
 		await expect(
 			canvas.getByRole("heading", { name: "Civic Tech Project Clinic" }),
 		).toBeVisible();
-		await expect(canvas.getByText("2 events waiting")).toBeVisible();
-		await expect(canvas.getByText("1 change waiting")).toBeVisible();
+		await expect(canvas.getByText("events waiting")).toHaveTextContent(
+			"2 events waiting",
+		);
+		await expect(canvas.getByText("change waiting")).toHaveTextContent(
+			"1 change waiting",
+		);
 	},
 });

@@ -7,7 +7,9 @@ import { createManagedEvent } from "@/stories/fixtures/managed-event";
 import { mocked } from "storybook/test";
 
 const seriesArgs = {
-	params: Promise.resolve({ eventId: "storybook-managed-event" }),
+	params: Promise.resolve({
+		eventId: "00000000-0000-4000-8000-000000000001",
+	}),
 	searchParams: Promise.resolve({ scope: "series" }),
 };
 
