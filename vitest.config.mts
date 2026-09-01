@@ -40,7 +40,9 @@ export default defineConfig({
 					include: ["**/*.test.ts"],
 					exclude: [...defaultExclude, databaseIntegrationTestPattern],
 					environment: "node",
-					sequence: { groupOrder: 0 },
+					sequence: {
+						groupOrder: 0,
+					},
 				},
 			},
 			{
@@ -55,7 +57,9 @@ export default defineConfig({
 					// sequential so each can reset the schema data before it runs.
 					fileParallelism: false,
 					isolate: true,
-					sequence: { groupOrder: 1 },
+					sequence: {
+						groupOrder: 1,
+					},
 				},
 			},
 			{
@@ -64,13 +68,22 @@ export default defineConfig({
 					name: "browser",
 					include: ["**/*.integration.test.tsx"],
 					setupFiles: ["./vitest.setup.ts"],
-					sequence: { groupOrder: 0 },
+					sequence: {
+						groupOrder: 0,
+					},
 					browser: {
 						enabled: true,
 						headless: true,
 						provider: playwright(),
-						instances: [{ browser: "chromium" }],
-						viewport: { width: 1280, height: 720 },
+						instances: [
+							{
+								browser: "chromium",
+							},
+						],
+						viewport: {
+							width: 1280,
+							height: 720,
+						},
 					},
 				},
 			},

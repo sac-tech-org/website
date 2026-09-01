@@ -23,7 +23,9 @@
     "db:migrate": "netlify database migrations apply",
     "db:status": "netlify database status",
     "auth:generate": "BETTER_AUTH_SCHEMA_GENERATION=1 auth generate --config ./lib/auth-config.ts --output ./db/auth-schema.ts --yes",
-    "auth:create-admin": "auth create-admin --config ./lib/auth-config.ts"
+    "auth:create-admin": "auth create-admin --config ./lib/auth-config.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.1",
@@ -73,6 +75,10 @@
     "prettier": "3.9.6",
     "typescript": "^6.0.3",
     "vite": "^8.2.1",
-    "vitest": "5.0.0-beta.7"
+    "vitest": "5.0.0-beta.7",
+    "storybook": "^10.5.10",
+    "@storybook/nextjs-vite": "^10.5.10",
+    "@storybook/addon-mcp": "^0.7.0",
+    "eslint-plugin-storybook": "^10.5.10"
   }
 }
