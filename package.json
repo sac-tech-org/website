@@ -18,7 +18,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build-storybook && pnpm build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",
     "db:status": "netlify database status",

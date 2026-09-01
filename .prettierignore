@@ -7,6 +7,7 @@ node_modules
 coverage
 out
 build
+storybook-static
 next-env.d.ts
 *.tsbuildinfo
 

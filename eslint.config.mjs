@@ -14,6 +14,7 @@ export default defineConfig([
 		".netlify/**",
 		"out/**",
 		"build/**",
+		"storybook-static/**",
 		"next-env.d.ts",
 	]),
 	eslintConfigPrettier,
