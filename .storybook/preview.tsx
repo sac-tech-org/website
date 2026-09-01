@@ -1,7 +1,7 @@
-import type { Preview } from "@storybook/nextjs-vite";
+import { definePreview } from "@storybook/nextjs-vite";
 
-const preview: Preview = {
-	parameters: {
+export default definePreview({
+    parameters: {
 		controls: {
 			matchers: {
 				color: /(background|color)$/i,
@@ -9,6 +9,6 @@ const preview: Preview = {
 			},
 		},
 	},
-};
 
-export default preview;
+    addons: []
+});
