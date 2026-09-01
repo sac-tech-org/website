@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache, Suspense } from "react";
 import { z } from "zod";
 import {
 	EventForm,
@@ -19,8 +20,6 @@ import { requireSession } from "@/lib/session";
 import { CollaboratorInviteForm } from "./collaborator-invite-form";
 import editStyle from "./edit-event.module.css";
 import formStyle from "../../submit/event-form.module.css";
-
-export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Edit event",
@@ -118,10 +117,10 @@ function formValuesFor(
 	};
 }
 
-export default async function EditEventPage({
-	params,
-	searchParams,
-}: EditEventPageProps) {
+const getEditEventContext = cache(async function getEditEventContext(
+	params: EditEventPageProps["params"],
+	searchParams: EditEventPageProps["searchParams"],
+) {
 	const session = await requireSession();
 	const { eventId } = await params;
 	const query = await searchParams;
@@ -131,7 +130,8 @@ export default async function EditEventPage({
 	}
 
 	const requestedScope = firstQueryValue(query.scope);
-	const scope = requestedScope === "occurrence" ? "occurrence" : "series";
+	const scope: "occurrence" | "series" =
+		requestedScope === "occurrence" ? "occurrence" : "series";
 	const requestedOccurrenceDate = firstQueryValue(query.occurrenceDate) ?? null;
 	const occurrenceDate =
 		scope === "occurrence" &&
@@ -149,10 +149,18 @@ export default async function EditEventPage({
 		notFound();
 	}
 
+	return { eventId, managedEvent, occurrenceDate, scope };
+});
+
+async function EditEventContent({ params, searchParams }: EditEventPageProps) {
+	const { eventId, managedEvent, occurrenceDate, scope } =
+		await getEditEventContext(params, searchParams);
+
 	const recurrence = recurrenceRuleFor(managedEvent);
 	const canEditOccurrence =
 		managedEvent.status === "approved" && recurrence !== null;
-	const today = getSacramentoDateKey(new Date());
+	const now = new Date();
+	const today = getSacramentoDateKey(now);
 	const nextOccurrence = recurrence
 		? getNextFutureOccurrence(
 				managedEvent.startsAt,
@@ -160,7 +168,7 @@ export default async function EditEventPage({
 					...recurrence,
 					excludedDates: managedEvent.canceledOccurrences,
 				},
-				new Date(),
+				now,
 			)
 		: null;
 	const suggestedOccurrenceDate = nextOccurrence
@@ -216,7 +224,7 @@ export default async function EditEventPage({
 					title: managedEvent.title,
 				} as const);
 
-			if (effectiveOccurrence.startsAt <= new Date()) {
+			if (effectiveOccurrence.startsAt <= now) {
 				occurrenceUnavailableMessage =
 					"Only future event occurrences can be edited.";
 				effectiveOccurrence = null;
@@ -248,11 +256,182 @@ export default async function EditEventPage({
 	);
 
 	return (
+		<div className={formStyle.layout}>
+			<aside className={formStyle.guide}>
+				<p className={formStyle.guideEyebrow}>Choose what changes</p>
+				<h2 id="edit-guide-title">
+					{scope === "occurrence" ? "One occurrence" : "The whole event"}
+				</h2>
+				<nav aria-label="Event edit scope" className={editStyle.scopeNav}>
+					<Link
+						aria-current={scope === "series" ? "page" : undefined}
+						href={`/events/${eventId}/edit?scope=series`}
+					>
+						Edit the whole {recurrence ? "series" : "event"}
+					</Link>
+					{canEditOccurrence && (
+						<Link
+							aria-current={scope === "occurrence" ? "page" : undefined}
+							href={`/events/${eventId}/edit?scope=occurrence`}
+						>
+							Edit one occurrence
+						</Link>
+					)}
+				</nav>
+				<p className={formStyle.reviewNote}>
+					<strong>The current version stays live during review.</strong>
+					Approving a whole-series change updates every inherited date.
+					Approving one occurrence changes only that selected session.
+				</p>
+				<Link className={editStyle.backLink} href="/account">
+					← Back to your account
+				</Link>
+			</aside>
+
+			<div className={editStyle.rightColumn}>
+				{scope === "occurrence" &&
+					canEditOccurrence &&
+					!managedEvent.canceledAt && (
+						<section className={editStyle.occurrencePicker}>
+							<h3>Choose the occurrence</h3>
+							<form action={`/events/${eventId}/edit`} method="get">
+								<input name="scope" type="hidden" value="occurrence" />
+								<label htmlFor="occurrenceDate">Scheduled date</label>
+								<div>
+									<input
+										defaultValue={occurrenceDate ?? suggestedOccurrenceDate}
+										id="occurrenceDate"
+										min={today}
+										name="occurrenceDate"
+										required
+										type="date"
+									/>
+									<button type="submit">Load this occurrence</button>
+								</div>
+							</form>
+						</section>
+					)}
+
+				{managedEvent.canceledAt ? (
+					<div className={editStyle.notice} role="alert">
+						This event is canceled and can no longer be edited or shared.
+					</div>
+				) : scope === "occurrence" && !canEditOccurrence ? (
+					<div className={editStyle.notice} role="alert">
+						Individual occurrences are available after a recurring series is
+						approved.
+					</div>
+				) : occurrenceUnavailableMessage ? (
+					<div className={editStyle.notice} role="alert">
+						{occurrenceUnavailableMessage}
+					</div>
+				) : matchingPendingRequest ? (
+					<div className={editStyle.pendingNotice} role="status">
+						<h3>Changes are already waiting for review</h3>
+						<p>
+							A reviewer must approve or reject that request before another
+							change can be submitted for this target.
+						</p>
+					</div>
+				) : scope === "series" || occurrenceValues ? (
+					<>
+						{matchingRejection?.moderationNote && (
+							<div className={editStyle.rejectionNote}>
+								<strong>Note from the reviewer</strong>
+								<p>{matchingRejection.moderationNote}</p>
+							</div>
+						)}
+						<div className={formStyle.formCard}>
+							<EventForm
+								action={editAction}
+								allowRecurrence={scope === "series"}
+								initialValues={
+									scope === "series" ? seriesValues : occurrenceValues!
+								}
+								variant="edit"
+							/>
+						</div>
+					</>
+				) : null}
+
+				{managedEvent.isOwner && !managedEvent.canceledAt && (
+					<section
+						aria-labelledby="collaborators-title"
+						className={editStyle.collaborationPanel}
+					>
+						<p className={editStyle.panelEyebrow}>Shared access</p>
+						<h2 id="collaborators-title">Invite another editor</h2>
+						<p>
+							Invite someone with an existing SacTech account. They can edit or
+							cancel this event, including individual occurrences.
+						</p>
+						<CollaboratorInviteForm eventId={eventId} />
+						{managedEvent.collaborators.length > 0 && (
+							<div className={editStyle.collaboratorList}>
+								<h3>People with access</h3>
+								<ul>
+									{managedEvent.collaborators.map((collaborator) => (
+										<li key={collaborator.userId}>
+											<strong>{collaborator.name}</strong>
+											<span>{collaborator.email}</span>
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
+					</section>
+				)}
+			</div>
+		</div>
+	);
+}
+
+async function EditEventTitle({ params, searchParams }: EditEventPageProps) {
+	const { managedEvent } = await getEditEventContext(params, searchParams);
+
+	return <h1 id="page-title">Edit {managedEvent.title}.</h1>;
+}
+
+function EditEventContentFallback() {
+	return (
+		<div aria-busy="true" className={formStyle.layout}>
+			<aside className={formStyle.guide}>
+				<p className={formStyle.guideEyebrow}>Choose what changes</p>
+				<h2 id="edit-guide-title">Preparing your editor</h2>
+				<p className={formStyle.reviewNote}>
+					<strong>The current version stays live during review.</strong>
+					Your event details and editing options are loading now.
+				</p>
+				<Link className={editStyle.backLink} href="/account">
+					← Back to your account
+				</Link>
+			</aside>
+
+			<div className={editStyle.rightColumn}>
+				<div className={formStyle.formCard} role="status">
+					<div className={formStyle.formHeading}>
+						<p className={formStyle.stepLabel}>Event edit</p>
+						<h2>Loading event details</h2>
+						<p>Checking your access and preparing the event form.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default function EditEventPage({
+	params,
+	searchParams,
+}: EditEventPageProps) {
+	return (
 		<main className={formStyle.page} id="main-content">
 			<section aria-labelledby="page-title" className={formStyle.hero}>
 				<div className={formStyle.heroInner}>
 					<p className={formStyle.eyebrow}>Manage event</p>
-					<h1 id="page-title">Edit {managedEvent.title}.</h1>
+					<Suspense fallback={<h1 id="page-title">Edit your event.</h1>}>
+						<EditEventTitle params={params} searchParams={searchParams} />
+					</Suspense>
 					<p>
 						Changes go to a SacTech reviewer before they replace anything
 						already on the public calendar.
@@ -261,133 +440,9 @@ export default async function EditEventPage({
 			</section>
 
 			<section aria-labelledby="edit-guide-title" className={formStyle.content}>
-				<div className={formStyle.layout}>
-					<aside className={formStyle.guide}>
-						<p className={formStyle.guideEyebrow}>Choose what changes</p>
-						<h2 id="edit-guide-title">
-							{scope === "occurrence" ? "One occurrence" : "The whole event"}
-						</h2>
-						<nav aria-label="Event edit scope" className={editStyle.scopeNav}>
-							<Link
-								aria-current={scope === "series" ? "page" : undefined}
-								href={`/events/${eventId}/edit?scope=series`}
-							>
-								Edit the whole {recurrence ? "series" : "event"}
-							</Link>
-							{canEditOccurrence && (
-								<Link
-									aria-current={scope === "occurrence" ? "page" : undefined}
-									href={`/events/${eventId}/edit?scope=occurrence`}
-								>
-									Edit one occurrence
-								</Link>
-							)}
-						</nav>
-						<p className={formStyle.reviewNote}>
-							<strong>The current version stays live during review.</strong>
-							Approving a whole-series change updates every inherited date.
-							Approving one occurrence changes only that selected session.
-						</p>
-						<Link className={editStyle.backLink} href="/account">
-							← Back to your account
-						</Link>
-					</aside>
-
-					<div className={editStyle.rightColumn}>
-						{scope === "occurrence" &&
-							canEditOccurrence &&
-							!managedEvent.canceledAt && (
-								<section className={editStyle.occurrencePicker}>
-									<h3>Choose the occurrence</h3>
-									<form action={`/events/${eventId}/edit`} method="get">
-										<input name="scope" type="hidden" value="occurrence" />
-										<label htmlFor="occurrenceDate">Scheduled date</label>
-										<div>
-											<input
-												defaultValue={occurrenceDate ?? suggestedOccurrenceDate}
-												id="occurrenceDate"
-												min={today}
-												name="occurrenceDate"
-												required
-												type="date"
-											/>
-											<button type="submit">Load this occurrence</button>
-										</div>
-									</form>
-								</section>
-							)}
-
-						{managedEvent.canceledAt ? (
-							<div className={editStyle.notice} role="alert">
-								This event is canceled and can no longer be edited or shared.
-							</div>
-						) : scope === "occurrence" && !canEditOccurrence ? (
-							<div className={editStyle.notice} role="alert">
-								Individual occurrences are available after a recurring series is
-								approved.
-							</div>
-						) : occurrenceUnavailableMessage ? (
-							<div className={editStyle.notice} role="alert">
-								{occurrenceUnavailableMessage}
-							</div>
-						) : matchingPendingRequest ? (
-							<div className={editStyle.pendingNotice} role="status">
-								<h3>Changes are already waiting for review</h3>
-								<p>
-									A reviewer must approve or reject that request before another
-									change can be submitted for this target.
-								</p>
-							</div>
-						) : scope === "series" || occurrenceValues ? (
-							<>
-								{matchingRejection?.moderationNote && (
-									<div className={editStyle.rejectionNote}>
-										<strong>Note from the reviewer</strong>
-										<p>{matchingRejection.moderationNote}</p>
-									</div>
-								)}
-								<div className={formStyle.formCard}>
-									<EventForm
-										action={editAction}
-										allowRecurrence={scope === "series"}
-										initialValues={
-											scope === "series" ? seriesValues : occurrenceValues!
-										}
-										variant="edit"
-									/>
-								</div>
-							</>
-						) : null}
-
-						{managedEvent.isOwner && !managedEvent.canceledAt && (
-							<section
-								aria-labelledby="collaborators-title"
-								className={editStyle.collaborationPanel}
-							>
-								<p className={editStyle.panelEyebrow}>Shared access</p>
-								<h2 id="collaborators-title">Invite another editor</h2>
-								<p>
-									Invite someone with an existing SacTech account. They can edit
-									or cancel this event, including individual occurrences.
-								</p>
-								<CollaboratorInviteForm eventId={eventId} />
-								{managedEvent.collaborators.length > 0 && (
-									<div className={editStyle.collaboratorList}>
-										<h3>People with access</h3>
-										<ul>
-											{managedEvent.collaborators.map((collaborator) => (
-												<li key={collaborator.userId}>
-													<strong>{collaborator.name}</strong>
-													<span>{collaborator.email}</span>
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
-							</section>
-						)}
-					</div>
-				</div>
+				<Suspense fallback={<EditEventContentFallback />}>
+					<EditEventContent params={params} searchParams={searchParams} />
+				</Suspense>
 			</section>
 		</main>
 	);

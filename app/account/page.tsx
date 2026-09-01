@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import type { RecurrenceRule } from "@/app/events/types";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import {
@@ -16,8 +17,6 @@ import {
 import { CancelEventForm } from "./cancel-event-form";
 import { SignOutButton } from "./sign-out-button";
 import style from "./account.module.css";
-
-export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Your account",
@@ -91,186 +90,249 @@ function getRecurrenceRule(
 	};
 }
 
-export default async function AccountPage() {
-	const session = await requireSession();
-	const submissions = await getSubmissionsForUser(session.user.id);
+function AccountHero({
+	session,
+}: {
+	session: Awaited<ReturnType<typeof requireSession>>;
+}) {
 	const canReviewEvents = sessionCanReviewEvents(session);
 	const isAdmin = sessionIsAdmin(session);
+
+	return (
+		<section className={style.hero}>
+			<div>
+				<p className={style.eyebrow}>Your account</p>
+				<h1>Welcome, {session.user.name}.</h1>
+				<p>Submit events, share access, and manage their details here.</p>
+			</div>
+			<div className={style.accountActions}>
+				<Link className={style.primaryAction} href="/events/submit">
+					Submit an event
+				</Link>
+				{canReviewEvents && (
+					<Link className={style.secondaryAction} href="/admin/events">
+						Review events
+					</Link>
+				)}
+				{isAdmin && (
+					<Link className={style.secondaryAction} href="/admin/users">
+						Manage users
+					</Link>
+				)}
+				<SignOutButton className={style.secondaryAction} />
+			</div>
+		</section>
+	);
+}
+
+async function AccountSubmissions({ userId }: { userId: string }) {
+	const submissions = await getSubmissionsForUser(userId);
 	const now = new Date();
 	const today = formatPacificDateKey(now);
 
 	return (
-		<main className={style.page} id="main-content">
-			<section className={style.hero}>
-				<div>
-					<p className={style.eyebrow}>Your account</p>
-					<h1>Welcome, {session.user.name}.</h1>
-					<p>Submit events, share access, and manage their details here.</p>
-				</div>
-				<div className={style.accountActions}>
-					<Link className={style.primaryAction} href="/events/submit">
-						Submit an event
-					</Link>
-					{canReviewEvents && (
-						<Link className={style.secondaryAction} href="/admin/events">
-							Review events
-						</Link>
-					)}
-					{isAdmin && (
-						<Link className={style.secondaryAction} href="/admin/users">
-							Manage users
-						</Link>
-					)}
-					<SignOutButton className={style.secondaryAction} />
-				</div>
-			</section>
+		<section aria-labelledby="submissions-title" className={style.submissions}>
+			<div className={style.sectionHeading}>
+				<h2 id="submissions-title">Events you manage</h2>
+			</div>
 
-			<section
-				aria-labelledby="submissions-title"
-				className={style.submissions}
-			>
-				<div className={style.sectionHeading}>
-					<h2 id="submissions-title">Events you manage</h2>
+			{submissions.length === 0 ? (
+				<div className={style.emptyState}>
+					<h3>No events here yet</h3>
+					<p>Events you submit or are invited to manage will appear here.</p>
+					<Link href="/events/submit">Submit an event →</Link>
 				</div>
-
-				{submissions.length === 0 ? (
-					<div className={style.emptyState}>
-						<h3>No events here yet</h3>
-						<p>Events you submit or are invited to manage will appear here.</p>
-						<Link href="/events/submit">Submit an event →</Link>
-					</div>
-				) : (
-					<ul className={style.submissionList} role="list">
-						{submissions.map((submission) => {
-							const recurrenceSummary = formatRecurrenceSummary(submission);
-							const recurrenceRule = getRecurrenceRule(submission);
-							const nextOccurrence =
-								!submission.canceledAt && recurrenceRule
-									? getNextFutureOccurrence(
-											submission.startsAt,
-											recurrenceRule,
-											now,
-										)
-									: null;
-							const defaultOccurrenceDate = nextOccurrence
-								? formatPacificDateKey(nextOccurrence)
+			) : (
+				<ul className={style.submissionList} role="list">
+					{submissions.map((submission) => {
+						const recurrenceSummary = formatRecurrenceSummary(submission);
+						const recurrenceRule = getRecurrenceRule(submission);
+						const nextOccurrence =
+							!submission.canceledAt && recurrenceRule
+								? getNextFutureOccurrence(
+										submission.startsAt,
+										recurrenceRule,
+										now,
+									)
 								: null;
-							const displayStatus = submission.canceledAt
-								? "canceled"
-								: submission.status;
-							const canceledOccurrences = [
-								...submission.canceledOccurrences,
-							].sort();
-							const pendingChanges = submission.changeRequests.filter(
-								(change) => change.status === "pending",
-							);
-							const latestRejectedChange = submission.changeRequests.find(
-								(change) => change.status === "rejected",
-							);
+						const defaultOccurrenceDate = nextOccurrence
+							? formatPacificDateKey(nextOccurrence)
+							: null;
+						const displayStatus = submission.canceledAt
+							? "canceled"
+							: submission.status;
+						const canceledOccurrences = [
+							...submission.canceledOccurrences,
+						].sort();
+						const pendingChanges = submission.changeRequests.filter(
+							(change) => change.status === "pending",
+						);
+						const latestRejectedChange = submission.changeRequests.find(
+							(change) => change.status === "rejected",
+						);
 
-							return (
-								<li className={style.submissionCard} key={submission.id}>
-									<div className={style.cardHeading}>
-										<div>
-											<p className={style.accessLabel}>
-												{submission.isOwner
-													? "Submitted by you"
-													: "Shared with you"}
-											</p>
-											<h3>{submission.title}</h3>
-											<p className={style.eventDate}>
-												{dateFormatter.format(submission.startsAt)}
-											</p>
-											<p className={style.recurrenceSummary}>
-												<span aria-hidden="true">↻</span> {recurrenceSummary}
-											</p>
-										</div>
-										<span data-status={displayStatus}>
-											{statusLabels[displayStatus]}
-										</span>
-									</div>
-									{submission.canceledAt && (
-										<p className={style.canceledEventNotice}>
-											Canceled on {dateFormatter.format(submission.canceledAt)}.
+						return (
+							<li className={style.submissionCard} key={submission.id}>
+								<div className={style.cardHeading}>
+									<div>
+										<p className={style.accessLabel}>
+											{submission.isOwner
+												? "Submitted by you"
+												: "Shared with you"}
 										</p>
-									)}
-									{pendingChanges.length > 0 && (
-										<div className={style.changeStatus}>
-											<strong>
-												{pendingChanges.length === 1
-													? "1 change is pending review"
-													: `${pendingChanges.length} changes are pending review`}
-											</strong>
-											<p>
-												The approved details stay live until a reviewer accepts
-												each change.
-											</p>
+										<h3>{submission.title}</h3>
+										<p className={style.eventDate}>
+											{dateFormatter.format(submission.startsAt)}
+										</p>
+										<p className={style.recurrenceSummary}>
+											<span aria-hidden="true">↻</span> {recurrenceSummary}
+										</p>
+									</div>
+									<span data-status={displayStatus}>
+										{statusLabels[displayStatus]}
+									</span>
+								</div>
+								{submission.canceledAt && (
+									<p className={style.canceledEventNotice}>
+										Canceled on {dateFormatter.format(submission.canceledAt)}.
+									</p>
+								)}
+								{pendingChanges.length > 0 && (
+									<div className={style.changeStatus}>
+										<strong>
+											{pendingChanges.length === 1
+												? "1 change is pending review"
+												: `${pendingChanges.length} changes are pending review`}
+										</strong>
+										<p>
+											The approved details stay live until a reviewer accepts
+											each change.
+										</p>
+									</div>
+								)}
+								{latestRejectedChange?.moderationNote && (
+									<div className={style.reviewNote}>
+										<strong>Note about your latest edit</strong>
+										<p>{latestRejectedChange.moderationNote}</p>
+									</div>
+								)}
+								{canceledOccurrences.length > 0 && (
+									<div className={style.canceledOccurrences}>
+										<h4>Canceled dates</h4>
+										<ul aria-label={`Canceled dates for ${submission.title}`}>
+											{canceledOccurrences.map((date) => (
+												<li key={date}>
+													<time dateTime={date}>
+														{formatCancellationDate(date)}
+													</time>
+												</li>
+											))}
+										</ul>
+									</div>
+								)}
+								{submission.moderationNote && (
+									<div className={style.reviewNote}>
+										<strong>Note from the reviewer</strong>
+										<p>{submission.moderationNote}</p>
+									</div>
+								)}
+								{!submission.canceledAt && (
+									<>
+										<div className={style.managementActions}>
+											<Link href={`/events/${submission.id}/edit?scope=series`}>
+												Edit {recurrenceRule ? "the whole series" : "event"}
+											</Link>
+											{recurrenceRule &&
+												submission.status === "approved" &&
+												defaultOccurrenceDate && (
+													<Link
+														href={`/events/${submission.id}/edit?scope=occurrence&occurrenceDate=${defaultOccurrenceDate}`}
+													>
+														Edit one occurrence
+													</Link>
+												)}
 										</div>
-									)}
-									{latestRejectedChange?.moderationNote && (
-										<div className={style.reviewNote}>
-											<strong>Note about your latest edit</strong>
-											<p>{latestRejectedChange.moderationNote}</p>
-										</div>
-									)}
-									{canceledOccurrences.length > 0 && (
-										<div className={style.canceledOccurrences}>
-											<h4>Canceled dates</h4>
-											<ul aria-label={`Canceled dates for ${submission.title}`}>
-												{canceledOccurrences.map((date) => (
-													<li key={date}>
-														<time dateTime={date}>
-															{formatCancellationDate(date)}
-														</time>
-													</li>
-												))}
-											</ul>
-										</div>
-									)}
-									{submission.moderationNote && (
-										<div className={style.reviewNote}>
-											<strong>Note from the reviewer</strong>
-											<p>{submission.moderationNote}</p>
-										</div>
-									)}
-									{!submission.canceledAt && (
-										<>
-											<div className={style.managementActions}>
-												<Link
-													href={`/events/${submission.id}/edit?scope=series`}
-												>
-													Edit {recurrenceRule ? "the whole series" : "event"}
-												</Link>
-												{recurrenceRule &&
-													submission.status === "approved" &&
-													defaultOccurrenceDate && (
-														<Link
-															href={`/events/${submission.id}/edit?scope=occurrence&occurrenceDate=${defaultOccurrenceDate}`}
-														>
-															Edit one occurrence
-														</Link>
-													)}
-											</div>
-											<CancelEventForm
-												defaultOccurrenceDate={defaultOccurrenceDate}
-												eventId={submission.id}
-												eventTitle={submission.title}
-												isRecurring={Boolean(recurrenceRule)}
-												maxOccurrenceDate={
-													recurrenceRule?.endType === "on_date"
-														? recurrenceRule.endDate
-														: null
-												}
-												minOccurrenceDate={today}
-											/>
-										</>
-									)}
-								</li>
-							);
-						})}
-					</ul>
-				)}
-			</section>
+										<CancelEventForm
+											defaultOccurrenceDate={defaultOccurrenceDate}
+											eventId={submission.id}
+											eventTitle={submission.title}
+											isRecurring={Boolean(recurrenceRule)}
+											maxOccurrenceDate={
+												recurrenceRule?.endType === "on_date"
+													? recurrenceRule.endDate
+													: null
+											}
+											minOccurrenceDate={today}
+										/>
+									</>
+								)}
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</section>
+	);
+}
+
+function AccountHeroFallback() {
+	return (
+		<section aria-busy="true" className={style.hero}>
+			<div>
+				<p className={style.eyebrow}>Your account</p>
+				<h1>Loading your account…</h1>
+				<p>Checking your session and account access.</p>
+			</div>
+		</section>
+	);
+}
+
+function AccountSubmissionsFallback() {
+	return (
+		<section
+			aria-busy="true"
+			aria-labelledby="submissions-title"
+			className={style.submissions}
+		>
+			<div className={style.sectionHeading}>
+				<h2 id="submissions-title">Events you manage</h2>
+			</div>
+			<div className={style.emptyState} role="status">
+				<h3>Loading your events…</h3>
+				<p>Checking for events you submitted or help manage.</p>
+			</div>
+		</section>
+	);
+}
+
+async function AccountContent() {
+	const session = await requireSession();
+
+	return (
+		<>
+			<AccountHero session={session} />
+			<Suspense fallback={<AccountSubmissionsFallback />}>
+				<AccountSubmissions userId={session.user.id} />
+			</Suspense>
+		</>
+	);
+}
+
+function AccountPageFallback() {
+	return (
+		<>
+			<AccountHeroFallback />
+			<AccountSubmissionsFallback />
+		</>
+	);
+}
+
+export default function AccountPage() {
+	return (
+		<main className={style.page} id="main-content">
+			<Suspense fallback={<AccountPageFallback />}>
+				<AccountContent />
+			</Suspense>
 		</main>
 	);
 }

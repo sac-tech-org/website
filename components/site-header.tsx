@@ -1,7 +1,32 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { SiteNav } from "./site-nav";
 import style from "./site-header.module.css";
+
+function SiteNavFallback() {
+	return (
+		<nav aria-label="Primary" className={style.nav}>
+			<ul>
+				<li>
+					<Link className={style.navLink} href="/#community">
+						Community
+					</Link>
+				</li>
+				<li>
+					<Link className={style.navLink} href="/events">
+						Events
+					</Link>
+				</li>
+				<li>
+					<Link className={style.navLink} href="/code-of-conduct">
+						Code of Conduct
+					</Link>
+				</li>
+			</ul>
+		</nav>
+	);
+}
 
 export function SiteHeader() {
 	return (
@@ -17,7 +42,9 @@ export function SiteHeader() {
 						width={72}
 					/>
 				</Link>
-				<SiteNav />
+				<Suspense fallback={<SiteNavFallback />}>
+					<SiteNav />
+				</Suspense>
 				<Link className={style.joinLink} href="/#join">
 					Join the community
 				</Link>

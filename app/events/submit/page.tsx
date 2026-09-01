@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { requireSession } from "@/lib/session";
 import { EventForm } from "./event-form";
 import style from "./event-form.module.css";
-
-export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Submit an event",
@@ -11,9 +10,23 @@ export const metadata: Metadata = {
 		"Submit a Sacramento technology event to the SacTech community calendar.",
 };
 
-export default async function SubmitEventPage() {
+async function AuthenticatedEventForm() {
 	await requireSession();
 
+	return <EventForm />;
+}
+
+function EventFormFallback() {
+	return (
+		<div aria-busy="true" className={style.formHeading} role="status">
+			<p className={style.stepLabel}>Event submission</p>
+			<h2>Tell us about the event</h2>
+			<p>Checking your account and preparing the event form.</p>
+		</div>
+	);
+}
+
+export default function SubmitEventPage() {
 	return (
 		<main className={style.page} id="main-content">
 			<section aria-labelledby="page-title" className={style.hero}>
@@ -51,7 +64,9 @@ export default async function SubmitEventPage() {
 					</aside>
 
 					<div className={style.formCard}>
-						<EventForm />
+						<Suspense fallback={<EventFormFallback />}>
+							<AuthenticatedEventForm />
+						</Suspense>
 					</div>
 				</div>
 			</section>

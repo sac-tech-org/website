@@ -5,7 +5,7 @@ import { userEvent } from "vitest/browser";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import { Calendar } from "./components/calendar/calendar";
 import { RecurringEventsCard } from "./components/event-cards/recurring-event-card";
-import EventsPage from "./events-page";
+import EventsPage, { EventsCallouts } from "./events-page";
 import type { Event, EventBlock, RecurrenceRule } from "./types";
 
 function createBlock(
@@ -371,9 +371,6 @@ describe("public events experience", () => {
 		);
 		const filterGroup = screen.getByRole("group", { name: "Show" });
 		const filters = within(filterGroup);
-		expect(
-			screen.getByRole("link", { name: "Submit an event" }),
-		).toHaveAttribute("href", "/account");
 		expect(screen.getByRole("status")).toHaveTextContent(
 			"Showing 2 events for all events.",
 		);
@@ -420,5 +417,16 @@ describe("public events experience", () => {
 		expect(
 			screen.getByRole("button", { name: "September 5, 2026, 1 event" }),
 		).toBeVisible();
+	});
+
+	it("keeps the community and event-submission calls to action available", () => {
+		render(<EventsCallouts />);
+
+		expect(
+			screen.getByRole("link", { name: "Join the community" }),
+		).toHaveAttribute("href", "/#join");
+		expect(
+			screen.getByRole("link", { name: "Submit an event" }),
+		).toHaveAttribute("href", "/account");
 	});
 });

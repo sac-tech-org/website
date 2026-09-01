@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { isEmailDeliveryEnabled } from "@/lib/email-delivery";
 import { getCurrentSession } from "@/lib/session";
 import { AuthForm } from "./auth-form";
 import style from "./auth-form.module.css";
-
-export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Sign in or create an account",
@@ -13,13 +12,28 @@ export const metadata: Metadata = {
 		"Sign in to SacTech or create an account to submit community events.",
 };
 
-export default async function AuthPage() {
+function AuthFormFallback() {
+	return (
+		<div className={style.formCard} role="status">
+			<div className={style.formHeading}>
+				<h2>Checking your account</h2>
+				<p>We’re getting the sign-in form ready.</p>
+			</div>
+		</div>
+	);
+}
+
+async function AuthFormForCurrentVisitor() {
 	const session = await getCurrentSession();
 
 	if (session) {
 		redirect("/account");
 	}
 
+	return <AuthForm emailDeliveryEnabled={isEmailDeliveryEnabled()} />;
+}
+
+export default function AuthPage() {
 	return (
 		<main className={style.page} id="main-content">
 			<section aria-labelledby="auth-page-title" className={style.shell}>
@@ -48,7 +62,9 @@ export default async function AuthPage() {
 				</div>
 
 				<div className={style.formPanel}>
-					<AuthForm emailDeliveryEnabled={isEmailDeliveryEnabled()} />
+					<Suspense fallback={<AuthFormFallback />}>
+						<AuthFormForCurrentVisitor />
+					</Suspense>
 				</div>
 			</section>
 		</main>

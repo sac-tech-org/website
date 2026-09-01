@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { VerifyEmailResult } from "./verification-result";
 import style from "../auth-form.module.css";
-
-const ACCOUNT_ROUTE = "/account";
-
-export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Verify your email",
@@ -18,54 +14,20 @@ interface VerifyEmailPageProps {
 	}>;
 }
 
-interface VerificationIssue {
-	heading: string;
-	message: string;
+function VerifyEmailFallback() {
+	return (
+		<div className={style.formCard} role="status">
+			<div className={style.formHeading}>
+				<h2>Checking your verification link</h2>
+				<p>We’re confirming the next step for your account.</p>
+			</div>
+		</div>
+	);
 }
 
-function getFirstSearchParam(value: string | string[] | undefined) {
-	if (Array.isArray(value)) {
-		return value.find(Boolean) ?? null;
-	}
-
-	return value || null;
-}
-
-function getVerificationIssue(error: string): VerificationIssue {
-	switch (error) {
-		case "TOKEN_EXPIRED":
-		case "EXPIRED_TOKEN":
-			return {
-				heading: "Verification link expired",
-				message:
-					"This verification link has expired. Sign in again with your email and password to request a new link.",
-			};
-		case "INVALID_TOKEN":
-			return {
-				heading: "Verification link unavailable",
-				message:
-					"This verification link is invalid or has already been used. Sign in again to request a new link if your email still needs verification.",
-			};
-		default:
-			return {
-				heading: "We couldn't verify your email",
-				message:
-					"This verification link can't be used. Sign in again to request a new link if your email still needs verification.",
-			};
-	}
-}
-
-export default async function VerifyEmailPage({
+export default function VerifyEmailPage({
 	searchParams,
 }: VerifyEmailPageProps) {
-	const error = getFirstSearchParam((await searchParams).error);
-
-	if (!error) {
-		redirect(ACCOUNT_ROUTE);
-	}
-
-	const issue = getVerificationIssue(error);
-
 	return (
 		<main className={style.page} id="main-content">
 			<section
@@ -97,17 +59,9 @@ export default async function VerifyEmailPage({
 				</div>
 
 				<div className={style.formPanel}>
-					<div className={style.formCard}>
-						<div className={style.formHeading} role="alert">
-							<h2>{issue.heading}</h2>
-							<p>{issue.message}</p>
-						</div>
-						<div className={style.form}>
-							<Link className={style.submitButton} href="/auth">
-								Back to sign in <span aria-hidden="true">→</span>
-							</Link>
-						</div>
-					</div>
+					<Suspense fallback={<VerifyEmailFallback />}>
+						<VerifyEmailResult searchParams={searchParams} />
+					</Suspense>
 				</div>
 			</section>
 		</main>

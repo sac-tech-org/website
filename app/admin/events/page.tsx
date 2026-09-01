@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import type { RecurrenceRule } from "@/app/events/types";
 import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
@@ -10,8 +11,6 @@ import {
 import { requireEventReviewerSession } from "@/lib/session";
 import style from "./admin-events.module.css";
 import { ModerationForm } from "./moderation-form";
-
-export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Review events",
@@ -46,7 +45,7 @@ function formatCancellationDate(dateKey: string) {
 	return cancellationDateFormatter.format(new Date(`${dateKey}T12:00:00Z`));
 }
 
-export default async function AdminEventsPage() {
+async function AdminEventQueues() {
 	await requireEventReviewerSession();
 	const [pendingEvents, pendingEdits] = await Promise.all([
 		getPendingEvents(),
@@ -54,19 +53,7 @@ export default async function AdminEventsPage() {
 	]);
 
 	return (
-		<main className={style.page} id="main-content">
-			<section aria-labelledby="page-title" className={style.hero}>
-				<div className={style.heroInner}>
-					<p className={style.eyebrow}>SacTech review team</p>
-					<h1 id="page-title">Review submitted events.</h1>
-					<p>
-						Review each submission and decide whether it&apos;s ready for the
-						public SacTech calendar. Open the event link if you need more
-						context.
-					</p>
-				</div>
-			</section>
-
+		<>
 			<section aria-labelledby="queue-title" className={style.queue}>
 				<header className={style.queueHeader}>
 					<div>
@@ -423,6 +410,69 @@ export default async function AdminEventsPage() {
 					</ul>
 				)}
 			</section>
+		</>
+	);
+}
+
+function AdminEventQueuesFallback() {
+	return (
+		<>
+			<section
+				aria-busy="true"
+				aria-labelledby="queue-title"
+				className={style.queue}
+			>
+				<header className={style.queueHeader}>
+					<div>
+						<h2 id="queue-title">Pending submissions</h2>
+					</div>
+				</header>
+				<div className={style.emptyState} role="status">
+					<div>
+						<h3>Loading submitted events…</h3>
+						<p>Checking your review access and the submission queue.</p>
+					</div>
+				</div>
+			</section>
+			<section
+				aria-busy="true"
+				aria-labelledby="changes-title"
+				className={style.queue}
+			>
+				<header className={style.queueHeader}>
+					<div>
+						<p className={style.queueEyebrow}>Published event updates</p>
+						<h2 id="changes-title">Pending changes</h2>
+					</div>
+				</header>
+				<div className={style.emptyState} role="status">
+					<div>
+						<h3>Loading proposed changes…</h3>
+						<p>Checking for edits that are waiting for review.</p>
+					</div>
+				</div>
+			</section>
+		</>
+	);
+}
+
+export default function AdminEventsPage() {
+	return (
+		<main className={style.page} id="main-content">
+			<section aria-labelledby="page-title" className={style.hero}>
+				<div className={style.heroInner}>
+					<p className={style.eyebrow}>SacTech review team</p>
+					<h1 id="page-title">Review submitted events.</h1>
+					<p>
+						Review each submission and decide whether it&apos;s ready for the
+						public SacTech calendar. Open the event link if you need more
+						context.
+					</p>
+				</div>
+			</section>
+			<Suspense fallback={<AdminEventQueuesFallback />}>
+				<AdminEventQueues />
+			</Suspense>
 		</main>
 	);
 }

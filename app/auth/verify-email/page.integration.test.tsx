@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
-import VerifyEmailPage from "./page";
+import { VerifyEmailResult } from "./verification-result";
 
 const navigationMocks = vi.hoisted(() => ({
 	redirect: vi.fn((destination: string) => {
@@ -22,9 +22,9 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-describe("VerifyEmailPage", () => {
+describe("VerifyEmailResult", () => {
 	it("redirects a successful verification callback to the account", async () => {
-		await VerifyEmailPage({ searchParams: Promise.resolve({}) }).catch(
+		await VerifyEmailResult({ searchParams: Promise.resolve({}) }).catch(
 			() => undefined,
 		);
 		expect(navigationMocks.redirect).toHaveBeenCalledWith("/account");
@@ -50,7 +50,7 @@ describe("VerifyEmailPage", () => {
 		"shows a recovery path for $error",
 		async ({ error, heading, message }) => {
 			render(
-				await VerifyEmailPage({
+				await VerifyEmailResult({
 					searchParams: Promise.resolve({ error }),
 				}),
 			);
