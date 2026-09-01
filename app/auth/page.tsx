@@ -5,6 +5,8 @@ import { getCurrentSession } from "@/lib/session";
 import { AuthForm } from "./auth-form";
 import style from "./auth-form.module.css";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Sign in or create an account",
 	description:

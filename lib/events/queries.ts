@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/db";
 import { user } from "@/db/auth-schema";
 import {
@@ -63,9 +63,14 @@ function groupByEventId<T extends { eventId: string }>(rows: T[]) {
 	return rowsByEvent;
 }
 
-async function queryApprovedEventRecords(): Promise<
+async function getCachedApprovedEventRecords(): Promise<
 	SerializedApprovedEventRecord[]
 > {
+	"use cache";
+
+	cacheLife({ revalidate: Infinity });
+	cacheTag(APPROVED_EVENTS_CACHE_TAG);
+
 	const [rows, cancellations, overrides] = await Promise.all([
 		db
 			.select({
@@ -136,15 +141,6 @@ async function queryApprovedEventRecords(): Promise<
 		startsAt: row.startsAt.toISOString(),
 	}));
 }
-
-const getCachedApprovedEventRecords = unstable_cache(
-	queryApprovedEventRecords,
-	[APPROVED_EVENTS_CACHE_TAG],
-	{
-		revalidate: false,
-		tags: [APPROVED_EVENTS_CACHE_TAG],
-	},
-);
 
 export async function getApprovedEvents(): Promise<CalendarEvent[]> {
 	const rows = await getCachedApprovedEventRecords();

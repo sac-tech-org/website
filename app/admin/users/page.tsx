@@ -6,6 +6,8 @@ import { requireAdminSession } from "@/lib/session";
 import style from "./admin-users.module.css";
 import { type ManagedUser, UserManagementCard } from "./user-management-card";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Manage users",
 	description: "Manage SacTech account roles and access.",

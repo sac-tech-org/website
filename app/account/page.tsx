@@ -17,6 +17,8 @@ import { CancelEventForm } from "./cancel-event-form";
 import { SignOutButton } from "./sign-out-button";
 import style from "./account.module.css";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Your account",
 	description: "Submit, edit, and manage events in your SacTech account.",

@@ -5,6 +5,8 @@ import style from "../auth-form.module.css";
 
 const ACCOUNT_ROUTE = "/account";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Verify your email",
 	description: "Finish verifying your SacTech account email address.",

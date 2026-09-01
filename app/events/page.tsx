@@ -5,6 +5,8 @@ import { getApprovedEvents } from "@/lib/events/queries";
 import { formatDateKey } from "./date-utils";
 import EventsPage from "./events-page";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Events",
 	description:

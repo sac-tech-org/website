@@ -10,31 +10,17 @@ import {
 import { testDatabase as database } from "@/test-support/database-client";
 
 const {
-	cacheRegistrations,
+	cacheLifeMock,
+	cacheTagMock,
 	getCurrentSessionMock,
 	revalidatePathMock,
-	unstableCacheMock,
 	updateTagMock,
 } = vi.hoisted(() => {
-	const cacheRegistrations: Array<{
-		keyParts?: string[];
-		options?: { revalidate?: number | false; tags?: string[] };
-	}> = [];
-
 	return {
-		cacheRegistrations,
+		cacheLifeMock: vi.fn(),
+		cacheTagMock: vi.fn(),
 		getCurrentSessionMock: vi.fn(),
 		revalidatePathMock: vi.fn(),
-		unstableCacheMock: vi.fn(
-			(
-				callback,
-				keyParts?: string[],
-				options?: { revalidate?: number | false; tags?: string[] },
-			) => {
-				cacheRegistrations.push({ keyParts, options });
-				return callback;
-			},
-		),
 		updateTagMock: vi.fn(),
 	};
 });
@@ -49,8 +35,9 @@ vi.mock("@/lib/session", async (importOriginal) => {
 });
 
 vi.mock("next/cache", () => ({
+	cacheLife: cacheLifeMock,
+	cacheTag: cacheTagMock,
 	revalidatePath: revalidatePathMock,
-	unstable_cache: unstableCacheMock,
 	updateTag: updateTagMock,
 }));
 
@@ -268,6 +255,8 @@ describe("event Server Actions and queries", () => {
 	});
 
 	beforeEach(async () => {
+		cacheLifeMock.mockReset();
+		cacheTagMock.mockReset();
 		getCurrentSessionMock.mockReset();
 		revalidatePathMock.mockReset();
 		updateTagMock.mockReset();
@@ -317,14 +306,13 @@ describe("event Server Actions and queries", () => {
 		expect(updateTagMock).not.toHaveBeenCalled();
 	});
 
-	it("caches approved event reads until the approved-events tag changes", () => {
-		expect(cacheRegistrations).toContainEqual({
-			keyParts: ["events:approved"],
-			options: {
-				revalidate: false,
-				tags: ["events:approved"],
-			},
-		});
+	it("caches approved event reads until the approved-events tag changes", async () => {
+		await queries.getApprovedEvents();
+
+		expect(cacheLifeMock).toHaveBeenCalledOnce();
+		expect(cacheLifeMock).toHaveBeenCalledWith({ revalidate: Infinity });
+		expect(cacheTagMock).toHaveBeenCalledOnce();
+		expect(cacheTagMock).toHaveBeenCalledWith("events:approved");
 	});
 
 	it("inserts a one-time event as one pending parent row", async () => {

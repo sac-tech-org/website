@@ -3,6 +3,8 @@ import { requireSession } from "@/lib/session";
 import { EventForm } from "./event-form";
 import style from "./event-form.module.css";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Submit an event",
 	description:

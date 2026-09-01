@@ -20,6 +20,8 @@ import { CollaboratorInviteForm } from "./collaborator-invite-form";
 import editStyle from "./edit-event.module.css";
 import formStyle from "../../submit/event-form.module.css";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Edit event",
 	description: "Propose changes to an event on the SacTech community calendar.",

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ResetPasswordForm } from "./reset-password-form";
 import style from "../auth-form.module.css";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Reset your password",
 	description: "Choose a new password for your SacTech account.",

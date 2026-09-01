@@ -11,6 +11,8 @@ import { requireEventReviewerSession } from "@/lib/session";
 import style from "./admin-events.module.css";
 import { ModerationForm } from "./moderation-form";
 
+export const instant = false;
+
 export const metadata: Metadata = {
 	title: "Review events",
 	description: "Review event submissions for the SacTech community calendar.",
