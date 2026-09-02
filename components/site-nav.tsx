@@ -21,7 +21,9 @@ export function SiteNav() {
 		<nav aria-label="Primary" className={style.nav}>
 			<ul>
 				{links.map((link) => {
-					const isCurrent = pathname === link.path;
+					const isCurrent =
+						pathname === link.path ||
+						(link.path !== "/" && pathname.startsWith(`${link.path}/`));
 
 					return (
 						<li key={link.href}>

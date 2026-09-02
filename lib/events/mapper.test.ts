@@ -163,6 +163,6 @@ describe("mapApprovedEventsToCalendar", () => {
 
 		expect(event.blocks).toHaveLength(1);
 		expect(event.recurrence_rule?.excludedDates).toEqual(["2026-09-16"]);
-		expect(event.has_event_page).toBe(false);
+		expect(event.has_event_page).toBe(true);
 	});
 });

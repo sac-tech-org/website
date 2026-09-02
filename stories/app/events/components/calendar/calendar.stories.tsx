@@ -50,6 +50,11 @@ export const SelectedOccurrence = MixedEvents.extend({
 			canvas.getByRole("region", { name: "September 15, 2026" }),
 		).toBeVisible();
 		await expect(canvas.getByText("TypeScript Hands-on Night")).toBeVisible();
+		await expect(
+			canvas.getByRole("link", {
+				name: "View event: TypeScript Hands-on Night",
+			}),
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	},
 });
 

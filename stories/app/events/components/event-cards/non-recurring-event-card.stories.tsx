@@ -28,7 +28,15 @@ const meta = preview.meta({
 	),
 });
 
-export const InPerson = meta.story({});
+export const InPerson = meta.story({
+	play: async ({ canvas }) => {
+		await expect(
+			canvas.getByRole("link", {
+				name: "View event: Sacramento Design Summit",
+			}),
+		).toHaveAttribute("href", "/events/sacramento-design-summit");
+	},
+});
 
 export const Online = InPerson.extend({
 	args: {

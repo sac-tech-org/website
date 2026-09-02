@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useMemo } from "react";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
@@ -75,16 +76,14 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 				eventTitle={event.title}
 				markdown={event.description}
 			/>
-			{event.location_url && (
-				<a
-					aria-label={`View details for ${event.title}`}
-					className={style.primaryLink}
-					href={event.location_url}
-				>
-					{event.location_description || "View event details"}
-					<span aria-hidden="true">→</span>
-				</a>
-			)}
+			<Link
+				aria-label={`View event: ${event.title}`}
+				className={style.primaryLink}
+				href={`/events/${event.slug}`}
+			>
+				View event
+				<span aria-hidden="true">→</span>
+			</Link>
 		</li>
 	);
 }

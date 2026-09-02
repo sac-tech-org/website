@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
@@ -42,11 +43,6 @@ export function RecurringEventsCard({
 	const featuredDescription = featuredBlock?.description ?? event.description;
 	const featuredInPerson = featuredBlock?.in_person ?? event.in_person;
 	const featuredIsOnline = featuredBlock?.is_online ?? event.is_online;
-	const featuredLocationDescription =
-		featuredBlock?.location_description ?? event.location_description;
-	const featuredLocationUrl = featuredBlock
-		? featuredBlock.location_url
-		: event.location_url;
 
 	return (
 		<li className={style.card}>
@@ -108,16 +104,14 @@ export function RecurringEventsCard({
 				</div>
 			)}
 
-			{featuredLocationUrl && featuredLocationDescription && (
-				<a
-					aria-label={`${featuredLocationDescription}: ${featuredTitle}`}
-					className={style.primaryLink}
-					href={featuredLocationUrl}
-				>
-					{featuredLocationDescription}
-					<span aria-hidden="true">→</span>
-				</a>
-			)}
+			<Link
+				aria-label={`View event: ${featuredTitle}`}
+				className={style.primaryLink}
+				href={`/events/${event.slug}`}
+			>
+				View event
+				<span aria-hidden="true">→</span>
+			</Link>
 		</li>
 	);
 }

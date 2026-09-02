@@ -46,9 +46,9 @@ export const OccurrenceOverride = WeeklyOnline.extend({
 		await expect(canvas.queryByText("Online")).not.toBeInTheDocument();
 		await expect(
 			canvas.getByRole("link", {
-				name: "The Urban Hive: TypeScript Hands-on Night",
+				name: "View event: TypeScript Hands-on Night",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	},
 });
 

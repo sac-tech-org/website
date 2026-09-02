@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from "dayjs";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
 	getNextOccurrence,
@@ -332,14 +333,12 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 											})}
 										</span>
 									</div>
-									{block.location_url && (
-										<a
-											aria-label={`View details for ${title}`}
-											href={block.location_url}
-										>
-											Event details
-										</a>
-									)}
+									<Link
+										aria-label={`View event: ${title}`}
+										href={`/events/${event.slug}`}
+									>
+										View event
+									</Link>
 								</li>
 							);
 						})}

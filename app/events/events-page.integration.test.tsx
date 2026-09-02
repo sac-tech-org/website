@@ -167,9 +167,9 @@ describe("public events experience", () => {
 		expect(selectedDay.getByText("10:00 AM")).toBeVisible();
 		expect(
 			selectedDay.getByRole("link", {
-				name: "View details for Sacramento TypeScript Weekly",
+				name: "View event: Sacramento TypeScript Weekly",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/details");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	});
 
 	it("places an override on its edited date with occurrence-specific details", async () => {
@@ -198,9 +198,9 @@ describe("public events experience", () => {
 		expect(selectedDay.getByText("6:30 PM")).toBeVisible();
 		expect(
 			selectedDay.getByRole("link", {
-				name: "View details for TypeScript Hands-on Night",
+				name: "View event: TypeScript Hands-on Night",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	});
 
 	it("navigates the three-month calendar window", async () => {
@@ -269,12 +269,12 @@ describe("public events experience", () => {
 		).toBeVisible();
 		expect(
 			screen.getByRole("link", {
-				name: "The Urban Hive: TypeScript Hands-on Night",
+				name: "View event: TypeScript Hands-on Night",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	});
 
-	it("renders one call to action when recurring-event links share a destination", () => {
+	it("renders one internal call to action for a recurring event", () => {
 		render(
 			<ul>
 				<RecurringEventsCard
@@ -287,11 +287,11 @@ describe("public events experience", () => {
 		const links = screen.getAllByRole("link");
 		expect(links).toHaveLength(1);
 		expect(links[0]).toHaveAccessibleName(
-			"Online: Sacramento TypeScript Weekly",
+			"View event: Sacramento TypeScript Weekly",
 		);
 		expect(links[0]).toHaveAttribute(
 			"href",
-			"https://events.example.com/details",
+			"/events/sacramento-typescript-weekly",
 		);
 	});
 

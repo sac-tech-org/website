@@ -60,6 +60,22 @@ describe("EventDescriptionMarkdown", () => {
 		).not.toHaveAttribute("href");
 	});
 
+	it("can start description headings at level three on detail pages", () => {
+		render(
+			<EventDescriptionMarkdown
+				headingStartLevel={3}
+				markdown={"# Agenda\n\n## What to bring"}
+			/>,
+		);
+
+		expect(
+			screen.getByRole("heading", { level: 3, name: "Agenda" }),
+		).toBeVisible();
+		expect(
+			screen.getByRole("heading", { level: 4, name: "What to bring" }),
+		).toBeVisible();
+	});
+
 	it("truncates the parsed Markdown tree without breaking formatting", () => {
 		const { container } = render(
 			<EventDescriptionMarkdown

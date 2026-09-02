@@ -1,0 +1,494 @@
+.page {
+	background: var(--color-cream);
+	color: var(--color-navy);
+	min-height: 100vh;
+}
+
+.hero {
+	background: var(--color-river-deep);
+	border-bottom: 0.5rem solid var(--color-bridge);
+	color: var(--color-cream);
+	position: relative;
+}
+
+.hero::after {
+	background:
+		linear-gradient(
+			45deg,
+			transparent 42%,
+			var(--color-bridge) 43% 48%,
+			transparent 49%
+		),
+		linear-gradient(
+			-45deg,
+			transparent 42%,
+			var(--color-bridge) 43% 48%,
+			transparent 49%
+		);
+	background-size: 2rem 0.5rem;
+	bottom: -0.5rem;
+	content: "";
+	height: 0.5rem;
+	left: 0;
+	opacity: 0.75;
+	position: absolute;
+	right: 0;
+}
+
+.heroInner {
+	margin: 0 auto;
+	max-width: var(--site-width);
+	padding: clamp(1.5rem, 4vw, 2.5rem) var(--site-gutter)
+		clamp(3.5rem, 7vw, 6rem);
+}
+
+.backLink {
+	align-items: center;
+	color: var(--color-cream);
+	display: inline-flex;
+	font-size: 0.9rem;
+	font-weight: 800;
+	gap: 0.55rem;
+	min-height: 2.75rem;
+	text-decoration-color: rgb(255 245 229 / 55%);
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.22em;
+}
+
+.backLink:hover {
+	color: var(--color-bridge);
+	text-decoration-color: currentColor;
+}
+
+.backLink:focus-visible {
+	outline-color: var(--color-bridge);
+}
+
+.heroLayout {
+	align-items: center;
+	display: grid;
+	gap: clamp(2rem, 7vw, 6rem);
+	grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.48fr);
+	margin-top: clamp(1.5rem, 4vw, 3rem);
+}
+
+.heroCopy {
+	max-width: 48rem;
+}
+
+.eyebrow,
+.sectionEyebrow,
+.occurrenceEyebrow {
+	font-size: 0.76rem;
+	font-weight: 850;
+	letter-spacing: 0.14em;
+	margin: 0 0 0.75rem;
+	text-transform: uppercase;
+}
+
+.eyebrow {
+	color: var(--color-bridge);
+}
+
+.hero h1 {
+	font-family: var(--font-display);
+	font-size: clamp(3rem, 7vw, 5.8rem);
+	letter-spacing: -0.065em;
+	line-height: 0.94;
+	margin: 0;
+	max-width: 14ch;
+	overflow-wrap: anywhere;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+	list-style: none;
+	margin: 1.75rem 0 0;
+	padding: 0;
+}
+
+.chips > li > span {
+	background: var(--color-paper);
+	border-color: var(--color-paper);
+	color: var(--color-navy);
+}
+
+.bridgeMark {
+	background:
+		linear-gradient(
+			45deg,
+			transparent 46%,
+			rgb(242 171 24 / 62%) 47% 50%,
+			transparent 51%
+		),
+		linear-gradient(
+			-45deg,
+			transparent 46%,
+			rgb(242 171 24 / 62%) 47% 50%,
+			transparent 51%
+		);
+	background-size: 5rem 5rem;
+	border: 1px solid rgb(242 171 24 / 60%);
+	box-shadow: 0.85rem 0.85rem 0 rgb(3 31 63 / 48%);
+	height: clamp(12rem, 22vw, 17rem);
+	min-width: 0;
+	overflow: hidden;
+	position: relative;
+}
+
+.bridgeMark::after {
+	background: repeating-linear-gradient(
+		to bottom,
+		transparent 0 0.8rem,
+		rgb(255 245 229 / 16%) 0.8rem 0.95rem
+	);
+	bottom: 0.8rem;
+	content: "";
+	height: 2.5rem;
+	left: 0;
+	position: absolute;
+	right: 0;
+}
+
+.bridgeDeck,
+.bridgeTowerLeft,
+.bridgeTowerRight {
+	background: var(--color-bridge);
+	display: block;
+	position: absolute;
+}
+
+.bridgeDeck {
+	bottom: 3.75rem;
+	height: 0.6rem;
+	left: 8%;
+	right: 8%;
+}
+
+.bridgeTowerLeft,
+.bridgeTowerRight {
+	bottom: 3.75rem;
+	height: 62%;
+	width: clamp(0.7rem, 1.5vw, 1rem);
+}
+
+.bridgeTowerLeft {
+	left: 25%;
+}
+
+.bridgeTowerRight {
+	right: 25%;
+}
+
+.content,
+.loadingContent {
+	display: grid;
+	gap: clamp(2rem, 5vw, 4.5rem);
+	grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.65fr);
+	margin: 0 auto;
+	max-width: var(--site-width);
+	padding: clamp(3.5rem, 7vw, 6rem) var(--site-gutter) var(--section-space);
+}
+
+.primaryColumn {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(3.5rem, 7vw, 6rem);
+	min-width: 0;
+}
+
+.about {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.4rem solid var(--color-bridge);
+	padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.sectionEyebrow,
+.occurrenceEyebrow {
+	color: var(--color-bridge-deep);
+}
+
+.about h2,
+.schedule h2,
+.detailsCard h2,
+.scheduleItem h3,
+.loadingPanel h2,
+.loadingCard h2 {
+	font-family: var(--font-display);
+	letter-spacing: -0.045em;
+	line-height: 1.05;
+}
+
+.about h2,
+.schedule h2 {
+	font-size: clamp(2rem, 4vw, 3.5rem);
+	margin: 0;
+}
+
+.description {
+	color: var(--color-ink-muted);
+	font-size: clamp(1rem, 1.8vw, 1.12rem);
+	line-height: 1.7;
+	margin-top: 1.5rem;
+	max-width: 68ch;
+}
+
+.schedule {
+	min-width: 0;
+}
+
+.scheduleHeader {
+	border-left: 0.4rem solid var(--color-bridge);
+	padding-left: 1rem;
+}
+
+.recurrenceSummary {
+	background: rgb(5 99 106 / 9%);
+	border: 1px solid rgb(5 99 106 / 32%);
+	border-left: 0.4rem solid var(--color-river);
+	color: var(--color-river-deep);
+	font-weight: 800;
+	line-height: 1.55;
+	margin: 1.5rem 0 0;
+	padding: 1rem 1.15rem;
+}
+
+.scheduleList {
+	display: grid;
+	gap: 1rem;
+	list-style: none;
+	margin: 1.5rem 0 0;
+	padding: 0;
+}
+
+.scheduleItem {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.3rem solid var(--color-bridge);
+	min-width: 0;
+	padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.occurrenceEyebrow {
+	font-size: 0.68rem;
+	margin-bottom: 0.55rem;
+}
+
+.scheduleItem h3 {
+	font-size: clamp(1.35rem, 3vw, 2rem);
+	margin: 0;
+}
+
+.scheduleFacts {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin: 1.35rem 0 0;
+}
+
+.scheduleFacts > div:last-child {
+	grid-column: 1 / -1;
+}
+
+.scheduleFacts dt,
+.detailsList dt {
+	color: var(--color-bridge-deep);
+	font-size: 0.68rem;
+	font-weight: 850;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.scheduleFacts dd,
+.detailsList dd {
+	color: var(--color-navy);
+	font-weight: 700;
+	line-height: 1.55;
+	margin: 0.3rem 0 0;
+	overflow-wrap: anywhere;
+}
+
+.scheduleFacts dd {
+	font-size: 0.9rem;
+}
+
+.address {
+	color: var(--color-ink-muted);
+	font-style: normal;
+	font-weight: 500;
+	margin-top: 0.15rem;
+}
+
+.occurrenceDescription {
+	border-top: 1px solid var(--color-line);
+	color: var(--color-ink-muted);
+	font-size: 0.94rem;
+	line-height: 1.65;
+	margin-top: 1.35rem;
+	padding-top: 1.25rem;
+}
+
+.occurrenceLink {
+	align-items: center;
+	color: var(--color-river-deep);
+	display: inline-flex;
+	font-size: 0.9rem;
+	font-weight: 800;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	min-height: 2.75rem;
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.2em;
+}
+
+.occurrenceLink:hover {
+	color: var(--color-poppy-deep);
+}
+
+.scheduleUnavailable {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	color: var(--color-ink-muted);
+	line-height: 1.65;
+	margin: 1.5rem 0 0;
+	padding: 1.25rem;
+}
+
+.aside {
+	min-width: 0;
+}
+
+.detailsCard {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.4rem solid var(--color-bridge);
+	padding: clamp(1.35rem, 3vw, 2rem);
+	position: sticky;
+	top: 1.5rem;
+}
+
+.detailsCard h2 {
+	font-size: clamp(1.6rem, 3vw, 2.25rem);
+	margin: 0;
+}
+
+.detailsList {
+	margin: 1.5rem 0 0;
+}
+
+.detailsList > div {
+	border-top: 1px solid var(--color-line);
+	padding: 1rem 0;
+}
+
+.detailsList > div:last-child {
+	padding-bottom: 0;
+}
+
+.detailsList dd {
+	font-size: 0.94rem;
+}
+
+.detailsList dd > span,
+.detailsList dd > address,
+.scheduleFacts dd > span,
+.scheduleFacts dd > address {
+	display: block;
+}
+
+.primaryLink {
+	align-items: center;
+	background: var(--color-poppy-deep);
+	border-radius: var(--radius-small);
+	color: var(--color-paper);
+	display: inline-flex;
+	font-weight: 850;
+	gap: 0.65rem;
+	justify-content: center;
+	margin-top: 1.5rem;
+	min-height: 3rem;
+	padding: 0.7rem 1.1rem;
+	text-decoration: none;
+	width: 100%;
+}
+
+.primaryLink:hover {
+	background: var(--color-river);
+}
+
+.loadingIntro {
+	color: rgb(255 245 229 / 82%);
+	font-size: 1.05rem;
+	line-height: 1.65;
+	margin: 1.4rem 0 0;
+	max-width: 38rem;
+}
+
+.loadingPanel,
+.loadingCard {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.4rem solid var(--color-bridge);
+	min-height: 16rem;
+	padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.loadingPanel h2,
+.loadingCard h2 {
+	font-size: clamp(1.6rem, 3vw, 2.5rem);
+	margin: 0;
+}
+
+.loadingPanel > p:last-child {
+	color: var(--color-ink-muted);
+	line-height: 1.65;
+	margin: 1rem 0 0;
+}
+
+@media (max-width: 60rem) {
+	.heroLayout {
+		grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.38fr);
+	}
+
+	.content,
+	.loadingContent {
+		gap: 2rem;
+		grid-template-columns: minmax(0, 1.3fr) minmax(15rem, 0.7fr);
+	}
+}
+
+@media (max-width: 48rem) {
+	.heroLayout,
+	.content,
+	.loadingContent {
+		grid-template-columns: 1fr;
+	}
+
+	.bridgeMark {
+		max-width: 34rem;
+	}
+
+	.detailsCard {
+		position: static;
+	}
+
+	.detailsList {
+		display: grid;
+		gap: 0 1.25rem;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 34rem) {
+	.scheduleFacts,
+	.detailsList {
+		grid-template-columns: 1fr;
+	}
+
+	.scheduleFacts > div:last-child {
+		grid-column: auto;
+	}
+}

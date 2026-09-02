@@ -128,10 +128,7 @@ export function mapApprovedEventsToCalendar(
 				}),
 			],
 			description: row.description,
-			has_event_page: Boolean(
-				row.eventUrl ||
-				occurrenceOverrides.some((override) => override.eventUrl),
-			),
+			has_event_page: true,
 			in_person: attendance.inPerson || hasInPersonOccurrence,
 			is_online: attendance.isOnline || hasOnlineOccurrence,
 			is_recurring: recurrenceRule !== null,
