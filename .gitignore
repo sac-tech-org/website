@@ -45,3 +45,7 @@ next-env.d.ts
 # IDEs
 .vscode/
 .idea/
+
+.pnpm-store/
+*storybook.log
+storybook-static

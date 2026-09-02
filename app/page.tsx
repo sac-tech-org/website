@@ -9,7 +9,11 @@ export const metadata: Metadata = {
 		"Meet people, share what you know, and find technology events around Sacramento.",
 };
 
-export default function Home() {
+interface HomePageProps {
+	inviteLink?: string;
+}
+
+export function HomePage({ inviteLink }: HomePageProps) {
 	return (
 		<main className={style.page} id="main-content">
 			<section className={style.hero}>
@@ -119,9 +123,13 @@ export default function Home() {
 							in the local community.
 						</p>
 					</div>
-					<JoinCommunity inviteLink={process.env.NEXT_PUBLIC_INVITE_LINK} />
+					<JoinCommunity inviteLink={inviteLink} />
 				</div>
 			</section>
 		</main>
 	);
+}
+
+export default function Home() {
+	return <HomePage inviteLink={process.env.NEXT_PUBLIC_INVITE_LINK} />;
 }

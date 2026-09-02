@@ -18,12 +18,14 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build-storybook && pnpm build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "netlify database migrations apply",
     "db:status": "netlify database status",
     "auth:generate": "BETTER_AUTH_SCHEMA_GENERATION=1 auth generate --config ./lib/auth-config.ts --output ./db/auth-schema.ts --yes",
-    "auth:create-admin": "auth create-admin --config ./lib/auth-config.ts"
+    "auth:create-admin": "auth create-admin --config ./lib/auth-config.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.1",
@@ -61,8 +63,8 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^6.0.5",
-    "@vitest/browser": "5.0.0-beta.7",
-    "@vitest/browser-playwright": "5.0.0-beta.7",
+    "@vitest/browser": "5.0.0-rc.4",
+    "@vitest/browser-playwright": "5.0.0-rc.4",
     "auth": "^1.7.1",
     "drizzle-kit": "1.0.0-rc.4",
     "eslint": "^9.31.0",
@@ -73,6 +75,10 @@
     "prettier": "3.9.6",
     "typescript": "^6.0.3",
     "vite": "^8.2.1",
-    "vitest": "5.0.0-beta.7"
+    "vitest": "5.0.0-rc.4",
+    "storybook": "^10.5.10",
+    "@storybook/nextjs-vite": "^10.5.10",
+    "@storybook/addon-mcp": "^0.7.0",
+    "eslint-plugin-storybook": "^10.5.10"
   }
 }
