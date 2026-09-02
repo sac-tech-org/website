@@ -141,6 +141,21 @@
 	text-transform: uppercase;
 }
 
+.headerImage {
+	aspect-ratio: 16 / 9;
+	background: var(--color-cream);
+	border: 1px solid var(--color-line);
+	margin-top: 2rem;
+	overflow: hidden;
+}
+
+.headerImage img {
+	display: block;
+	height: 100%;
+	object-fit: cover;
+	width: 100%;
+}
+
 .details {
 	display: grid;
 	gap: 0;

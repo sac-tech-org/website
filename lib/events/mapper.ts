@@ -3,12 +3,14 @@ import type {
 	RecurrenceRule,
 } from "@/app/events/types";
 import type { EventMode } from "@/db/schema";
+import { eventHeaderImagePath } from "@/lib/events/header-image-constraints";
 
 export interface ApprovedEventRecord {
 	canceledOccurrenceDates: string[];
 	description: string;
 	endsAt: Date;
 	eventUrl: string | null;
+	headerImageKey: string | null;
 	id: string;
 	locationAddress: string | null;
 	locationName: string | null;
@@ -57,6 +59,9 @@ export function mapApprovedEventsToCalendar(
 			row.locationName,
 		);
 		const attendance = getAttendance(row.mode);
+		const bannerImage = row.headerImageKey
+			? eventHeaderImagePath(row.id, row.headerImageKey)
+			: undefined;
 		const canceledOccurrenceDates = new Set(row.canceledOccurrenceDates);
 		const occurrenceOverrides = row.occurrenceOverrides.filter(
 			(override) => !canceledOccurrenceDates.has(override.occurrenceDate),
@@ -89,8 +94,10 @@ export function mapApprovedEventsToCalendar(
 				: null;
 
 		return {
+			banner_image: bannerImage,
 			blocks: [
 				{
+					banner_image: bannerImage,
 					description: row.description,
 					ends_at: row.endsAt,
 					in_person: attendance.inPerson,

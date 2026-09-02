@@ -1,5 +1,6 @@
 export type EventFormField =
 	| "title"
+	| "headerImage"
 	| "description"
 	| "startsAt"
 	| "endsAt"

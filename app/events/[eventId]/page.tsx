@@ -7,9 +7,9 @@ import { EventDescriptionMarkdown } from "@/components/event-description-markdow
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
 import { getApprovedEvents } from "@/lib/events/queries";
 import { formatDateInTimeZone, formatDateKey } from "../date-utils";
-import { EventChip } from "../components/event-chip/event-chip";
 import type { Event, EventBlock } from "../types";
 import style from "./event-detail.module.css";
+import { EventHeader } from "./event-header";
 
 export const metadata: Metadata = {
 	title: "Event details",
@@ -122,49 +122,14 @@ export function EventDetails({ event }: { event: Event }) {
 
 	return (
 		<main className={style.page} id="main-content">
-			<section aria-labelledby="event-title" className={style.hero}>
-				<div className={style.heroInner}>
-					<Link className={style.backLink} href="/events">
-						<span aria-hidden="true">←</span> Back to all events
-					</Link>
-
-					<div className={style.heroLayout}>
-						<div className={style.heroCopy}>
-							<p className={style.eyebrow}>
-								{event.is_recurring ? "Recurring event" : "Special event"}
-							</p>
-							<h1 id="event-title">{event.title}</h1>
-							<ul aria-label="Event type" className={style.chips} role="list">
-								{event.in_person && (
-									<li>
-										<EventChip size="default" variant="in-person" />
-									</li>
-								)}
-								{event.is_online && (
-									<li>
-										<EventChip size="default" variant="online" />
-									</li>
-								)}
-								{event.recurrence_rule?.interval === 1 && (
-									<li>
-										<EventChip
-											every={event.recurrence_rule.frequency}
-											size="default"
-											variant="recurring"
-										/>
-									</li>
-								)}
-							</ul>
-						</div>
-
-						<div aria-hidden="true" className={style.bridgeMark}>
-							<span className={style.bridgeDeck} />
-							<span className={style.bridgeTowerLeft} />
-							<span className={style.bridgeTowerRight} />
-						</div>
-					</div>
-				</div>
-			</section>
+			<EventHeader
+				imageUrl={event.banner_image}
+				inPerson={event.in_person}
+				isOnline={event.is_online}
+				isRecurring={event.is_recurring}
+				recurrenceRule={event.recurrence_rule}
+				title={event.title}
+			/>
 
 			<div className={style.content}>
 				<div className={style.primaryColumn}>
@@ -349,11 +314,6 @@ function EventDetailsFallback() {
 							<p className={style.loadingIntro}>
 								The latest approved event information will be ready in a moment.
 							</p>
-						</div>
-						<div aria-hidden="true" className={style.bridgeMark}>
-							<span className={style.bridgeDeck} />
-							<span className={style.bridgeTowerLeft} />
-							<span className={style.bridgeTowerRight} />
 						</div>
 					</div>
 				</div>

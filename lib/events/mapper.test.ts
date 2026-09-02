@@ -9,6 +9,7 @@ const baseEvent: ApprovedEventRecord = {
 	description: "A community event.",
 	endsAt: new Date("2026-09-02T03:00:00.000Z"),
 	eventUrl: "https://example.com/event",
+	headerImageKey: null,
 	id: "25c46a15-483e-46b8-8fc2-50ead29510dc",
 	locationAddress: "100 Capitol Mall",
 	locationName: "Community Hall",
@@ -46,6 +47,20 @@ describe("mapApprovedEventsToCalendar", () => {
 		expect(event).not.toHaveProperty("submittedBy");
 		expect(event).not.toHaveProperty("moderationNote");
 		expect(event.blocks[0].location_url).toBe(baseEvent.eventUrl);
+	});
+
+	it("maps a stored header image to its versioned public route", () => {
+		const [event] = mapApprovedEventsToCalendar([
+			{
+				...baseEvent,
+				headerImageKey: "00000000-0000-4000-8000-000000000002",
+			},
+		]);
+
+		expect(event.banner_image).toBe(
+			"/event-images/25c46a15-483e-46b8-8fc2-50ead29510dc/00000000-0000-4000-8000-000000000002",
+		);
+		expect(event.blocks[0].banner_image).toBe(event.banner_image);
 	});
 
 	it("maps a public recurrence rule without moderation data", () => {

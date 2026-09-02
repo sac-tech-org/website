@@ -18,6 +18,11 @@ import { roleHasEventPermission } from "@/lib/auth-permissions";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
 import { APPROVED_EVENTS_CACHE_TAG } from "@/lib/events/cache";
 import {
+	deleteEventHeaderImage,
+	InvalidEventHeaderImageError,
+	uploadEventHeaderImage,
+} from "@/lib/events/header-image";
+import {
 	getCurrentSession,
 	sessionCanCancelOwnEvents,
 	sessionCanReviewEvents,
@@ -157,14 +162,21 @@ export async function submitEvent(
 		};
 	}
 
+	let uploadedHeaderImageKey: string | null = null;
+
 	try {
-		const { recurrence, ...eventValues } = validation.data;
+		const { headerImage, recurrence, ...eventValues } = validation.data;
+
+		if (headerImage) {
+			uploadedHeaderImageKey = await uploadEventHeaderImage(headerImage);
+		}
 
 		await db.transaction(async (transaction) => {
 			const [createdEvent] = await transaction
 				.insert(event)
 				.values({
 					...eventValues,
+					headerImageKey: uploadedHeaderImageKey,
 					status: "pending",
 					submittedBy: session.user.id,
 					timezone: SACRAMENTO_TIME_ZONE,
@@ -183,6 +195,25 @@ export async function submitEvent(
 			}
 		});
 	} catch (error) {
+		if (uploadedHeaderImageKey) {
+			try {
+				await deleteEventHeaderImage(uploadedHeaderImageKey);
+			} catch (cleanupError) {
+				console.error(
+					"Unable to clean up an unassociated event header image",
+					cleanupError,
+				);
+			}
+		}
+
+		if (error instanceof InvalidEventHeaderImageError) {
+			return {
+				status: "error",
+				message: "Check the highlighted fields and try again.",
+				errors: { headerImage: [error.message] },
+			};
+		}
+
 		console.error("Unable to save event submission", error);
 		return {
 			status: "error",
@@ -411,7 +442,19 @@ export async function requestEventEdit(
 				} satisfies EventFormState;
 			}
 
-			const { recurrence, ...eventValues } = validation.data;
+			const { headerImage, recurrence, ...eventValues } = validation.data;
+
+			if (headerImage) {
+				return {
+					status: "error",
+					message: "Header images can only be added with a new event.",
+					errors: {
+						headerImage: [
+							"Header images cannot be changed from the event editor yet.",
+						],
+					},
+				} satisfies EventFormState;
+			}
 
 			if (
 				target.data.scope === "series" &&

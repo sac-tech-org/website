@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
 	createRecurringEventWithOverride,
@@ -16,6 +16,7 @@ describe("EventDetails", () => {
 		render(
 			<EventDetails
 				event={createSpecialEvent({
+					banner_image: "/events/design-summit/header-image",
 					description: "# Agenda\n\nMeet Sacramento designers and builders.",
 				})}
 			/>,
@@ -35,6 +36,10 @@ describe("EventDetails", () => {
 		).toBeVisible();
 		expect(screen.getAllByText("123 J Street, Sacramento, CA")).toHaveLength(2);
 		expect(screen.getAllByText("Saturday, September 5, 2026")).toHaveLength(2);
+		expect(screen.getByAltText("")).toHaveAttribute(
+			"src",
+			"/events/design-summit/header-image",
+		);
 
 		const externalLink = screen.getByRole("link", {
 			name: "Visit event page",
@@ -45,6 +50,29 @@ describe("EventDetails", () => {
 		);
 		expect(externalLink).toHaveAttribute("target", "_blank");
 		expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
+	});
+
+	it("does not render image markup when an event has no header image", () => {
+		const { container } = render(
+			<EventDetails event={createSpecialEvent({ banner_image: undefined })} />,
+		);
+
+		expect(container.querySelector("img")).not.toBeInTheDocument();
+	});
+
+	it("collapses the image region when the header image cannot load", () => {
+		const { container } = render(
+			<EventDetails
+				event={createSpecialEvent({
+					banner_image: "/events/design-summit/missing-header-image",
+				})}
+			/>,
+		);
+		const image = container.querySelector("img");
+
+		expect(image).toBeInTheDocument();
+		fireEvent.error(image as HTMLImageElement);
+		expect(container.querySelector("img")).not.toBeInTheDocument();
 	});
 
 	it("explains a recurring schedule without inventing future occurrences", () => {

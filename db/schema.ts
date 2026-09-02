@@ -74,6 +74,7 @@ export const event = pgTable(
 		locationName: varchar("location_name", { length: 200 }),
 		locationAddress: text("location_address"),
 		eventUrl: text("event_url"),
+		headerImageKey: uuid("header_image_key"),
 		status: eventStatus("status").default("pending").notNull(),
 		moderationNote: varchar("moderation_note", { length: 500 }),
 		reviewedBy: text("reviewed_by").references(() => user.id, {

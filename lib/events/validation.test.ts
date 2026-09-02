@@ -107,6 +107,45 @@ describe("validateEventSubmission", () => {
 		expect(result.data).not.toHaveProperty("reviewedBy");
 	});
 
+	it("accepts an optional raster header image", () => {
+		const formData = validFormData();
+		const image = new File(
+			[new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
+			"header.png",
+			{
+				type: "image/png",
+			},
+		);
+		formData.set("headerImage", image);
+
+		const result = validateEventSubmission(formData);
+
+		expect(result.errors).toBeUndefined();
+		expect(result.data?.headerImage).toBe(image);
+	});
+
+	it("rejects unsupported and oversized header images", () => {
+		const unsupportedForm = validFormData();
+		unsupportedForm.set(
+			"headerImage",
+			new File(["<svg />"], "header.svg", { type: "image/svg+xml" }),
+		);
+		const oversizedForm = validFormData();
+		oversizedForm.set(
+			"headerImage",
+			new File([new Uint8Array(3 * 1024 * 1024 + 1)], "header.png", {
+				type: "image/png",
+			}),
+		);
+
+		expect(
+			validateEventSubmission(unsupportedForm).errors?.headerImage,
+		).toContain("Choose an AVIF, JPEG, PNG, or WebP image.");
+		expect(
+			validateEventSubmission(oversizedForm).errors?.headerImage,
+		).toContain("Keep the image under 3 MB.");
+	});
+
 	it("normalizes a weekly recurrence rule in Pacific time", () => {
 		const formData = recurringFormData();
 		formData.append("recurrenceWeekdays", "2");

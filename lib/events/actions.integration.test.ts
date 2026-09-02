@@ -12,18 +12,28 @@ import { testDatabase as database } from "@/test-support/database-client";
 const {
 	cacheLifeMock,
 	cacheTagMock,
+	deleteEventHeaderImageMock,
 	getCurrentSessionMock,
 	revalidatePathMock,
+	uploadEventHeaderImageMock,
 	updateTagMock,
 } = vi.hoisted(() => {
 	return {
 		cacheLifeMock: vi.fn(),
 		cacheTagMock: vi.fn(),
+		deleteEventHeaderImageMock: vi.fn(),
 		getCurrentSessionMock: vi.fn(),
 		revalidatePathMock: vi.fn(),
+		uploadEventHeaderImageMock: vi.fn(),
 		updateTagMock: vi.fn(),
 	};
 });
+
+vi.mock("@/lib/events/header-image", () => ({
+	deleteEventHeaderImage: deleteEventHeaderImageMock,
+	InvalidEventHeaderImageError: class InvalidEventHeaderImageError extends Error {},
+	uploadEventHeaderImage: uploadEventHeaderImageMock,
+}));
 
 vi.mock("@/lib/session", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@/lib/session")>();
@@ -74,6 +84,7 @@ interface SubmissionOptions {
 	description?: string;
 	startsAt?: string;
 	endsAt?: string;
+	headerImage?: File;
 	recurring?: boolean;
 	weekday?: number;
 	title: string;
@@ -83,6 +94,7 @@ function submissionForm({
 	description = "A detailed Sacramento technology community event for integration testing.",
 	startsAt = "2026-09-01T18:00",
 	endsAt = "2026-09-01T20:00",
+	headerImage,
 	recurring = false,
 	weekday = 2,
 	title,
@@ -96,6 +108,10 @@ function submissionForm({
 	formData.set("locationName", "");
 	formData.set("locationAddress", "");
 	formData.set("eventUrl", "https://example.com/sacramento-event");
+
+	if (headerImage) {
+		formData.set("headerImage", headerImage);
+	}
 
 	if (recurring) {
 		formData.set("recurring", "on");
@@ -257,8 +273,10 @@ describe("event Server Actions and queries", () => {
 	beforeEach(async () => {
 		cacheLifeMock.mockReset();
 		cacheTagMock.mockReset();
+		deleteEventHeaderImageMock.mockReset();
 		getCurrentSessionMock.mockReset();
 		revalidatePathMock.mockReset();
+		uploadEventHeaderImageMock.mockReset();
 		updateTagMock.mockReset();
 		await database.exec(`DELETE FROM "event"`);
 	});
@@ -358,6 +376,32 @@ describe("event Server Actions and queries", () => {
 			["/account"],
 			["/admin/events"],
 		]);
+	});
+
+	it("associates an uploaded header image with a new pending event", async () => {
+		const imageKey = "00000000-0000-4000-8000-000000000099";
+		const image = new File(
+			[new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+			"event-header.png",
+			{ type: "image/png" },
+		);
+		uploadEventHeaderImageMock.mockResolvedValue(imageKey);
+		getCurrentSessionMock.mockResolvedValue(session(OWNER_ID));
+
+		const result = await actions.submitEvent(
+			idleState,
+			submissionForm({ headerImage: image, title: "Event With Header" }),
+		);
+		const stored = await database.query<{ header_image_key: string }>(`
+			SELECT header_image_key
+			FROM "event"
+			WHERE title = 'Event With Header'
+		`);
+
+		expect(result).toMatchObject({ status: "success" });
+		expect(uploadEventHeaderImageMock).toHaveBeenCalledWith(image);
+		expect(stored.rows).toEqual([{ header_image_key: imageKey }]);
+		expect(deleteEventHeaderImageMock).not.toHaveBeenCalled();
 	});
 
 	it("inserts one recurring parent and one recurrence rule transactionally", async () => {

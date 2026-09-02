@@ -62,7 +62,9 @@ function getSubmittedFormData(callIndex = 0) {
 		throw new TypeError("submitEvent did not receive FormData.");
 	}
 
-	return Array.from(formData.entries());
+	return Array.from(formData.entries()).filter(
+		([, value]) => !(value instanceof File && value.size === 0),
+	);
 }
 
 function getDescriptionEditor() {
@@ -144,6 +146,26 @@ describe("EventForm", () => {
 
 		expect(serverActions.submitEvent).toHaveBeenCalledTimes(1);
 		expect(getSubmittedFormData()).toEqual(eventEntries());
+	});
+
+	it("optionally submits a header image with a new event", async () => {
+		const user = userEvent.setup();
+		const image = new File(
+			[new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])],
+			"event-header.png",
+			{ type: "image/png" },
+		);
+		render(<EventForm />);
+		await fillRequiredEventFields(user);
+		await user.upload(screen.getByLabelText("Header image"), image);
+
+		await submitAndWaitForSuccess(user);
+
+		expect(getSubmittedFormData()).toEqual([
+			...eventEntries().slice(0, 1),
+			["headerImage", image],
+			...eventEntries().slice(1),
+		]);
 	});
 
 	it("serializes rich-text formatting as Markdown", async () => {

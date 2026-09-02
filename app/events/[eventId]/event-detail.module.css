@@ -65,11 +65,14 @@
 }
 
 .heroLayout {
+	margin-top: clamp(1.5rem, 4vw, 3rem);
+}
+
+.heroLayoutWithImage {
 	align-items: center;
 	display: grid;
 	gap: clamp(2rem, 7vw, 6rem);
 	grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.48fr);
-	margin-top: clamp(1.5rem, 4vw, 3rem);
 }
 
 .heroCopy {
@@ -115,71 +118,15 @@
 	color: var(--color-navy);
 }
 
-.bridgeMark {
-	background:
-		linear-gradient(
-			45deg,
-			transparent 46%,
-			rgb(242 171 24 / 62%) 47% 50%,
-			transparent 51%
-		),
-		linear-gradient(
-			-45deg,
-			transparent 46%,
-			rgb(242 171 24 / 62%) 47% 50%,
-			transparent 51%
-		);
-	background-size: 5rem 5rem;
+.heroImage {
+	aspect-ratio: 1;
 	border: 1px solid rgb(242 171 24 / 60%);
 	box-shadow: 0.85rem 0.85rem 0 rgb(3 31 63 / 48%);
-	height: clamp(12rem, 22vw, 17rem);
-	min-width: 0;
-	overflow: hidden;
-	position: relative;
-}
-
-.bridgeMark::after {
-	background: repeating-linear-gradient(
-		to bottom,
-		transparent 0 0.8rem,
-		rgb(255 245 229 / 16%) 0.8rem 0.95rem
-	);
-	bottom: 0.8rem;
-	content: "";
-	height: 2.5rem;
-	left: 0;
-	position: absolute;
-	right: 0;
-}
-
-.bridgeDeck,
-.bridgeTowerLeft,
-.bridgeTowerRight {
-	background: var(--color-bridge);
 	display: block;
-	position: absolute;
-}
-
-.bridgeDeck {
-	bottom: 3.75rem;
-	height: 0.6rem;
-	left: 8%;
-	right: 8%;
-}
-
-.bridgeTowerLeft,
-.bridgeTowerRight {
-	bottom: 3.75rem;
-	height: 62%;
-	width: clamp(0.7rem, 1.5vw, 1rem);
-}
-
-.bridgeTowerLeft {
-	left: 25%;
-}
-
-.bridgeTowerRight {
-	right: 25%;
+	height: auto;
+	max-height: 24rem;
+	object-fit: cover;
+	width: 100%;
 }
 
 .content,
@@ -449,7 +396,7 @@
 }
 
 @media (max-width: 60rem) {
-	.heroLayout {
+	.heroLayoutWithImage {
 		grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.38fr);
 	}
 
@@ -461,13 +408,13 @@
 }
 
 @media (max-width: 48rem) {
-	.heroLayout,
+	.heroLayoutWithImage,
 	.content,
 	.loadingContent {
 		grid-template-columns: 1fr;
 	}
 
-	.bridgeMark {
+	.heroImage {
 		max-width: 34rem;
 	}
 
