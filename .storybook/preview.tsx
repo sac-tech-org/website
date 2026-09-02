@@ -20,6 +20,9 @@ export default definePreview({
 			},
 		},
 		layout: "fullscreen",
+		react: {
+			rsc: true,
+		},
 		nextjs: {
 			appDirectory: true,
 		},
