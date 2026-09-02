@@ -1,5 +1,5 @@
 import { within } from "@testing-library/dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
@@ -127,6 +127,41 @@ function specialEvent(): Event {
 }
 
 describe("public events experience", () => {
+	it("shows configured event images without reserving a placeholder", () => {
+		render(
+			<EventsPage
+				events={[
+					recurringEvent({ banner_image: "/event-images/recurring/header" }),
+					specialEvent(),
+				]}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		const recurringCard = screen
+			.getByRole("link", {
+				name: "View event: Sacramento TypeScript Weekly",
+			})
+			.closest("li");
+		const specialCard = screen
+			.getByRole("link", {
+				name: "View event: Sacramento Design Summit",
+			})
+			.closest("li");
+		const image = recurringCard?.querySelector("img");
+
+		if (!recurringCard || !specialCard || !image) {
+			throw new Error("Expected both event cards and the configured image.");
+		}
+
+		expect(image).toHaveAttribute("alt", "");
+		expect(image).toHaveAttribute("src", "/event-images/recurring/header");
+		expect(specialCard.querySelector("img")).not.toBeInTheDocument();
+
+		fireEvent.error(image);
+		expect(recurringCard.querySelector("img")).not.toBeInTheDocument();
+	});
+
 	it("expands a series, omits its canceled date, and shows selected-day details", async () => {
 		const user = userEvent.setup();
 

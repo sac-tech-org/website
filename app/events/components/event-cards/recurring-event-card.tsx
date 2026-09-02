@@ -3,6 +3,7 @@ import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
 import { EventChip } from "../event-chip/event-chip";
+import { EventCardImage } from "./event-card-image";
 import type { RecurringEventsCardProps } from "./types";
 import style from "./recurring-event-card.module.css";
 
@@ -46,6 +47,7 @@ export function RecurringEventsCard({
 
 	return (
 		<li className={style.card}>
+			<EventCardImage imageUrl={event.banner_image} />
 			<div className={style.cardTopline}>
 				<span aria-hidden="true" className={style.accentMark} />
 				<span>Recurring</span>

@@ -4,9 +4,55 @@ import style from "@/app/events/events-page.module.css";
 import type { Event } from "@/app/events/types";
 import { BridgeArt } from "@/components/bridge-art";
 import {
+	createRecurringEvent,
+	createSpecialEvent,
 	EVENT_STORY_REFERENCE_DATE,
 	MIXED_EVENTS,
 } from "@/stories/fixtures/events";
+import { expect } from "storybook/test";
+
+const eventImageUrl = "/images/opengraph/sactech-sticker.png";
+const eventTitles = [
+	"Sacramento TypeScript Weekly",
+	"Sacramento AI Builders",
+	"Sacramento Design Summit",
+	"Civic Tech Demo Night",
+] as const;
+
+function createImageScenario(
+	imagePresence: [boolean, boolean, boolean, boolean],
+) {
+	return [
+		createRecurringEvent({
+			banner_image: imagePresence[0] ? eventImageUrl : undefined,
+			slug: "sacramento-typescript-weekly",
+			title: eventTitles[0],
+		}),
+		createRecurringEvent({
+			banner_image: imagePresence[1] ? eventImageUrl : undefined,
+			description: "Build useful AI projects with Sacramento technologists.",
+			slug: "sacramento-ai-builders",
+			title: eventTitles[1],
+		}),
+		createSpecialEvent({
+			banner_image: imagePresence[2] ? eventImageUrl : undefined,
+			slug: "sacramento-design-summit",
+			title: eventTitles[2],
+		}),
+		createSpecialEvent({
+			banner_image: imagePresence[3] ? eventImageUrl : undefined,
+			description: "See practical civic technology projects from local teams.",
+			slug: "civic-tech-demo-night",
+			title: eventTitles[3],
+		}),
+	].map((event) => ({
+		...event,
+		blocks: event.blocks.map((block, index) => ({
+			...block,
+			slug: `${event.slug}-${index + 1}`,
+		})),
+	}));
+}
 
 interface EventsRoutePreviewProps {
 	events: Event[];
@@ -54,6 +100,74 @@ const meta = preview.meta({
 });
 
 export const PopulatedCalendar = meta.story({});
+
+export const AllEventsHaveImages = PopulatedCalendar.extend({
+	args: {
+		events: createImageScenario([true, true, true, true]),
+	},
+	play: async ({ canvas }) => {
+		for (const title of eventTitles) {
+			const card = canvas
+				.getByRole("link", { name: `View event: ${title}` })
+				.closest("li");
+
+			if (!card) {
+				throw new Error(`Expected an event card for ${title}.`);
+			}
+
+			await expect(card.querySelector("img")).toHaveAttribute("alt", "");
+			await expect(card.querySelector("img")).toHaveAttribute(
+				"src",
+				eventImageUrl,
+			);
+		}
+	},
+});
+
+export const NoEventsHaveImages = PopulatedCalendar.extend({
+	args: {
+		events: createImageScenario([false, false, false, false]),
+	},
+	play: async ({ canvas }) => {
+		for (const title of eventTitles) {
+			const card = canvas
+				.getByRole("link", { name: `View event: ${title}` })
+				.closest("li");
+
+			if (!card) {
+				throw new Error(`Expected an event card for ${title}.`);
+			}
+
+			await expect(card.querySelector("img")).not.toBeInTheDocument();
+		}
+	},
+});
+
+export const MixedImagePresence = PopulatedCalendar.extend({
+	args: {
+		events: createImageScenario([true, false, true, false]),
+	},
+	play: async ({ canvas }) => {
+		for (const [index, title] of eventTitles.entries()) {
+			const card = canvas
+				.getByRole("link", { name: `View event: ${title}` })
+				.closest("li");
+
+			if (!card) {
+				throw new Error(`Expected an event card for ${title}.`);
+			}
+
+			if (index % 2 === 0) {
+				await expect(card.querySelector("img")).toHaveAttribute(
+					"src",
+					eventImageUrl,
+				);
+			} else {
+				await expect(card.querySelector("img")).not.toBeInTheDocument();
+			}
+		}
+	},
+});
 
 export const EmptyCalendar = PopulatedCalendar.extend({
 	args: {
