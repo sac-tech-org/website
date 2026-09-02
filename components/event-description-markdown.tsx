@@ -56,7 +56,7 @@ function MarkdownLink({
 	);
 }
 
-const components: Components = {
+const cardComponents: Components = {
 	a: MarkdownLink,
 	// Event titles are h3 elements, so description headings must start below them.
 	h1: "h4",
@@ -67,8 +67,20 @@ const components: Components = {
 	h6: "h6",
 };
 
+const pageComponents: Components = {
+	a: MarkdownLink,
+	// Detail-page descriptions sit below an h2 section heading.
+	h1: "h3",
+	h2: "h4",
+	h3: "h5",
+	h4: "h6",
+	h5: "h6",
+	h6: "h6",
+};
+
 interface EventDescriptionMarkdownProps {
 	className?: string;
+	headingStartLevel?: 3 | 4;
 	markdown: string;
 	maxCharacters?: number;
 }
@@ -165,6 +177,7 @@ function createTruncatedMarkdownPlugin(maxCharacters: number) {
 
 export function EventDescriptionMarkdown({
 	className,
+	headingStartLevel = 4,
 	markdown,
 	maxCharacters,
 }: EventDescriptionMarkdownProps) {
@@ -176,7 +189,7 @@ export function EventDescriptionMarkdown({
 		<div className={[style.prose, className].filter(Boolean).join(" ")}>
 			<ReactMarkdown
 				allowedElements={allowedElements}
-				components={components}
+				components={headingStartLevel === 3 ? pageComponents : cardComponents}
 				remarkPlugins={remarkPlugins}
 				skipHtml
 				urlTransform={safeUrlTransform}

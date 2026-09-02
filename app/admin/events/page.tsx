@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import type { RecurrenceRule } from "@/app/events/types";
 import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
+import { eventHeaderImagePath } from "@/lib/events/header-image-constraints";
 import { getPendingEventEdits, getPendingEvents } from "@/lib/events/queries";
 import {
 	getOccurrenceEnd,
@@ -97,6 +98,19 @@ async function AdminEventQueues() {
 											</div>
 											<span className={style.pendingBadge}>Pending</span>
 										</header>
+
+										{event.headerImageKey && (
+											<div className={style.headerImage}>
+												{/* eslint-disable-next-line @next/next/no-img-element -- Pending Blob images require the reviewer's same-origin session. */}
+												<img
+													alt={`Header image for ${event.title}`}
+													src={eventHeaderImagePath(
+														event.id,
+														event.headerImageKey,
+													)}
+												/>
+											</div>
+										)}
 
 										<dl className={style.details}>
 											<div>

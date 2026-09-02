@@ -1,9 +1,10 @@
-import preview from "@/.storybook/preview";
-import { SignOutButton } from "@/app/account/sign-out-button";
-import { authClient } from "@/lib/auth-client";
+import preview from "@/.storybook/preview.tsx";
+import { SignOutButton } from "@/app/account/sign-out-button.tsx";
+import { authClient } from "@/lib/auth-client.ts";
 import { expect, mocked } from "storybook/test";
 
 const meta = preview.meta({
+	title: "Components/Sign Out Button",
 	component: SignOutButton,
 	parameters: {
 		layout: "centered",

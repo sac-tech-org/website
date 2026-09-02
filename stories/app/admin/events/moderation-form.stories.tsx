@@ -4,7 +4,7 @@ import { moderateEvent, moderateEventEdit } from "@/lib/events/actions";
 import { expect, mocked } from "storybook/test";
 
 const meta = preview.meta({
-	title: "Admin/Events/Moderation Form",
+	title: "Pages/Admin/Moderation Form",
 	component: ModerationForm,
 	parameters: {
 		layout: "centered",

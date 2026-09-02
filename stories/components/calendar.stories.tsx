@@ -1,18 +1,18 @@
-import preview from "../../../../../.storybook/preview";
+import preview from "../../.storybook/preview.tsx";
 
 import { expect } from "storybook/test";
 
-import { Calendar } from "@/app/events/components/calendar/calendar";
+import { Calendar } from "@/app/events/components/calendar/calendar.tsx";
 import {
 	createRecurringEvent,
 	createRecurringEventWithOverride,
 	createSpecialEvent,
 	EVENT_STORY_REFERENCE_DATE,
 	MIXED_EVENTS,
-} from "@/stories/fixtures/events";
+} from "@/stories/fixtures/events.ts";
 
 const meta = preview.meta({
-	title: "Events/Components/Calendar",
+	title: "Components/Calendar",
 	component: Calendar,
 	parameters: {
 		layout: "padded",
@@ -50,6 +50,11 @@ export const SelectedOccurrence = MixedEvents.extend({
 			canvas.getByRole("region", { name: "September 15, 2026" }),
 		).toBeVisible();
 		await expect(canvas.getByText("TypeScript Hands-on Night")).toBeVisible();
+		await expect(
+			canvas.getByRole("link", {
+				name: "View event: TypeScript Hands-on Night",
+			}),
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	},
 });
 

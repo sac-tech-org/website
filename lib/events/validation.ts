@@ -4,6 +4,10 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { z } from "zod";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
+import {
+	EVENT_HEADER_IMAGE_MAX_BYTES,
+	EVENT_HEADER_IMAGE_TYPES,
+} from "@/lib/events/header-image-constraints";
 import type { EventFormField } from "@/lib/events/state";
 
 dayjs.extend(customParseFormat);
@@ -158,6 +162,7 @@ const submissionSchema = z
 
 export interface ValidatedEventSubmission {
 	title: string;
+	headerImage?: File;
 	description: string;
 	startsAt: Date;
 	endsAt: Date;
@@ -235,7 +240,31 @@ export function validateEventSubmission(
 				occurrenceCount: formData.get("recurrenceCount"),
 			})
 		: null;
+	const headerImageValue = formData.get("headerImage");
+	const headerImage =
+		headerImageValue instanceof File && headerImageValue.size > 0
+			? headerImageValue
+			: undefined;
 	const errors: Partial<Record<EventFormField, string[]>> = {};
+
+	if (headerImageValue !== null && !(headerImageValue instanceof File)) {
+		addFieldError(errors, "headerImage", "Choose an image file to upload.");
+	} else if (
+		headerImage &&
+		!EVENT_HEADER_IMAGE_TYPES.includes(
+			headerImage.type as (typeof EVENT_HEADER_IMAGE_TYPES)[number],
+		)
+	) {
+		addFieldError(
+			errors,
+			"headerImage",
+			"Choose an AVIF, JPEG, PNG, or WebP image.",
+		);
+	}
+
+	if (headerImage && headerImage.size > EVENT_HEADER_IMAGE_MAX_BYTES) {
+		addFieldError(errors, "headerImage", "Keep the image under 3 MB.");
+	}
 
 	if (!allowRecurrence && recurrenceWasSubmitted) {
 		addFieldError(
@@ -369,6 +398,7 @@ export function validateEventSubmission(
 	return {
 		data: {
 			...parsedSubmission.data,
+			headerImage,
 			startsAt,
 			endsAt,
 			recurrence: parsedRecurrence?.success

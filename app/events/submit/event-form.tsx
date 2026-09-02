@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitEvent } from "@/lib/events/actions";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
+import { EVENT_HEADER_IMAGE_ACCEPT } from "@/lib/events/header-image-constraints";
 import {
 	initialEventFormState,
 	type EventFormField,
@@ -153,6 +154,7 @@ const FORM_COPY = {
 
 const EVENT_FORM_FIELD_ORDER: EventFormField[] = [
 	"title",
+	"headerImage",
 	"description",
 	"startsAt",
 	"endsAt",
@@ -456,6 +458,29 @@ export function EventForm({
 				</p>
 				<FieldErrors errors={errors} field="title" />
 			</div>
+
+			{variant === "submit" && (
+				<div className={style.field}>
+					<label htmlFor="headerImage">Header image</label>
+					<input
+						accept={EVENT_HEADER_IMAGE_ACCEPT}
+						aria-describedby={describedBy(
+							"headerImage",
+							"header-image-hint",
+							errors,
+						)}
+						aria-invalid={errors?.headerImage?.length ? true : undefined}
+						disabled={pending}
+						id="headerImage"
+						name="headerImage"
+						type="file"
+					/>
+					<p className={style.hint} id="header-image-hint">
+						Optional. Upload an AVIF, JPEG, PNG, or WebP image under 3 MB.
+					</p>
+					<FieldErrors errors={errors} field="headerImage" />
+				</div>
+			)}
 
 			<div className={style.field}>
 				<label htmlFor="description" id="description-label">

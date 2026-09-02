@@ -5,7 +5,7 @@ import { STORY_MANAGED_USERS } from "@/stories/fixtures/admin";
 import { expect, mocked } from "storybook/test";
 
 const meta = preview.meta({
-	title: "Admin/Users/User Management Card",
+	title: "Pages/Admin/User Management Card",
 	component: UserManagementCard,
 	parameters: {
 		layout: "centered",

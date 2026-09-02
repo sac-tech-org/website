@@ -40,6 +40,7 @@ const weeklyValues: EventFormValues = {
 };
 
 const meta = preview.meta({
+	title: "Components/Event Form",
 	component: EventForm,
 	parameters: {
 		layout: "padded",

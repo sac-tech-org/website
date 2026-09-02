@@ -1,0 +1,10 @@
+.image {
+	aspect-ratio: 16 / 9;
+	background: var(--color-cream);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-small);
+	display: block;
+	height: auto;
+	object-fit: cover;
+	width: 100%;
+}

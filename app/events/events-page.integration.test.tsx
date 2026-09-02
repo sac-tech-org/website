@@ -1,5 +1,5 @@
 import { within } from "@testing-library/dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
@@ -127,6 +127,41 @@ function specialEvent(): Event {
 }
 
 describe("public events experience", () => {
+	it("shows configured event images without reserving a placeholder", () => {
+		render(
+			<EventsPage
+				events={[
+					recurringEvent({ banner_image: "/event-images/recurring/header" }),
+					specialEvent(),
+				]}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		const recurringCard = screen
+			.getByRole("link", {
+				name: "View event: Sacramento TypeScript Weekly",
+			})
+			.closest("li");
+		const specialCard = screen
+			.getByRole("link", {
+				name: "View event: Sacramento Design Summit",
+			})
+			.closest("li");
+		const image = recurringCard?.querySelector("img");
+
+		if (!recurringCard || !specialCard || !image) {
+			throw new Error("Expected both event cards and the configured image.");
+		}
+
+		expect(image).toHaveAttribute("alt", "");
+		expect(image).toHaveAttribute("src", "/event-images/recurring/header");
+		expect(specialCard.querySelector("img")).not.toBeInTheDocument();
+
+		fireEvent.error(image);
+		expect(recurringCard.querySelector("img")).not.toBeInTheDocument();
+	});
+
 	it("expands a series, omits its canceled date, and shows selected-day details", async () => {
 		const user = userEvent.setup();
 
@@ -167,9 +202,9 @@ describe("public events experience", () => {
 		expect(selectedDay.getByText("10:00 AM")).toBeVisible();
 		expect(
 			selectedDay.getByRole("link", {
-				name: "View details for Sacramento TypeScript Weekly",
+				name: "View event: Sacramento TypeScript Weekly",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/details");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	});
 
 	it("places an override on its edited date with occurrence-specific details", async () => {
@@ -198,9 +233,9 @@ describe("public events experience", () => {
 		expect(selectedDay.getByText("6:30 PM")).toBeVisible();
 		expect(
 			selectedDay.getByRole("link", {
-				name: "View details for TypeScript Hands-on Night",
+				name: "View event: TypeScript Hands-on Night",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	});
 
 	it("navigates the three-month calendar window", async () => {
@@ -269,12 +304,12 @@ describe("public events experience", () => {
 		).toBeVisible();
 		expect(
 			screen.getByRole("link", {
-				name: "The Urban Hive: TypeScript Hands-on Night",
+				name: "View event: TypeScript Hands-on Night",
 			}),
-		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
 	});
 
-	it("renders one call to action when recurring-event links share a destination", () => {
+	it("renders one internal call to action for a recurring event", () => {
 		render(
 			<ul>
 				<RecurringEventsCard
@@ -287,11 +322,11 @@ describe("public events experience", () => {
 		const links = screen.getAllByRole("link");
 		expect(links).toHaveLength(1);
 		expect(links[0]).toHaveAccessibleName(
-			"Online: Sacramento TypeScript Weekly",
+			"View event: Sacramento TypeScript Weekly",
 		);
 		expect(links[0]).toHaveAttribute(
 			"href",
-			"https://events.example.com/details",
+			"/events/sacramento-typescript-weekly",
 		);
 	});
 

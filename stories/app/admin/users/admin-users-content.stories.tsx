@@ -10,7 +10,7 @@ import { createSession } from "@/stories/fixtures/auth";
 import { expect, mocked } from "storybook/test";
 
 const meta = preview.meta({
-	title: "Admin/Users/User List",
+	title: "Pages/Admin/User List",
 	component: AdminUsersContent,
 	parameters: {
 		layout: "padded",

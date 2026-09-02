@@ -11,6 +11,7 @@
 	margin-bottom: 0;
 }
 
+.prose h3,
 .prose h4,
 .prose h5,
 .prose h6 {
@@ -22,6 +23,7 @@
 	margin: 1.1rem 0 0.45rem;
 }
 
+.prose h3,
 .prose h4 {
 	font-size: 1.15em;
 }
