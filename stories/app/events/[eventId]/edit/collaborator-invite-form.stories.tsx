@@ -4,6 +4,7 @@ import { inviteEventCollaborator } from "@/lib/events/actions";
 import { expect, mocked } from "storybook/test";
 
 const meta = preview.meta({
+	title: "Pages/Events/Collaborator Invite Form",
 	component: CollaboratorInviteForm,
 	parameters: {
 		layout: "centered",

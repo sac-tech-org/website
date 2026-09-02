@@ -1,18 +1,18 @@
-import preview from "../../../../../.storybook/preview";
+import preview from "../../.storybook/preview.tsx";
 
 import { expect } from "storybook/test";
 
-import { Calendar } from "@/app/events/components/calendar/calendar";
+import { Calendar } from "@/app/events/components/calendar/calendar.tsx";
 import {
 	createRecurringEvent,
 	createRecurringEventWithOverride,
 	createSpecialEvent,
 	EVENT_STORY_REFERENCE_DATE,
 	MIXED_EVENTS,
-} from "@/stories/fixtures/events";
+} from "@/stories/fixtures/events.ts";
 
 const meta = preview.meta({
-	title: "Events/Components/Calendar",
+	title: "Components/Calendar",
 	component: Calendar,
 	parameters: {
 		layout: "padded",

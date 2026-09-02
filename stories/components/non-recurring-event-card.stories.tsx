@@ -1,16 +1,16 @@
-import preview from "../../../../../.storybook/preview";
+import preview from "../../.storybook/preview.tsx";
 
 import { expect } from "storybook/test";
 
-import { NonRecurringEventsCard } from "@/app/events/components/event-cards/non-recurring-event-card";
+import { NonRecurringEventsCard } from "@/app/events/components/event-cards/non-recurring-event-card.tsx";
 import {
 	createEventBlock,
 	createLongEventDescription,
 	createSpecialEvent,
-} from "@/stories/fixtures/events";
+} from "@/stories/fixtures/events.ts";
 
 const meta = preview.meta({
-	title: "Events/Components/Event Cards/Non-recurring",
+	title: "Components/Event Cards/Non-recurring",
 	component: NonRecurringEventsCard,
 	parameters: {
 		layout: "padded",

@@ -1,18 +1,18 @@
-import preview from "../../../../../.storybook/preview";
+import preview from "../../.storybook/preview.tsx";
 
 import { expect } from "storybook/test";
 
-import { RecurringEventsCard } from "@/app/events/components/event-cards/recurring-event-card";
+import { RecurringEventsCard } from "@/app/events/components/event-cards/recurring-event-card.tsx";
 import {
 	createLongEventDescription,
 	createRecurringEvent,
 	createRecurringEventWithOverride,
 	createWeeklyRecurrenceRule,
 	EVENT_STORY_REFERENCE_DATE,
-} from "@/stories/fixtures/events";
+} from "@/stories/fixtures/events.ts";
 
 const meta = preview.meta({
-	title: "Events/Components/Event Cards/Recurring",
+	title: "Components/Event Cards/Recurring",
 	component: RecurringEventsCard,
 	parameters: {
 		layout: "padded",

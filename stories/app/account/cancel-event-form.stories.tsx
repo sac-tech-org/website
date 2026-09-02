@@ -13,6 +13,7 @@ const recurringArgs = {
 };
 
 const meta = preview.meta({
+	title: "Pages/Events/Cancel Event Form",
 	component: CancelEventForm,
 	parameters: {
 		layout: "centered",

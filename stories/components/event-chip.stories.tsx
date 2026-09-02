@@ -1,9 +1,9 @@
-import preview from "../../../../../.storybook/preview";
+import preview from "../../.storybook/preview.tsx";
 
-import { EventChip } from "@/app/events/components/event-chip/event-chip";
+import { EventChip } from "@/app/events/components/event-chip/event-chip.tsx";
 
 const meta = preview.meta({
-	title: "Events/Components/Event Chip",
+	title: "Components/Event Chip",
 	component: EventChip,
 	parameters: {
 		layout: "centered",

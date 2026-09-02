@@ -19,6 +19,7 @@ const greeting = "Hello, Sacramento!";
 \`\`\``;
 
 const meta = preview.meta({
+	title: "Components/Event Description Editor",
 	component: EventDescriptionEditor,
 	parameters: {
 		layout: "padded",
