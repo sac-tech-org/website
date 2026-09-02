@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { getNextOccurrence } from "@/lib/events/recurrence";
 import { Calendar } from "./components/calendar/calendar";
 import { NonRecurringEventsCard } from "./components/event-cards/non-recurring-event-card";
 import { RecurringEventsCard } from "./components/event-cards/recurring-event-card";
+import { formatDateKey } from "./date-utils";
 import type { Event } from "./types";
 import style from "./events-page.module.css";
 
@@ -21,6 +23,30 @@ const eventFilters: Array<{ label: string; value: EventType }> = [
 	{ label: "In person", value: "in-person" },
 ];
 
+function hasCurrentOrUpcomingDate(event: Event, referenceDate: string) {
+	if (!event.recurrence_rule) {
+		return event.blocks.some(
+			(block) => formatDateKey(block.ends_at, block.timezone) >= referenceDate,
+		);
+	}
+
+	const seed = event.blocks
+		.filter((block) => !block.recurrence_date)
+		.sort(
+			(left, right) => left.starts_at.valueOf() - right.starts_at.valueOf(),
+		)[0];
+	const nextOccurrence = seed
+		? getNextOccurrence(seed.starts_at, event.recurrence_rule, referenceDate)
+		: null;
+	const hasUpcomingOverride = event.blocks.some(
+		(block) =>
+			block.recurrence_date &&
+			formatDateKey(block.starts_at, block.timezone) >= referenceDate,
+	);
+
+	return nextOccurrence !== null || hasUpcomingOverride;
+}
+
 export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 	const [eventTypesToShow, setEventTypesToShow] = useState<EventType>("all");
 
@@ -36,8 +62,19 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 		return events;
 	}, [events, eventTypesToShow]);
 
-	const recurringEvents = filteredEvents.filter((event) => event.is_recurring);
-	const specialEvents = filteredEvents.filter((event) => !event.is_recurring);
+	const currentAndUpcomingEvents = useMemo(
+		() =>
+			filteredEvents.filter((event) =>
+				hasCurrentOrUpcomingDate(event, referenceDate),
+			),
+		[filteredEvents, referenceDate],
+	);
+	const recurringEvents = currentAndUpcomingEvents.filter(
+		(event) => event.is_recurring,
+	);
+	const specialEvents = currentAndUpcomingEvents.filter(
+		(event) => !event.is_recurring,
+	);
 	const hasEvents = recurringEvents.length > 0 || specialEvents.length > 0;
 	const activeFilterLabel =
 		eventFilters.find((filter) => filter.value === eventTypesToShow)?.label ??
@@ -83,8 +120,8 @@ export default function EventsPage({ events, referenceDate }: EventsPageProps) {
 				</fieldset>
 
 				<p className={style.visuallyHidden} role="status">
-					Showing {filteredEvents.length}{" "}
-					{filteredEvents.length === 1 ? "event" : "events"} for{" "}
+					Showing {currentAndUpcomingEvents.length}{" "}
+					{currentAndUpcomingEvents.length === 1 ? "event" : "events"} for{" "}
 					{activeFilterLabel.toLowerCase()}.
 				</p>
 

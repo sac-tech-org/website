@@ -395,6 +395,120 @@ describe("public events experience", () => {
 		expect(screen.getByText(specialTail, { exact: false })).toBeVisible();
 	});
 
+	it("omits past events from the main lists while keeping today's events", () => {
+		const pastSpecialEvent = {
+			...specialEvent(),
+			blocks: [
+				createBlock({
+					ends_at: new Date("2026-09-01T06:59:00.000Z"),
+					location_description: "The Urban Hive",
+					slug: "past-special-occurrence",
+					starts_at: new Date("2026-09-01T05:00:00.000Z"),
+					title: "Past Special Event",
+				}),
+			],
+			slug: "past-special-event",
+			title: "Past Special Event",
+		};
+		const todaySpecialEvent = {
+			...specialEvent(),
+			blocks: [
+				createBlock({
+					ends_at: new Date("2026-09-01T21:00:00.000Z"),
+					location_description: "The Urban Hive",
+					slug: "today-special-occurrence",
+					starts_at: new Date("2026-09-01T19:00:00.000Z"),
+					title: "Today's Special Event",
+				}),
+			],
+			slug: "today-special-event",
+			title: "Today's Special Event",
+		};
+		const exhaustedRecurringEvent = recurringEvent({
+			blocks: [
+				createBlock({
+					ends_at: new Date("2026-08-20T01:00:00.000Z"),
+					in_person: false,
+					is_online: true,
+					location_address: undefined,
+					location_description: "Online",
+					slug: "finished-weekly-seed",
+					starts_at: new Date("2026-08-20T00:00:00.000Z"),
+					title: "Finished Weekly Event",
+				}),
+			],
+			recurrence_rule: weeklyRule({
+				excludedDates: [],
+				occurrenceCount: 2,
+			}),
+			slug: "finished-weekly-event",
+			title: "Finished Weekly Event",
+		});
+		const rescheduledRecurringEvent = recurringEvent({
+			blocks: [
+				createBlock({
+					ends_at: new Date("2026-08-20T01:00:00.000Z"),
+					in_person: false,
+					is_online: true,
+					location_address: undefined,
+					location_description: "Online",
+					slug: "rescheduled-weekly-seed",
+					starts_at: new Date("2026-08-20T00:00:00.000Z"),
+					title: "Rescheduled Weekly Event",
+				}),
+				createBlock({
+					ends_at: new Date("2026-09-04T01:00:00.000Z"),
+					in_person: false,
+					is_online: true,
+					location_address: undefined,
+					location_description: "Online",
+					recurrence_date: "2026-08-26",
+					slug: "rescheduled-weekly-override",
+					starts_at: new Date("2026-09-04T00:00:00.000Z"),
+					title: "Rescheduled Future Event",
+				}),
+			],
+			recurrence_rule: weeklyRule({
+				excludedDates: ["2026-08-26"],
+				occurrenceCount: 2,
+			}),
+			slug: "rescheduled-weekly-event",
+			title: "Rescheduled Weekly Event",
+		});
+
+		render(
+			<EventsPage
+				events={[
+					pastSpecialEvent,
+					todaySpecialEvent,
+					exhaustedRecurringEvent,
+					recurringEvent(),
+					rescheduledRecurringEvent,
+				]}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("heading", { name: "Past Special Event" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("heading", { name: "Finished Weekly Event" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Today's Special Event" }),
+		).toBeVisible();
+		expect(
+			screen.getByRole("heading", { name: "Sacramento TypeScript Weekly" }),
+		).toBeVisible();
+		expect(
+			screen.getByRole("heading", { name: "Rescheduled Future Event" }),
+		).toBeVisible();
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Showing 3 events for all events.",
+		);
+	});
+
 	it("filters both the calendar and event-card collections by attendance type", async () => {
 		const user = userEvent.setup();
 
