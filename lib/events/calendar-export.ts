@@ -1,3 +1,10 @@
+import type { Element, Root, RootContent } from "hast";
+import { toText } from "hast-util-to-text";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
+import { SKIP, visit } from "unist-util-visit";
 import type { Event, EventBlock } from "@/app/events/types";
 
 const GOOGLE_CALENDAR_EVENT_URL =
@@ -68,33 +75,97 @@ export function toCalendarEvent(
 	};
 }
 
+function isListItem(node: RootContent): node is Element {
+	return node.type === "element" && node.tagName === "li";
+}
+
+function linkAlreadyShowsDestination(label: string, href: string) {
+	return (
+		label === href ||
+		href === `mailto:${label}` ||
+		(label.startsWith("www.") &&
+			(href === `http://${label}` || href === `https://${label}`))
+	);
+}
+
+function prependListMarker(node: Element, marker: string) {
+	const firstChild = node.children[0];
+	const markerParent =
+		firstChild?.type === "element" && firstChild.tagName === "p"
+			? firstChild
+			: node;
+
+	markerParent.children.unshift({ type: "text", value: marker });
+}
+
+function rehypeCalendarText() {
+	return (tree: Root) => {
+		visit(tree, "element", (node, index, parent) => {
+			if (node.tagName === "a") {
+				const href = node.properties.href;
+				const label = toText(node).trim();
+
+				if (
+					typeof href === "string" &&
+					!linkAlreadyShowsDestination(label, href)
+				) {
+					node.children.push({ type: "text", value: ` (${href})` });
+				}
+
+				return;
+			}
+
+			if (
+				node.tagName === "li" &&
+				parent?.type === "element" &&
+				(parent.tagName === "ol" || parent.tagName === "ul")
+			) {
+				const precedingItems = parent.children
+					.slice(0, index)
+					.filter(isListItem).length;
+				const configuredStart = parent.properties.start;
+				const start =
+					parent.tagName === "ol" && typeof configuredStart === "number"
+						? configuredStart
+						: 1;
+				const marker =
+					parent.tagName === "ol" ? `${start + precedingItems}. ` : "• ";
+
+				prependListMarker(node, marker);
+				return;
+			}
+
+			if (node.tagName === "img" && parent && typeof index === "number") {
+				const alt = node.properties.alt;
+				parent.children[index] = {
+					type: "text",
+					value: typeof alt === "string" ? alt : "",
+				};
+
+				return SKIP;
+			}
+		});
+	};
+}
+
+const markdownToTextProcessor = unified()
+	.use(remarkParse)
+	.use(remarkGfm)
+	.use(remarkRehype)
+	.use(rehypeCalendarText)
+	.freeze();
+
 export function markdownToPlainText(markdown: string) {
-	return markdown
-		.replace(/\r\n?|\u2028|\u2029/g, "\n")
-		.replace(
-			/^[\t ]{0,3}(?:```|~~~)[^\n]*\n([\s\S]*?)^[\t ]{0,3}(?:```|~~~)[\t ]*$/gm,
-			"$1",
-		)
-		.replace(/!\[([^\]]*)\]\([^\n)]*\)/g, "$1")
-		.replace(/\[([^\]]+)\]\(([^\s)]+)(?:\s+["'][^)]*["'])?\)/g, "$1 ($2)")
-		.replace(/<((?:https?:\/\/|mailto:)[^>]+)>/gi, "$1")
-		.replace(/^[\t ]{0,3}#{1,6}[\t ]+/gm, "")
-		.replace(/^[\t ]{0,3}>[\t ]?/gm, "")
-		.replace(
-			/^[\t ]{0,3}(?:(?:\*[\t ]*){3,}|(?:-[\t ]*){3,}|(?:_[\t ]*){3,})$/gm,
-			"",
-		)
-		.replace(/^[\t ]{0,3}[-+*][\t ]+/gm, "• ")
-		.replace(/^[\t ]{0,3}(\d+)[.)][\t ]+/gm, "$1. ")
-		.replace(/\*\*([^*\n]+)\*\*/g, "$1")
-		.replace(/__([^_\n]+)__/g, "$1")
-		.replace(/~~([^~\n]+)~~/g, "$1")
-		.replace(/`([^`\n]+)`/g, "$1")
-		.replace(/(^|[^\w])\*([^*\n]+)\*(?=$|[^\w])/g, "$1$2")
-		.replace(/(^|[^\w])_([^_\n]+)_(?=$|[^\w])/g, "$1$2")
-		.replace(/\\([\\`*_[\]{}()#+\-.!>])/g, "$1")
-		.replace(/\n{3,}/g, "\n\n")
-		.trim();
+	const normalizedMarkdown = markdown
+		.replaceAll("\r\n", "\n")
+		.replaceAll("\r", "\n")
+		.replaceAll("\u2028", "\n")
+		.replaceAll("\u2029", "\n");
+	const tree = markdownToTextProcessor.runSync(
+		markdownToTextProcessor.parse(normalizedMarkdown),
+	);
+
+	return toText(tree).trim();
 }
 
 function calendarDescription(event: CalendarEventData) {

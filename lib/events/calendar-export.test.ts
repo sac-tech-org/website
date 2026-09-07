@@ -65,7 +65,7 @@ describe("calendar exports", () => {
 		expect(unfolded).toContain("DTEND:20260905T210000Z\r\n");
 		expect(unfolded).toContain("SUMMARY:Design\\, Build\\; Share\\\\Learn\r\n");
 		expect(unfolded).toContain(
-			"DESCRIPTION:First line\\nSecond\\; line\\, with a \\\\ slash.\\n\\nMore information: https://events.example.com/design?a=1&b=2\r\n",
+			"DESCRIPTION:First line Second\\; line\\, with a \\\\ slash.\\n\\nMore information: https://events.example.com/design?a=1&b=2\r\n",
 		);
 		expect(unfolded).toContain("LOCATION:Café\\, Hall\\; A\r\n");
 		expect(unfolded).toContain(
@@ -137,6 +137,35 @@ describe("calendar exports", () => {
 				"",
 				"• Bring a laptop",
 				"• Share one idea",
+			].join("\n"),
+		);
+	});
+
+	it("parses reference links, image text, lists, and autolinks structurally", () => {
+		const markdown = [
+			"![SacTech bridge][logo]",
+			"",
+			"Read [the guide][guide].",
+			"",
+			"3. Arrive",
+			"4. Meet neighbors",
+			"",
+			"Contact <team@example.com> or visit <https://example.com>.",
+			"",
+			"[logo]: https://example.com/logo.png",
+			"[guide]: https://example.com/guide",
+		].join("\n");
+
+		expect(markdownToPlainText(markdown)).toBe(
+			[
+				"SacTech bridge",
+				"",
+				"Read the guide (https://example.com/guide).",
+				"",
+				"3. Arrive",
+				"4. Meet neighbors",
+				"",
+				"Contact team@example.com or visit https://example.com.",
 			].join("\n"),
 		);
 	});
