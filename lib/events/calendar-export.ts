@@ -9,6 +9,19 @@ import type { Event, EventBlock } from "@/app/events/types";
 
 const GOOGLE_CALENDAR_EVENT_URL =
 	"https://calendar.google.com/calendar/r/eventedit";
+const utcDateTimeFormatter = new Intl.DateTimeFormat(
+	"en-US-u-ca-gregory-nu-latn",
+	{
+		day: "2-digit",
+		hour: "2-digit",
+		hourCycle: "h23",
+		minute: "2-digit",
+		month: "2-digit",
+		second: "2-digit",
+		timeZone: "UTC",
+		year: "numeric",
+	},
+);
 
 export interface CalendarEventData {
 	description: string;
@@ -31,6 +44,19 @@ function validDate(value: Date | string) {
 	return date;
 }
 
+function dateTimePart(
+	parts: Intl.DateTimeFormatPart[],
+	type: Intl.DateTimeFormatPartTypes,
+) {
+	const value = parts.find((part) => part.type === type)?.value;
+
+	if (value === undefined) {
+		throw new Error(`Could not format the calendar date ${type}.`);
+	}
+
+	return value;
+}
+
 function formatDateKeyInTimeZone(value: Date | string, timeZone: string) {
 	const parts = new Intl.DateTimeFormat("en-US-u-ca-gregory-nu-latn", {
 		day: "2-digit",
@@ -38,10 +64,8 @@ function formatDateKeyInTimeZone(value: Date | string, timeZone: string) {
 		timeZone,
 		year: "numeric",
 	}).formatToParts(validDate(value));
-	const getPart = (type: Intl.DateTimeFormatPartTypes) =>
-		parts.find((part) => part.type === type)?.value;
 
-	return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+	return `${dateTimePart(parts, "year")}-${dateTimePart(parts, "month")}-${dateTimePart(parts, "day")}`;
 }
 
 function locationForCalendar(
@@ -178,11 +202,18 @@ function calendarDescription(event: CalendarEventData) {
 }
 
 export function formatUtcDate(value: Date | string) {
-	return validDate(value)
-		.toISOString()
-		.replaceAll("-", "")
-		.replaceAll(":", "")
-		.replace(/\.\d{3}Z$/, "Z");
+	const parts = utcDateTimeFormatter.formatToParts(validDate(value));
+
+	return [
+		dateTimePart(parts, "year"),
+		dateTimePart(parts, "month"),
+		dateTimePart(parts, "day"),
+		"T",
+		dateTimePart(parts, "hour"),
+		dateTimePart(parts, "minute"),
+		dateTimePart(parts, "second"),
+		"Z",
+	].join("");
 }
 
 export function createGoogleCalendarUrl(event: CalendarEventData) {

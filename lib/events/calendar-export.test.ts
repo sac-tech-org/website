@@ -119,6 +119,16 @@ describe("calendar exports", () => {
 		).toBe("2026-09-15-typescript-hands-on-night.ics");
 	});
 
+	it("formats UTC calendar timestamps with Intl", () => {
+		expect(formatUtcDate("2024-02-29T00:00:00.999Z")).toBe("20240229T000000Z");
+		expect(formatUtcDate(new Date("2026-12-31T23:59:58.123Z"))).toBe(
+			"20261231T235958Z",
+		);
+		expect(() => formatUtcDate("not-a-date")).toThrow(
+			"Calendar dates must be valid dates.",
+		);
+	});
+
 	it("turns common Markdown formatting into readable calendar text", () => {
 		const markdown = [
 			"# What to expect",
