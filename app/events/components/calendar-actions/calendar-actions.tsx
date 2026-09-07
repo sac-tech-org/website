@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, Download, ExternalLink } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
 	createGoogleCalendarUrl,
@@ -90,12 +91,7 @@ export function CalendarActions({
 				type="button"
 			>
 				Add to calendar
-				<span
-					aria-hidden="true"
-					className={isOpen ? style.chevronOpen : style.chevron}
-				>
-					⌄
-				</span>
+				<ChevronDown aria-hidden="true" className={style.chevron} />
 			</button>
 
 			{isOpen && (
@@ -113,7 +109,7 @@ export function CalendarActions({
 								target="_blank"
 							>
 								Add to Google Calendar
-								<span aria-hidden="true">↗</span>
+								<ExternalLink aria-hidden="true" className={style.optionIcon} />
 							</a>
 						</li>
 						<li>
@@ -123,7 +119,7 @@ export function CalendarActions({
 								type="button"
 							>
 								Download as ICS
-								<span aria-hidden="true">↓</span>
+								<Download aria-hidden="true" className={style.optionIcon} />
 							</button>
 						</li>
 					</ul>

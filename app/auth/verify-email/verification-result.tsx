@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import style from "../auth-form.module.css";
@@ -66,7 +67,7 @@ export async function VerifyEmailResult({
 			</div>
 			<div className={style.form}>
 				<Link className={style.submitButton} href="/auth">
-					Back to sign in <span aria-hidden="true">→</span>
+					Back to sign in <ArrowRight aria-hidden="true" size={18} />
 				</Link>
 			</div>
 		</div>

@@ -27,8 +27,10 @@
 }
 
 .backLink {
-	display: inline-block;
+	align-items: center;
+	display: inline-flex;
 	font-weight: 800;
+	gap: 0.5rem;
 	margin-top: 1.5rem;
 }
 

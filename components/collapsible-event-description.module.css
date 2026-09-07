@@ -29,8 +29,3 @@
 	outline: 0.2rem solid var(--color-focus);
 	outline-offset: 0.2rem;
 }
-
-.toggle span {
-	font-size: 1.05rem;
-	line-height: 1;
-}

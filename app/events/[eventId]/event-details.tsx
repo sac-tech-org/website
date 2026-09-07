@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import { EventDescriptionMarkdown } from "@/components/event-description-markdown";
 import { toCalendarEvent } from "@/lib/events/calendar-export";
 import { formatRecurrenceSummary } from "@/lib/events/format-recurrence-summary";
@@ -258,7 +259,7 @@ export function EventDetails({ event, referenceDate }: EventDetailsProps) {
 														target="_blank"
 													>
 														Visit this occurrence&apos;s event page
-														<span aria-hidden="true">↗</span>
+														<ExternalLink aria-hidden="true" size={16} />
 													</a>
 												)}
 										</li>
@@ -334,7 +335,8 @@ export function EventDetails({ event, referenceDate }: EventDetailsProps) {
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								Visit event page <span aria-hidden="true">↗</span>
+								Visit event page
+								<ExternalLink aria-hidden="true" size={16} />
 							</a>
 						)}
 					</div>

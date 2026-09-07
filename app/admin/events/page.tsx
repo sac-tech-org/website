@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import type { RecurrenceRule } from "@/app/events/types";
@@ -199,7 +200,12 @@ async function AdminEventQueues() {
 												rel="noopener noreferrer"
 												target="_blank"
 											>
-												Open event link <span aria-hidden="true">↗</span>
+												Open event link
+												<ExternalLink
+													aria-hidden="true"
+													size={16}
+													strokeWidth={2.5}
+												/>
 											</a>
 										)}
 
@@ -407,8 +413,12 @@ async function AdminEventQueues() {
 												rel="noopener noreferrer"
 												target="_blank"
 											>
-												Open proposed event link{" "}
-												<span aria-hidden="true">↗</span>
+												Open proposed event link
+												<ExternalLink
+													aria-hidden="true"
+													size={16}
+													strokeWidth={2.5}
+												/>
 											</a>
 										)}
 

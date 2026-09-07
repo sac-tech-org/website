@@ -26,16 +26,15 @@
 	color: var(--color-river-deep);
 }
 
-.chevron,
-.chevronOpen {
-	font-size: 1rem;
-	line-height: 1;
-	transform: translateY(-0.1rem);
+.chevron {
+	flex: 0 0 auto;
+	height: 1rem;
 	transition: transform 150ms ease;
+	width: 1rem;
 }
 
-.chevronOpen {
-	transform: rotate(180deg) translateY(0.1rem);
+.trigger[aria-expanded="true"] .chevron {
+	transform: rotate(180deg);
 }
 
 .panel {
@@ -83,9 +82,11 @@
 	color: var(--color-river-deep);
 }
 
-.option span {
+.optionIcon {
 	color: var(--color-bridge-deep);
-	font-size: 1rem;
+	flex: 0 0 auto;
+	height: 1rem;
+	width: 1rem;
 }
 
 .fullWidth,

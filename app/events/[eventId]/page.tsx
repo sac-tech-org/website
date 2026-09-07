@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { io } from "next/cache";
 import Link from "next/link";
@@ -25,7 +26,8 @@ function EventDetailsFallback() {
 			<section aria-labelledby="event-title" className={style.hero}>
 				<div className={style.heroInner}>
 					<Link className={style.backLink} href="/events">
-						<span aria-hidden="true">←</span> Back to all events
+						<ArrowLeft aria-hidden="true" size={16} />
+						Back to all events
 					</Link>
 					<div className={style.heroLayout}>
 						<div className={style.heroCopy}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import style from "./join-community.module.css";
@@ -57,7 +58,7 @@ export function JoinCommunity({ inviteLink }: JoinCommunityProps) {
 				</span>
 			</label>
 			<button className={style.button} type="submit">
-				Join SacTech Slack <span aria-hidden="true">→</span>
+				Join SacTech Slack <ArrowRight aria-hidden="true" size={18} />
 			</button>
 			{message && (
 				<p className={style.message} role="status">

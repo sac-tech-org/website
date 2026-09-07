@@ -1,3 +1,4 @@
+import { ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
 import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
@@ -56,7 +57,7 @@ export function RecurringEventsCard({
 
 			{featuredBlock ? (
 				<p className={style.eventDate}>
-					<span aria-hidden="true">◷</span>
+					<Clock aria-hidden="true" size={16} />
 					<time dateTime={featuredBlock.starts_at.toISOString()}>
 						{formatDateInTimeZone(
 							featuredBlock.starts_at,
@@ -112,7 +113,7 @@ export function RecurringEventsCard({
 				href={`/events/${event.slug}`}
 			>
 				View event
-				<span aria-hidden="true">→</span>
+				<ArrowRight aria-hidden="true" size={16} />
 			</Link>
 		</li>
 	);

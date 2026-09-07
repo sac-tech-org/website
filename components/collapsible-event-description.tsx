@@ -1,5 +1,6 @@
 "use client";
 
+import { Minus, Plus } from "lucide-react";
 import { useId, useState } from "react";
 import { EventDescriptionMarkdown } from "./event-description-markdown";
 import style from "./collapsible-event-description.module.css";
@@ -45,7 +46,11 @@ export function CollapsibleEventDescription({
 					type="button"
 				>
 					{action} details
-					<span aria-hidden="true">{expanded ? "−" : "+"}</span>
+					{expanded ? (
+						<Minus aria-hidden="true" size={18} />
+					) : (
+						<Plus aria-hidden="true" size={18} />
+					)}
 				</button>
 			)}
 		</div>
