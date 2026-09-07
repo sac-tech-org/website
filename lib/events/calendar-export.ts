@@ -1,5 +1,6 @@
 import type { Element, Root, RootContent } from "hast";
 import { toText } from "hast-util-to-text";
+import { createEvent } from "ics";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
@@ -241,69 +242,32 @@ export function createGoogleCalendarUrl(event: CalendarEventData) {
 	return url.toString();
 }
 
-function escapeIcsText(value: string) {
-	return value
-		.replaceAll("\\", "\\\\")
-		.replace(/\r\n|\r|\n/g, "\\n")
-		.replaceAll(",", "\\,")
-		.replaceAll(";", "\\;");
-}
+export function createIcsContent(event: CalendarEventData) {
+	const description = calendarDescription(event);
+	const { error, value } = createEvent({
+		description: description || undefined,
+		end: validDate(event.endsAt).getTime(),
+		endInputType: "utc",
+		endOutputType: "utc",
+		location: event.location || undefined,
+		method: "PUBLISH",
+		productId: "-//SacTech//Community Events//EN",
+		start: validDate(event.startsAt).getTime(),
+		startInputType: "utc",
+		startOutputType: "utc",
+		status: "CONFIRMED",
+		title: event.title,
+		uid: `${event.id}@sac-tech.org`,
+		url: event.url,
+	});
 
-function sanitizeIcsUri(value: string) {
-	return value.replace(/[\r\n]/g, "");
-}
-
-function foldIcsLine(line: string) {
-	const encoder = new TextEncoder();
-	const foldedLines: string[] = [];
-	let currentLine = "";
-	let currentLineBytes = 0;
-
-	for (const character of line) {
-		const characterBytes = encoder.encode(character).length;
-
-		if (currentLineBytes + characterBytes > 75) {
-			foldedLines.push(currentLine);
-			currentLine = ` ${character}`;
-			currentLineBytes = 1 + characterBytes;
-			continue;
-		}
-
-		currentLine += character;
-		currentLineBytes += characterBytes;
+	if (error || value === null) {
+		throw new Error("Unable to create ICS calendar content.", {
+			cause: error ?? undefined,
+		});
 	}
 
-	foldedLines.push(currentLine);
-	return foldedLines.join("\r\n");
-}
-
-export function createIcsContent(
-	event: CalendarEventData,
-	createdAt = new Date(),
-) {
-	const description = calendarDescription(event);
-	const lines = [
-		"BEGIN:VCALENDAR",
-		"VERSION:2.0",
-		"PRODID:-//SacTech//Community Events//EN",
-		"CALSCALE:GREGORIAN",
-		"METHOD:PUBLISH",
-		`X-WR-TIMEZONE:${escapeIcsText(event.timeZone)}`,
-		"BEGIN:VEVENT",
-		`UID:${escapeIcsText(event.id)}@sac-tech.org`,
-		`DTSTAMP:${formatUtcDate(createdAt)}`,
-		`DTSTART:${formatUtcDate(event.startsAt)}`,
-		`DTEND:${formatUtcDate(event.endsAt)}`,
-		`SUMMARY:${escapeIcsText(event.title)}`,
-		...(description ? [`DESCRIPTION:${escapeIcsText(description)}`] : []),
-		...(event.location ? [`LOCATION:${escapeIcsText(event.location)}`] : []),
-		...(event.url ? [`URL:${sanitizeIcsUri(event.url)}`] : []),
-		"STATUS:CONFIRMED",
-		"END:VEVENT",
-		"END:VCALENDAR",
-	];
-
-	return `${lines.map(foldIcsLine).join("\r\n")}\r\n`;
+	return value;
 }
 
 export function createIcsFilename(event: CalendarEventData) {

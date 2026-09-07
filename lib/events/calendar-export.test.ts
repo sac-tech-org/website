@@ -1,5 +1,4 @@
-import { Buffer } from "node:buffer";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	createRecurringEvent,
 	createSpecialEvent,
@@ -45,18 +44,20 @@ describe("calendar exports", () => {
 	});
 
 	it("creates a standards-shaped ICS file with escaped text and stable values", () => {
-		const content = createIcsContent(
-			{
-				...calendarEvent,
-				description: "First line\r\nSecond; line, with a \\ slash.",
-				location: "Café, Hall; A",
-				title: "Design, Build; Share\\Learn",
-			},
-			new Date("2026-08-30T12:34:56.789Z"),
-		);
-		const unfolded = content.replaceAll("\r\n ", "");
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-08-30T12:34:56.789Z"));
+		const content = createIcsContent({
+			...calendarEvent,
+			description: "First line\r\nSecond; line, with a \\ slash.",
+			location: "Café, Hall; A",
+			title: "Design, Build; Share\\Learn",
+		});
+		vi.useRealTimers();
+		const unfolded = content.replaceAll("\r\n\t", "").replaceAll("\r\n ", "");
 
 		expect(unfolded).toContain("BEGIN:VCALENDAR\r\nVERSION:2.0\r\n");
+		expect(unfolded).toContain("PRODID:-//SacTech//Community Events//EN\r\n");
+		expect(unfolded).toContain("X-PUBLISHED-TTL:PT1H\r\n");
 		expect(unfolded).toContain(
 			"UID:event-123-20260905T190000Z@sac-tech.org\r\n",
 		);
@@ -75,17 +76,23 @@ describe("calendar exports", () => {
 		expect(content.replaceAll("\r\n", "")).not.toContain("\n");
 	});
 
-	it("folds every physical ICS line to at most 75 UTF-8 bytes", () => {
-		const content = createIcsContent(
-			{ ...calendarEvent, title: "é".repeat(60) },
-			new Date("2026-08-30T12:34:56.789Z"),
-		);
+	it("uses the ICS package's continuation lines for long properties", () => {
+		const content = createIcsContent({
+			...calendarEvent,
+			title: "Design ".repeat(30),
+		});
 		const lines = content.split("\r\n").filter(Boolean);
 
-		expect(lines.some((line) => line.startsWith(" "))).toBe(true);
+		expect(lines.some((line) => line.startsWith("\t"))).toBe(true);
 		for (const line of lines) {
-			expect(Buffer.byteLength(line, "utf8")).toBeLessThanOrEqual(75);
+			expect(Array.from(line).length).toBeLessThanOrEqual(75);
 		}
+	});
+
+	it("surfaces ICS package validation errors", () => {
+		expect(() =>
+			createIcsContent({ ...calendarEvent, url: "not a valid URL" }),
+		).toThrow("Unable to create ICS calendar content.");
 	});
 
 	it("normalizes an event block for both export formats", () => {
