@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getNextOccurrence, getOccurrenceEnd } from "@/lib/events/recurrence";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
+import { toCalendarEvent } from "@/lib/events/calendar-export";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
+import { CalendarActions } from "../calendar-actions/calendar-actions";
 import { EventChip } from "../event-chip/event-chip";
 import { EventCardImage } from "./event-card-image";
 import type { RecurringEventsCardProps } from "./types";
@@ -106,14 +108,21 @@ export function RecurringEventsCard({
 				</div>
 			)}
 
-			<Link
-				aria-label={`View event: ${featuredTitle}`}
-				className={style.primaryLink}
-				href={`/events/${event.slug}`}
-			>
-				View event
-				<span aria-hidden="true">→</span>
-			</Link>
+			<div className={style.actions}>
+				<Link
+					aria-label={`View event: ${featuredTitle}`}
+					className={style.primaryLink}
+					href={`/events/${event.slug}`}
+				>
+					View event
+					<span aria-hidden="true">→</span>
+				</Link>
+				{featuredBlock && (
+					<CalendarActions
+						calendarEvent={toCalendarEvent(event, featuredBlock)}
+					/>
+				)}
+			</div>
 		</li>
 	);
 }

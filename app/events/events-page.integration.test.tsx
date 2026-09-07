@@ -307,6 +307,11 @@ describe("public events experience", () => {
 				name: "View event: TypeScript Hands-on Night",
 			}),
 		).toHaveAttribute("href", "/events/sacramento-typescript-weekly");
+		expect(
+			screen.getByRole("button", {
+				name: "Add TypeScript Hands-on Night to calendar",
+			}),
+		).toBeVisible();
 	});
 
 	it("renders one internal call to action for a recurring event", () => {
@@ -347,6 +352,11 @@ describe("public events experience", () => {
 		expect(
 			screen.getByText("There aren't any upcoming dates yet."),
 		).toBeVisible();
+		expect(
+			screen.queryByRole("button", {
+				name: "Add Sacramento TypeScript Weekly to calendar",
+			}),
+		).not.toBeInTheDocument();
 	});
 
 	it("collapses long descriptions for recurring and special event cards", async () => {

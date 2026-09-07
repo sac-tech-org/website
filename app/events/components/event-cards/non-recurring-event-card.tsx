@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
+import { toCalendarEvent } from "@/lib/events/calendar-export";
 import { formatDateInTimeZone, formatDateKey } from "../../date-utils";
+import { CalendarActions } from "../calendar-actions/calendar-actions";
 import { EventChip } from "../event-chip/event-chip";
 import { EventCardImage } from "./event-card-image";
 import type { NonRecurringEventsCardProps } from "./types";
@@ -78,14 +80,21 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 				eventTitle={event.title}
 				markdown={event.description}
 			/>
-			<Link
-				aria-label={`View event: ${event.title}`}
-				className={style.primaryLink}
-				href={`/events/${event.slug}`}
-			>
-				View event
-				<span aria-hidden="true">→</span>
-			</Link>
+			<div className={style.actions}>
+				<Link
+					aria-label={`View event: ${event.title}`}
+					className={style.primaryLink}
+					href={`/events/${event.slug}`}
+				>
+					View event
+					<span aria-hidden="true">→</span>
+				</Link>
+				{startBlock && endBlock && (
+					<CalendarActions
+						calendarEvent={toCalendarEvent(event, startBlock, endBlock.ends_at)}
+					/>
+				)}
+			</div>
 		</li>
 	);
 }

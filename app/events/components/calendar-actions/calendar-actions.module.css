@@ -1,0 +1,89 @@
+.root {
+	display: inline-flex;
+	position: relative;
+}
+
+.trigger {
+	align-items: center;
+	background: transparent;
+	border: 1px solid var(--color-navy);
+	border-radius: var(--radius-small);
+	color: var(--color-navy);
+	cursor: pointer;
+	display: inline-flex;
+	font-size: 0.88rem;
+	font-weight: 800;
+	gap: 0.6rem;
+	justify-content: center;
+	min-height: 2.75rem;
+	padding: 0.65rem 1rem;
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+	background: rgb(5 99 106 / 10%);
+	border-color: var(--color-river-deep);
+	color: var(--color-river-deep);
+}
+
+.chevron,
+.chevronOpen {
+	font-size: 1rem;
+	line-height: 1;
+	transform: translateY(-0.1rem);
+	transition: transform 150ms ease;
+}
+
+.chevronOpen {
+	transform: rotate(180deg) translateY(0.1rem);
+}
+
+.panel {
+	background: var(--color-paper);
+	border: 1px solid var(--color-line);
+	border-top: 0.25rem solid var(--color-bridge);
+	box-shadow: var(--shadow-raised);
+	left: 0;
+	min-width: 15rem;
+	position: absolute;
+	top: calc(100% + 0.5rem);
+	z-index: 10;
+}
+
+.options {
+	list-style: none;
+	margin: 0;
+	padding: 0.35rem 0;
+}
+
+.options li + li {
+	border-top: 1px solid var(--color-line);
+}
+
+.option {
+	align-items: center;
+	background: transparent;
+	border: 0;
+	color: var(--color-navy);
+	cursor: pointer;
+	display: flex;
+	font-size: 0.9rem;
+	font-weight: 750;
+	gap: 0.75rem;
+	justify-content: space-between;
+	min-height: 2.75rem;
+	padding: 0.65rem 0.85rem;
+	text-align: left;
+	text-decoration: none;
+	width: 100%;
+}
+
+.option:hover {
+	background: rgb(242 171 24 / 18%);
+	color: var(--color-river-deep);
+}
+
+.option span {
+	color: var(--color-bridge-deep);
+	font-size: 1rem;
+}
