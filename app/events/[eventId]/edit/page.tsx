@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -284,7 +285,8 @@ async function EditEventContent({ params, searchParams }: EditEventPageProps) {
 					Approving one occurrence changes only that selected session.
 				</p>
 				<Link className={editStyle.backLink} href="/account">
-					← Back to your account
+					<ArrowLeft aria-hidden="true" size={16} />
+					Back to your account
 				</Link>
 			</aside>
 
@@ -403,7 +405,8 @@ function EditEventContentFallback() {
 					Your event details and editing options are loading now.
 				</p>
 				<Link className={editStyle.backLink} href="/account">
-					← Back to your account
+					<ArrowLeft aria-hidden="true" size={16} />
+					Back to your account
 				</Link>
 			</aside>
 

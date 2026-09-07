@@ -1,6 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element -- Event headers intentionally use native images for Blob-backed URLs. */
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { EventChip } from "../components/event-chip/event-chip";
@@ -31,7 +32,8 @@ export function EventHeader({
 		<section aria-labelledby="event-title" className={style.hero}>
 			<div className={style.heroInner}>
 				<Link className={style.backLink} href="/events">
-					<span aria-hidden="true">←</span> Back to all events
+					<ArrowLeft aria-hidden="true" size={16} />
+					Back to all events
 				</Link>
 
 				<div

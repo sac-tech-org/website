@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { getNextOccurrence } from "@/lib/events/recurrence";
@@ -195,7 +196,8 @@ export function EventsCallouts() {
 					</p>
 				</div>
 				<Link className={style.communityLink} href="/#join">
-					Join the community <span aria-hidden="true">→</span>
+					Join the community
+					<ArrowRight aria-hidden="true" size={17} />
 				</Link>
 			</section>
 
@@ -209,7 +211,8 @@ export function EventsCallouts() {
 					</p>
 				</div>
 				<Link className={style.submitLink} href="/account">
-					Submit an event <span aria-hidden="true">→</span>
+					Submit an event
+					<ArrowRight aria-hidden="true" size={17} />
 				</Link>
 			</section>
 		</>

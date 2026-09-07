@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BridgeArt } from "../components/bridge-art";
@@ -29,7 +30,7 @@ export function HomePage({ inviteLink }: HomePageProps) {
 						</p>
 						<div className={style.heroActions}>
 							<Link className={style.primaryAction} href="/events">
-								Explore events <span aria-hidden="true">→</span>
+								Explore events <ArrowRight aria-hidden="true" size={18} />
 							</Link>
 							<Link className={style.secondaryAction} href="#join">
 								Join the community
@@ -97,7 +98,7 @@ export function HomePage({ inviteLink }: HomePageProps) {
 							community events as soon as we&apos;ve verified the details.
 						</p>
 						<Link className={style.textAction} href="/events">
-							Visit the events page <span aria-hidden="true">→</span>
+							Visit the events page <ArrowRight aria-hidden="true" size={18} />
 						</Link>
 					</div>
 					<div className={style.communityPanel}>

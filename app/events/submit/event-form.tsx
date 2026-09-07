@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitEvent } from "@/lib/events/actions";
 import { SACRAMENTO_TIME_ZONE } from "@/lib/events/constants";
@@ -1070,7 +1071,7 @@ export function EventForm({
 			<div className={style.submitArea}>
 				<button disabled={pending} type="submit">
 					{pending ? copy.pendingButton : copy.submitButton}
-					<span aria-hidden="true">→</span>
+					<ArrowRight aria-hidden="true" size={17} />
 				</button>
 				<p>{copy.review}</p>
 			</div>

@@ -339,6 +339,14 @@
 	font-size: 0.94rem;
 }
 
+.calendarAction {
+	margin-top: 1.5rem;
+}
+
+.calendarAction + .primaryLink {
+	margin-top: 0.75rem;
+}
+
 .detailsList dd > span,
 .detailsList dd > address,
 .scheduleFacts dd > span,

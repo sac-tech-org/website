@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -90,7 +91,7 @@ function UnavailableResetLink({
 			</div>
 			<div className={style.form}>
 				<Link className={style.submitButton} href="/auth">
-					Back to sign in <span aria-hidden="true">→</span>
+					Back to sign in <ArrowRight aria-hidden="true" size={18} />
 				</Link>
 			</div>
 		</div>
@@ -210,7 +211,7 @@ export function ResetPasswordForm({
 				</div>
 				<div className={style.form}>
 					<Link className={style.submitButton} href="/auth">
-						Back to sign in <span aria-hidden="true">→</span>
+						Back to sign in <ArrowRight aria-hidden="true" size={18} />
 					</Link>
 				</div>
 			</div>
@@ -286,7 +287,7 @@ export function ResetPasswordForm({
 					type="submit"
 				>
 					{isPending ? "Resetting password…" : "Reset password"}
-					<span aria-hidden="true">→</span>
+					<ArrowRight aria-hidden="true" size={18} />
 				</button>
 
 				<div className={style.status}>

@@ -1,9 +1,10 @@
 import preview from "@/.storybook/preview";
-import { EventDetails } from "@/app/events/[eventId]/page";
+import { EventDetails } from "@/app/events/[eventId]/event-details";
 import {
 	createEventBlock,
 	createRecurringEventWithOverride,
 	createSpecialEvent,
+	EVENT_STORY_REFERENCE_DATE,
 } from "@/stories/fixtures/events";
 import { expect } from "storybook/test";
 
@@ -27,6 +28,7 @@ const meta = preview.meta({
 	},
 	args: {
 		event: specialEvent,
+		referenceDate: EVENT_STORY_REFERENCE_DATE,
 	},
 	argTypes: {
 		event: { control: false },
@@ -53,6 +55,7 @@ export const SpecialEvent = meta.story({
 export const RecurringEvent = SpecialEvent.extend({
 	args: {
 		event: createRecurringEventWithOverride({ slug: eventId }),
+		referenceDate: "2026-09-09",
 	},
 	play: async ({ canvas }) => {
 		await expect(

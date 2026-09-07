@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -407,7 +408,7 @@ export function AuthForm({ emailDeliveryEnabled = true }: AuthFormProps) {
 							: isCreatingAccount
 								? "Create account"
 								: "Sign in"}
-					<span aria-hidden="true">→</span>
+					<ArrowRight aria-hidden="true" size={18} />
 				</button>
 
 				{isResetRequest && (

@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from "dayjs";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
@@ -202,7 +203,7 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 					onClick={() => moveCalendarWindow(-1)}
 					type="button"
 				>
-					<span aria-hidden="true">‹</span>
+					<ChevronLeft aria-hidden="true" size={18} />
 				</button>
 				<div className={style.headingGroup}>
 					<h2 className={style.calendarHeading} id="events-calendar-title">
@@ -226,7 +227,7 @@ export function Calendar({ events, referenceDate }: CalendarProps) {
 					onClick={() => moveCalendarWindow(1)}
 					type="button"
 				>
-					<span aria-hidden="true">›</span>
+					<ChevronRight aria-hidden="true" size={18} />
 				</button>
 			</header>
 

@@ -125,7 +125,10 @@
 }
 
 .emptyState a {
+	align-items: center;
+	display: inline-flex;
 	font-weight: 800;
+	gap: 0.35rem;
 }
 
 .submissionList {
@@ -177,9 +180,9 @@
 	padding: 0.55rem 0.7rem;
 }
 
-.recurrenceSummary span {
+.recurrenceIcon {
 	color: var(--color-river-deep);
-	font-size: 1.05rem;
+	flex: 0 0 auto;
 }
 
 .cardHeading span {

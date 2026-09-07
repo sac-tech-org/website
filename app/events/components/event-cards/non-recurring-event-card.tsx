@@ -1,3 +1,4 @@
+import { ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { CollapsibleEventDescription } from "@/components/collapsible-event-description";
@@ -50,7 +51,7 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 			</div>
 			<h3 className={style.title}>{event.title}</h3>
 			<p className={style.eventDate}>
-				<span aria-hidden="true">◷</span>
+				<Clock aria-hidden="true" size={16} />
 				{startBlock ? (
 					<time
 						dateTime={formatDateKey(startBlock.starts_at, startBlock.timezone)}
@@ -84,7 +85,7 @@ export function NonRecurringEventsCard({ event }: NonRecurringEventsCardProps) {
 				href={`/events/${event.slug}`}
 			>
 				View event
-				<span aria-hidden="true">→</span>
+				<ArrowRight aria-hidden="true" size={16} />
 			</Link>
 		</li>
 	);

@@ -1,3 +1,4 @@
+import { ArrowRight, Repeat2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -140,7 +141,10 @@ async function AccountSubmissions({ userId }: { userId: string }) {
 				<div className={style.emptyState}>
 					<h3>No events here yet</h3>
 					<p>Events you submit or are invited to manage will appear here.</p>
-					<Link href="/events/submit">Submit an event →</Link>
+					<Link href="/events/submit">
+						Submit an event
+						<ArrowRight aria-hidden="true" size={16} strokeWidth={2.5} />
+					</Link>
 				</div>
 			) : (
 				<ul className={style.submissionList} role="list">
@@ -185,7 +189,13 @@ async function AccountSubmissions({ userId }: { userId: string }) {
 											{dateFormatter.format(submission.startsAt)}
 										</p>
 										<p className={style.recurrenceSummary}>
-											<span aria-hidden="true">↻</span> {recurrenceSummary}
+											<Repeat2
+												aria-hidden="true"
+												className={style.recurrenceIcon}
+												size={17}
+												strokeWidth={2.5}
+											/>
+											{recurrenceSummary}
 										</p>
 									</div>
 									<span data-status={displayStatus}>

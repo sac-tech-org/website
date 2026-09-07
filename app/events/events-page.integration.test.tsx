@@ -157,6 +157,9 @@ describe("public events experience", () => {
 		expect(image).toHaveAttribute("alt", "");
 		expect(image).toHaveAttribute("src", "/event-images/recurring/header");
 		expect(specialCard.querySelector("img")).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: /to calendar/i }),
+		).not.toBeInTheDocument();
 
 		fireEvent.error(image);
 		expect(recurringCard.querySelector("img")).not.toBeInTheDocument();
@@ -328,6 +331,9 @@ describe("public events experience", () => {
 			"href",
 			"/events/sacramento-typescript-weekly",
 		);
+		expect(
+			screen.queryByRole("button", { name: /to calendar/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it("reports when exclusions consume every remaining finite occurrence", () => {

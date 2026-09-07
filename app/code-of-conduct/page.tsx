@@ -1,3 +1,4 @@
+import { ArrowDown } from "lucide-react";
 import type { Metadata } from "next";
 import { BridgeArt } from "../../components/bridge-art";
 import style from "./code-of-conduct.module.css";
@@ -65,7 +66,7 @@ export default function CodeOfConductPage() {
 							</li>
 						</ul>
 						<a className={style.readPolicyLink} href="#full-policy">
-							Read the full policy <span aria-hidden="true">↓</span>
+							Read the full policy <ArrowDown aria-hidden="true" size={18} />
 						</a>
 					</div>
 				</div>
