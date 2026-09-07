@@ -11,9 +11,13 @@ import style from "./calendar-actions.module.css";
 
 interface CalendarActionsProps {
 	calendarEvent: CalendarEventData;
+	fullWidth?: boolean;
 }
 
-export function CalendarActions({ calendarEvent }: CalendarActionsProps) {
+export function CalendarActions({
+	calendarEvent,
+	fullWidth = false,
+}: CalendarActionsProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const panelId = useId();
 	const rootRef = useRef<HTMLDivElement>(null);
@@ -72,7 +76,10 @@ export function CalendarActions({ calendarEvent }: CalendarActionsProps) {
 	}
 
 	return (
-		<div className={style.root} ref={rootRef}>
+		<div
+			className={fullWidth ? `${style.root} ${style.fullWidth}` : style.root}
+			ref={rootRef}
+		>
 			<button
 				aria-controls={panelId}
 				aria-expanded={isOpen}

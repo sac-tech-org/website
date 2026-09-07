@@ -87,3 +87,10 @@
 	color: var(--color-bridge-deep);
 	font-size: 1rem;
 }
+
+.fullWidth,
+.fullWidth .trigger,
+.fullWidth .panel {
+	min-width: 100%;
+	width: 100%;
+}

@@ -1,24 +1,26 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 import {
+	createEventBlock,
+	createRecurringEvent,
 	createRecurringEventWithOverride,
 	createSpecialEvent,
 } from "@/stories/fixtures/events";
 
-vi.mock("@/lib/events/queries", () => ({
-	getApprovedEvents: vi.fn(),
-}));
-
-import { EventDetails } from "./page";
+import { EventDetails } from "./event-details";
 
 describe("EventDetails", () => {
-	it("renders a one-time event with its first-party and external navigation", () => {
+	it("renders a one-time event with navigation and calendar actions", async () => {
+		const user = userEvent.setup();
+
 		render(
 			<EventDetails
 				event={createSpecialEvent({
 					banner_image: "/events/design-summit/header-image",
 					description: "# Agenda\n\nMeet Sacramento designers and builders.",
 				})}
+				referenceDate="2026-09-01"
 			/>,
 		);
 
@@ -50,14 +52,94 @@ describe("EventDetails", () => {
 		);
 		expect(externalLink).toHaveAttribute("target", "_blank");
 		expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
+
+		await user.click(
+			screen.getByRole("button", {
+				name: "Add Sacramento Design Summit to calendar",
+			}),
+		);
+		const googleLink = screen.getByRole("link", {
+			name: "Add to Google Calendar",
+		});
+		const googleUrl = new URL(googleLink.getAttribute("href") ?? "");
+
+		expect(googleUrl.searchParams.get("dates")).toBe(
+			"20260905T190000Z/20260905T210000Z",
+		);
+		expect(
+			screen.getByRole("button", { name: "Download as ICS" }),
+		).toBeVisible();
+	});
+
+	it("exports the full date range for a multi-block event", async () => {
+		const user = userEvent.setup();
+
+		render(
+			<EventDetails
+				event={createSpecialEvent({
+					blocks: [
+						createEventBlock({
+							ends_at: new Date("2026-09-05T21:00:00.000Z"),
+							slug: "design-summit-day-one",
+							starts_at: new Date("2026-09-05T19:00:00.000Z"),
+							title: "Sacramento Design Summit",
+						}),
+						createEventBlock({
+							ends_at: new Date("2026-09-06T20:00:00.000Z"),
+							slug: "design-summit-day-two",
+							starts_at: new Date("2026-09-06T17:00:00.000Z"),
+							title: "Sacramento Design Summit",
+						}),
+					],
+				})}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		await user.click(
+			screen.getByRole("button", {
+				name: "Add Sacramento Design Summit to calendar",
+			}),
+		);
+		const googleUrl = new URL(
+			screen
+				.getByRole("link", { name: "Add to Google Calendar" })
+				.getAttribute("href") ?? "",
+		);
+
+		expect(googleUrl.searchParams.get("dates")).toBe(
+			"20260905T190000Z/20260906T200000Z",
+		);
 	});
 
 	it("does not render image markup when an event has no header image", () => {
 		const { container } = render(
-			<EventDetails event={createSpecialEvent({ banner_image: undefined })} />,
+			<EventDetails
+				event={createSpecialEvent({ banner_image: undefined })}
+				referenceDate="2026-09-01"
+			/>,
 		);
 
 		expect(container.querySelector("img")).not.toBeInTheDocument();
+	});
+
+	it("omits calendar actions when an event has no dated block", () => {
+		render(
+			<EventDetails
+				event={createSpecialEvent({
+					blocks: [],
+					location_url: undefined,
+					title: "Future Community Showcase",
+				})}
+				referenceDate="2026-09-01"
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("button", {
+				name: "Add Future Community Showcase to calendar",
+			}),
+		).not.toBeInTheDocument();
 	});
 
 	it("collapses the image region when the header image cannot load", () => {
@@ -66,6 +148,7 @@ describe("EventDetails", () => {
 				event={createSpecialEvent({
 					banner_image: "/events/design-summit/missing-header-image",
 				})}
+				referenceDate="2026-09-01"
 			/>,
 		);
 		const image = container.querySelector("img");
@@ -75,8 +158,15 @@ describe("EventDetails", () => {
 		expect(container.querySelector("img")).not.toBeInTheDocument();
 	});
 
-	it("explains a recurring schedule without inventing future occurrences", () => {
-		render(<EventDetails event={createRecurringEventWithOverride()} />);
+	it("exports the next valid recurring occurrence", async () => {
+		const user = userEvent.setup();
+
+		render(
+			<EventDetails
+				event={createRecurringEventWithOverride()}
+				referenceDate="2026-09-09"
+			/>,
+		);
 
 		expect(
 			screen.getAllByText("Every week on Wednesday for 8 occurrences"),
@@ -90,5 +180,41 @@ describe("EventDetails", () => {
 				name: "Visit this occurrence's event page",
 			}),
 		).toHaveAttribute("href", "https://events.example.com/hands-on-night");
+
+		await user.click(
+			screen.getByRole("button", {
+				name: "Add TypeScript Hands-on Night to calendar",
+			}),
+		);
+		const googleUrl = new URL(
+			screen
+				.getByRole("link", { name: "Add to Google Calendar" })
+				.getAttribute("href") ?? "",
+		);
+
+		expect(googleUrl.searchParams.get("dates")).toBe(
+			"20260916T013000Z/20260916T030000Z",
+		);
+		expect(googleUrl.searchParams.get("text")).toBe(
+			"TypeScript Hands-on Night",
+		);
+		expect(googleUrl.searchParams.get("location")).toBe(
+			"The Urban Hive, 123 J Street, Sacramento, CA",
+		);
+	});
+
+	it("omits calendar actions when a recurring series has ended", () => {
+		render(
+			<EventDetails
+				event={createRecurringEvent()}
+				referenceDate="2027-01-01"
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("button", {
+				name: "Add Sacramento TypeScript Weekly to calendar",
+			}),
+		).not.toBeInTheDocument();
 	});
 });
